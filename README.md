@@ -11,9 +11,6 @@ cd backend
 ```sh
 npm install
 ```
-```sh
-npm install lucide-vue-next
-```
 2. ejecutar backend
 ```sh
 node index.js
@@ -26,6 +23,9 @@ cd frontend-antojomap
 1. instalar dependencias
 ```sh
 npm install
+```
+```sh
+npm install lucide-vue-next
 ```
 2. ejecutar frontend
 ```sh
