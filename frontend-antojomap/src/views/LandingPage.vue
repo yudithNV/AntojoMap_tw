@@ -64,12 +64,12 @@ import { Zap, MapPin, Users } from 'lucide-vue-next'
 <style scoped>
 .landing {
   min-height: 100vh;
-  background-color: var(--color-white);
+  background-color: #FDFDFD;
 }
 
 .hero {
   padding: 60px 20px 80px;
-  background: linear-gradient(135deg, var(--color-white) 0%, rgba(235, 226, 207, 0.3) 100%);
+  background: linear-gradient(135deg, #FDFDFD 0%, rgba(255, 107, 0, 0.05) 100%);
 }
 
 .hero-wrapper {
@@ -85,8 +85,8 @@ import { Zap, MapPin, Users } from 'lucide-vue-next'
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background-color: rgba(171, 72, 45, 0.08);
-  color: var(--color-blood-orange);
+  background-color: rgba(255, 107, 0, 0.08);
+  color: #FF6B00;
   padding: 8px 16px;
   border-radius: 20px;
   font-size: 0.8rem;
@@ -99,7 +99,7 @@ import { Zap, MapPin, Users } from 'lucide-vue-next'
 
 h1 {
   font-size: 3.5rem;
-  color: var(--color-plum);
+  color: #212121;
   margin: 0 0 20px 0;
   line-height: 1.1;
   font-weight: 700;
@@ -107,7 +107,7 @@ h1 {
 }
 
 .highlight {
-  color: var(--color-blood-orange);
+  color: #FF6B00;
   text-decoration: none;
   position: relative;
 }
@@ -119,13 +119,13 @@ h1 {
   left: 0;
   right: 0;
   height: 3px;
-  background-color: var(--color-blood-orange);
+  background-color: #FF6B00;
   border-radius: 2px;
 }
 
 .hero-description {
   font-size: 1.1rem;
-  color: var(--color-gray-600);
+  color: #212121;
   margin: 0 0 32px 0;
   line-height: 1.6;
   font-weight: 400;
@@ -139,7 +139,7 @@ h1 {
 
 .btn-primary, .btn-secondary {
   padding: 12px 28px;
-  border-radius: var(--radius-md);
+  border-radius: 50px;
   border: none;
   font-size: 0.95rem;
   font-weight: 700;
@@ -153,14 +153,15 @@ h1 {
 }
 
 .btn-primary {
-  background-color: var(--color-blood-orange);
+  background-color: #FF6B00;
   color: white;
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
 }
 
 .btn-primary:hover {
-  background-color: var(--color-dusty-coral);
-  box-shadow: var(--shadow-lg);
+  background-color: #E05F00;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 107, 0, 0.4);
 }
 
 .btn-primary:active {
@@ -168,15 +169,15 @@ h1 {
 }
 
 .btn-secondary {
-  background-color: var(--color-white);
-  color: var(--color-blood-orange);
-  border: 1px solid var(--color-blood-orange);
+  background-color: #FDFDFD;
+  color: #FF6B00;
+  border: 1px solid #FF6B00;
 }
 
 .btn-secondary:hover {
-  background-color: rgba(171, 72, 45, 0.04);
-  border-color: var(--color-dusty-coral);
-  color: var(--color-dusty-coral);
+  background-color: rgba(255, 107, 0, 0.04);
+  border-color: #E05F00;
+  color: #E05F00;
 }
 
 .social-proof {
@@ -189,12 +190,12 @@ h1 {
   font-size: 1.8rem;
   display: inline-flex;
   align-items: center;
-  color: var(--color-blood-orange);
+  color: #FFC107;
 }
 
 .social-text {
   font-size: 0.9rem;
-  color: var(--color-plum);
+  color: #212121;
   font-weight: 500;
 }
 
@@ -205,8 +206,8 @@ h1 {
 }
 
 .footer {
-  background-color: var(--color-dark-bg);
-  color: var(--color-ivory);
+  background-color: #212121;
+  color: #FDFDFD;
   padding: 32px 20px;
   text-align: center;
 }
@@ -229,14 +230,14 @@ h1 {
 }
 
 .footer-links a {
-  color: var(--color-ivory);
+  color: #FDFDFD;
   text-decoration: none;
   font-weight: 500;
   transition: color 0.2s;
 }
 
 .footer-links a:hover {
-  color: var(--color-blood-orange);
+  color: #FF6B00;
 }
 
 @media (max-width: 768px) {

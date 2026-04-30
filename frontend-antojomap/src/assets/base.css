@@ -50,6 +50,18 @@
   }
 }
 
+:root {
+  --naranja-antojo: #FF6B00;
+  --amarillo-mostaza: #FFC107;
+  --negro-carbon: #212121;
+  --blanco-crema: #FDFDFD;
+  --rojo-chile: #E53935;
+}
+
+/* También puedes definir clases utilitarias */
+.bg-primary { background-color: var(--naranja-antojo); }
+.text-primary { color: var(--naranja-antojo); }
+.bg-offer { background-color: var(--rojo-chile); }
 *,
 *::before,
 *::after {

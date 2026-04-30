@@ -21,15 +21,24 @@
 </template>
 
 <script setup>
-defineProps({
+import { useRouter } from 'vue-router'
+
+const props = defineProps({
   restaurant: {
     type: Object,
     required: true,
     validator: (obj) => {
       return obj.name && obj.image && obj.category && obj.rating && obj.deliveryTime
     }
+  },
+  linkTo: {
+    type: String,
+    default: '/login'
   }
 })
+
+const router = useRouter()
+const goToMenu = () => router.push(props.linkTo)
 </script>
 
 <style scoped>

@@ -2,19 +2,33 @@
   <DashboardLayout>
     <div class="page-header">
       <h1>Perfil del Restaurante</h1>
-      <p class="subtitle">Actualiza la información de tu restaurante</p>
+      <p class="subtitle">Información de acceso y datos del restaurante</p>
     </div>
 
-    <div class="content-placeholder">
-      <User :size="48" stroke-width="1.5" />
-      <p>Formulario de perfil en construcción</p>
+    <div class="profile-card">
+      <div class="profile-row">
+        <span class="label">Email</span>
+        <span class="value">{{ userEmail }}</span>
+      </div>
+      <div class="profile-row">
+        <span class="label">Nombre</span>
+        <span class="value">{{ restaurantName }}</span>
+      </div>
+      <div class="profile-row">
+        <span class="label">Empresa</span>
+        <span class="value">{{ restaurantCompany }}</span>
+      </div>
     </div>
   </DashboardLayout>
 </template>
 
 <script setup>
 import DashboardLayout from '../../components/DashboardLayout.vue'
-import { User } from 'lucide-vue-next'
+import { ref } from 'vue'
+
+const userEmail = ref(localStorage.getItem('user_email') || 'rest@test.com')
+const restaurantName = ref(localStorage.getItem('restaurant_name') || 'La Casa del Antojo')
+const restaurantCompany = ref(localStorage.getItem('restaurant_company') || 'AntojoMap Bistro')
 </script>
 
 <style scoped>
@@ -26,6 +40,35 @@ import { User } from 'lucide-vue-next'
   color: var(--plum);
   font-size: 2rem;
   margin: 0 0 10px 0;
+}
+
+.profile-card {
+  background: white;
+  padding: 28px;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+
+.profile-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid #f1ece7;
+}
+
+.profile-row:last-child {
+  border-bottom: none;
+}
+
+.label {
+  color: #7d6a6a;
+  font-weight: 700;
+}
+
+.value {
+  color: var(--plum);
+  font-weight: 600;
 }
 
 .subtitle {

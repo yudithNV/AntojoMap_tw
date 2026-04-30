@@ -5,17 +5,59 @@
       <p class="subtitle">Descubre nuevos restaurantes y platos deliciosos</p>
     </div>
 
-    <div class="content-placeholder">
-      <Search :size="48" stroke-width="1.5" />
-      <p>Feed de exploración en construcción</p>
+    <div class="restaurants-grid">
+      <RestaurantCard
+        v-for="restaurant in restaurants"
+        :key="restaurant.id"
+        :restaurant="restaurant"
+        linkTo="/user/menu"
+      />
     </div>
   </DashboardLayout>
 </template>
 
 <script setup>
 import DashboardLayout from '../../components/DashboardLayout.vue'
-import { Search } from 'lucide-vue-next'
+import RestaurantCard from '../../components/RestaurantCard.vue'
+
+const restaurants = [
+  {
+    id: 1,
+    name: 'The Burger Joint',
+    category: 'Hamburguesas • Comida Rápida',
+    image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop',
+    rating: '⭐ 4.8',
+    deliveryTime: '20-30 min',
+    badge: 'Promoción'
+  },
+  {
+    id: 2,
+    name: 'Sakura Sushi',
+    category: 'Sushi • Japonesa',
+    image: 'https://images.unsplash.com/photo-1553621042-f6e147245169?w=400&h=300&fit=crop',
+    rating: '⭐ 4.6',
+    deliveryTime: '35-45 min',
+    badge: 'Nuevo'
+  },
+  {
+    id: 3,
+    name: 'Bella Pizza',
+    category: 'Pizza • Italiana',
+    image: 'https://images.unsplash.com/photo-1604068549290-dea0e4a305ca?w=400&h=300&fit=crop',
+    rating: '⭐ 4.9',
+    deliveryTime: '15-25 min',
+    badge: 'Popular'
+  }
+]
 </script>
+
+<style scoped>
+.restaurants-grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+</style>
 
 <style scoped>
 .page-header {

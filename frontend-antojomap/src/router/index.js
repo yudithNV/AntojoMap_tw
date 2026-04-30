@@ -14,8 +14,10 @@ import AdminReports from '../views/admin/AdminReports.vue'
 // Restaurant Views
 import RestaurantDashboard from '../views/restaurant/RestaurantDashboard.vue'
 import RestaurantMenu from '../views/restaurant/RestaurantMenu.vue'
+import RestaurantMenuEdit from '../views/restaurant/RestaurantMenuEdit.vue'
 import RestaurantProfile from '../views/restaurant/RestaurantProfile.vue'
 import RestaurantFeedbacks from '../views/restaurant/RestaurantFeedbacks.vue'
+import MenuView from '../views/restaurant/MenuView.vue'
 
 // User Views
 import UserFeed from '../views/user/UserFeed.vue'
@@ -90,6 +92,19 @@ const router = createRouter({
       meta: { requiresAuth: true, role: 'restaurant' }
     },
     {
+      path: '/restaurant/menu/add',
+      name: 'restaurant-menu-add',
+      component: RestaurantMenuEdit,
+      meta: { requiresAuth: true, role: 'restaurant' }
+    },
+    {
+      path: '/restaurant/menu/edit/:id',
+      name: 'restaurant-menu-edit',
+      component: RestaurantMenuEdit,
+      props: true,
+      meta: { requiresAuth: true, role: 'restaurant' }
+    },
+    {
       path: '/restaurant/profile',
       name: 'restaurant-profile',
       component: RestaurantProfile,
@@ -106,6 +121,12 @@ const router = createRouter({
       path: '/user/feed',
       name: 'user-feed',
       component: UserFeed,
+      meta: { requiresAuth: true, role: 'user' }
+    },
+    {
+      path: '/user/menu',
+      name: 'user-menu',
+      component: MenuView,
       meta: { requiresAuth: true, role: 'user' }
     },
     {

@@ -6,7 +6,7 @@
     </div>
     
     <div class="restaurants-grid">
-      <RestaurantCard v-for="restaurant in restaurants" :key="restaurant.id" :restaurant="restaurant" />
+      <RestaurantCard v-for="restaurant in restaurants" :key="restaurant.id" :restaurant="restaurant" linkTo="/login" />
     </div>
   </section>
 </template>

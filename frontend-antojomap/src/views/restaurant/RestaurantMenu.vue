@@ -7,7 +7,7 @@
           <h1>Platos del Día</h1>
           <span class="items-count">{{ plates.length }} items</span>
         </div>
-        <button class="add-plate-btn">
+        <button class="add-plate-btn" @click="router.push({ name: 'restaurant-menu-add' })">
           <Plus :size="20" stroke-width="3" /> Agregar Plato
         </button>
       </header>
@@ -22,7 +22,7 @@
             <h3>{{ plate.name }}</h3>
             <p class="price">${{ plate.price }}</p>
             <div class="plate-actions">
-              <button class="edit-btn">
+              <button class="edit-btn" @click="editPlate(plate.id)">
                 <Pencil :size="16" /> Editar
               </button>
               <button class="delete-btn">
@@ -37,30 +37,17 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import DashboardLayout from '../../components/DashboardLayout.vue'
 import { Plus, Pencil, Trash2 } from 'lucide-vue-next'
+import restaurantMenuStore from '../../stores/restaurantMenuStore.js'
 
-const plates = ref([
-  { 
-    id: 1, 
-    name: 'Bowl de Quinoa', 
-    price: '12.50', 
-    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=500&auto=format&fit=crop' 
-  },
-  { 
-    id: 2, 
-    name: 'Hamburguesa Clásica', 
-    price: '15.00', 
-    image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=500&auto=format&fit=crop' 
-  },
-  { 
-    id: 3, 
-    name: 'Pasta Alfredo', 
-    price: '14.00', 
-    image: 'https://images.pexels.com/photos/1437267/pexels-photo-1437267.jpeg?auto=compress&cs=tinysrgb&w=400' 
-  }
-])
+const router = useRouter()
+const plates = restaurantMenuStore.plates
+
+const editPlate = (id) => {
+  router.push({ name: 'restaurant-menu-edit', params: { id } })
+}
 </script>
 
 <style scoped>

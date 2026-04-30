@@ -71,6 +71,10 @@
               </div>
 
               <button type="submit" class="btn-submit">Iniciar Sesión</button>
+
+              <div v-if="loginFeedback.message" class="form-feedback" :class="loginFeedback.type" aria-live="polite">
+                {{ loginFeedback.message }}
+              </div>
             </form>
 
             <div class="auth-footer">
@@ -95,25 +99,36 @@ const form = ref({
   password: '',
   remember: false
 })
+const loginFeedback = ref({ message: '', type: '' })
 
 const handleLogin = () => {
   const { email, password } = form.value
+  loginFeedback.value.message = ''
+  loginFeedback.value.type = ''
 
-  // Test credentials
   if (email === 'admin@test.com' && password === 'admin123') {
     localStorage.setItem('user_role', 'admin')
     localStorage.setItem('user_email', email)
-    router.push('/admin/dashboard')
+    loginFeedback.value.message = 'Ingreso exitoso'
+    loginFeedback.value.type = 'success'
+    setTimeout(() => router.push('/admin/dashboard'), 300)
   } else if (email === 'rest@test.com' && password === 'rest123') {
     localStorage.setItem('user_role', 'restaurant')
     localStorage.setItem('user_email', email)
-    router.push('/restaurant/menu')
+    localStorage.setItem('restaurant_name', 'La Casa del Antojo')
+    localStorage.setItem('restaurant_company', 'AntojoMap Bistro')
+    loginFeedback.value.message = 'Ingreso exitoso'
+    loginFeedback.value.type = 'success'
+    setTimeout(() => router.push('/restaurant/menu'), 300)
   } else if (email === 'user@test.com' && password === 'user123') {
     localStorage.setItem('user_role', 'user')
     localStorage.setItem('user_email', email)
-    router.push('/user/feed')
+    loginFeedback.value.message = 'Ingreso exitoso'
+    loginFeedback.value.type = 'success'
+    setTimeout(() => router.push('/user/feed'), 300)
   } else {
-    alert('Credenciales inválidas. Usa:\n- admin@test.com / admin123\n- rest@test.com / rest123\n- user@test.com / user123')
+    loginFeedback.value.message = 'Credenciales incorrectas'
+    loginFeedback.value.type = 'error'
   }
 }
 </script>
@@ -121,10 +136,12 @@ const handleLogin = () => {
 <style scoped>
 .auth-page {
   min-height: 100vh;
-  background-color: var(--color-gray-50);
+  background: radial-gradient(circle at top, rgba(255, 251, 242, 0.95), #fffbf2 0%, #f7ede5 100%);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 24px;
+  color: #4a2c2c;
 }
 
 .auth-container {
@@ -132,15 +149,17 @@ const handleLogin = () => {
   grid-template-columns: 1fr 1fr;
   width: 100%;
   max-width: 1000px;
-  height: 600px;
-  background-color: var(--color-white);
-  border-radius: var(--radius-lg);
+  min-height: 640px;
+  background: rgba(255, 251, 242, 0.88);
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 26px 65px rgba(107, 33, 33, 0.14);
+  border: 1px solid rgba(255, 251, 242, 0.9);
+  backdrop-filter: blur(16px);
 }
 
 .auth-left {
-  background: linear-gradient(135deg, var(--color-moss-green) 0%, var(--color-dusty-coral) 100%);
+  background: linear-gradient(180deg, #6B2121 0%, #A33333 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -148,50 +167,76 @@ const handleLogin = () => {
   overflow: hidden;
 }
 
+.form-feedback {
+  margin-top: 18px;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.form-feedback.error {
+  color: #A33333;
+}
+
+.form-feedback.success {
+  color: #1B6A3A;
+}
+
+.auth-left::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.18), transparent 42%);
+}
+
 .food-image {
+  position: relative;
+  z-index: 1;
   font-size: 15rem;
-  opacity: 0.9;
-  filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.2));
+  opacity: 0.92;
+  filter: drop-shadow(0 14px 36px rgba(0, 0, 0, 0.25));
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .auth-right {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px;
+  padding: 38px;
 }
 
 .auth-form-wrapper {
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
+  animation: fadeInUp 0.8s ease forwards;
+  opacity: 0;
+  transform: translateY(24px);
 }
 
 .auth-header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 36px;
 }
 
 .logo {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .logo-icon {
-  font-size: 2rem;
-  width: 50px;
-  height: 50px;
+  width: 56px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(171, 72, 45, 0.1);
-  border-radius: 10px;
-  color: var(--color-blood-orange);
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  color: #fff;
 }
 
 .logo-text {
@@ -201,33 +246,33 @@ const handleLogin = () => {
 }
 
 .logo-main {
-  font-size: 1.3rem;
-  font-weight: 700;
-  font-family: var(--font-family-display);
-  color: var(--color-plum);
+  font-size: 1.45rem;
+  font-weight: 800;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #3a1f1f;
 }
 
 .logo-sub {
-  font-size: 1rem;
-  color: var(--color-blood-orange);
+  font-size: 0.98rem;
+  color: #6b2121;
   font-weight: 600;
 }
 
 .form-content h2 {
-  font-size: 1.8rem;
-  color: var(--color-plum);
+  font-size: 2rem;
+  color: #4a1f1f;
   margin: 0 0 12px 0;
   text-align: center;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .subtitle {
-  color: var(--color-gray-500);
-  font-size: 0.95rem;
+  color: #6b2121;
+  font-size: 1rem;
   text-align: center;
   margin: 0 0 30px 0;
-  line-height: 1.5;
-  font-weight: 400;
+  line-height: 1.6;
+  font-weight: 500;
 }
 
 .form-group {
@@ -236,32 +281,35 @@ const handleLogin = () => {
 
 label {
   display: block;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--color-plum);
-  margin-bottom: 8px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #5a2c2c;
+  margin-bottom: 10px;
 }
 
 input[type="email"],
 input[type="password"],
 input[type="text"] {
   width: 100%;
-  padding: 12px 14px;
-  border: 1px solid var(--color-gray-200);
-  border-radius: var(--radius-md);
-  font-size: 0.95rem;
-  transition: all 0.2s;
+  padding: 16px 18px;
+  border: 1px solid rgba(107, 33, 33, 0.18);
+  border-radius: 18px;
+  font-size: 1rem;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
   box-sizing: border-box;
-  font-family: var(--font-family);
-  font-weight: 400;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.88);
+  color: #422424;
 }
 
 input[type="email"]:focus,
 input[type="password"]:focus,
 input[type="text"]:focus {
   outline: none;
-  border-color: var(--color-blood-orange);
-  box-shadow: 0 0 0 3px rgba(171, 72, 45, 0.08);
+  border-color: #A33333;
+  box-shadow: 0 0 0 4px rgba(163, 51, 51, 0.12);
+  background: #fff;
 }
 
 .password-input-wrapper {
@@ -271,23 +319,22 @@ input[type="text"]:focus {
 }
 
 .password-input-wrapper input {
-  padding-right: 45px;
+  padding-right: 46px;
 }
 
 .toggle-password {
   position: absolute;
-  right: 12px;
+  right: 14px;
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 1.1rem;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.6;
-  transition: opacity 0.2s;
-  color: var(--color-gray-600);
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+  color: #6b2121;
 }
 
 .toggle-password:hover {
@@ -299,55 +346,57 @@ input[type="text"]:focus {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 25px;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
 .checkbox {
   display: flex;
   align-items: center;
   cursor: pointer;
-  gap: 6px;
-  color: var(--color-gray-700);
-  font-weight: 400;
+  gap: 8px;
+  color: #4c3434;
+  font-weight: 500;
 }
 
 .checkbox input[type="checkbox"] {
   width: 18px;
   height: 18px;
   cursor: pointer;
-  accent-color: var(--color-blood-orange);
+  accent-color: #A33333;
 }
 
 .forgot-password {
-  color: var(--color-blood-orange);
+  color: #A33333;
   text-decoration: none;
-  font-weight: 600;
-  transition: color 0.2s;
-  font-size: 0.9rem;
+  font-weight: 700;
+  transition: color 0.2s ease;
+  font-size: 0.95rem;
 }
 
 .forgot-password:hover {
-  color: var(--color-dusty-coral);
+  color: #6b2121;
 }
 
 .btn-submit {
   width: 100%;
-  padding: 12px;
-  background-color: var(--color-blood-orange);
-  color: white;
+  padding: 16px 18px;
+  background: #A33333;
+  color: #fff;
   border: none;
-  border-radius: var(--radius-md);
-  font-size: 0.95rem;
-  font-weight: 700;
+  border-radius: 16px;
+  font-size: 1rem;
+  font-weight: 800;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: transform 0.25s ease, filter 0.25s ease, box-shadow 0.25s ease;
   margin-bottom: 20px;
-  font-family: var(--font-family);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  box-shadow: 0 12px 28px rgba(163, 51, 51, 0.16);
 }
 
 .btn-submit:hover {
-  background-color: var(--color-dusty-coral);
-  box-shadow: var(--shadow-md);
+  transform: scale(1.03);
+  filter: brightness(1.06);
+  box-shadow: 0 18px 32px rgba(163, 51, 51, 0.22);
 }
 
 .btn-submit:active {
@@ -356,20 +405,71 @@ input[type="text"]:focus {
 
 .auth-footer {
   text-align: center;
-  font-size: 0.9rem;
-  color: var(--color-gray-500);
-  font-weight: 400;
+  font-size: 0.95rem;
+  color: #6b2121;
+  font-weight: 500;
 }
 
 .auth-footer a {
-  color: var(--color-blood-orange);
+  color: #A33333;
   text-decoration: none;
-  font-weight: 600;
-  transition: color 0.2s;
+  font-weight: 700;
+  transition: color 0.2s ease;
 }
 
 .auth-footer a:hover {
-  color: var(--color-dusty-coral);
+  color: #6b2121;
+}
+
+input[type="email"],
+input[type="password"],
+input[type="text"] {
+  transition: border-color 0.24s ease, box-shadow 0.24s ease, background-color 0.24s ease, transform 0.24s ease;
+}
+
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="text"]:focus {
+  outline: none;
+  border-color: #C64445;
+  background-color: #fff7f1;
+  box-shadow: 0 0 0 4px rgba(163, 51, 51, 0.12);
+  transform: translateY(-1px);
+}
+
+.btn-submit {
+  transition: transform 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease, color 0.22s ease;
+}
+
+.btn-submit:hover {
+  transform: translateY(-1px) scale(1.01);
+  background-color: #d34b2f;
+  box-shadow: 0 16px 28px rgba(163, 51, 51, 0.22);
+}
+
+.btn-submit:active {
+  transform: translateY(0) scale(0.99);
+  box-shadow: 0 12px 20px rgba(163, 51, 51, 0.18);
+}
+
+.toggle-password:hover {
+  transform: translateY(-1px);
+  background-color: rgba(163, 51, 51, 0.08);
+}
+
+.toggle-password:active {
+  transform: scale(0.98);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 768px) {
@@ -377,7 +477,7 @@ input[type="text"]:focus {
     grid-template-columns: 1fr;
     height: auto;
     max-width: 100%;
-    border-radius: 0;
+    border-radius: 18px;
   }
 
   .auth-left {
@@ -393,7 +493,7 @@ input[type="text"]:focus {
   }
 
   .form-content h2 {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
   }
 
   .form-options {
