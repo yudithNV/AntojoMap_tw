@@ -1,28 +1,31 @@
 <script setup>
-import { RouterView, RouterLink } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
+import { computed } from 'vue'
+import Navbar from './components/Navbar.vue'
+
+const route = useRoute()
+
+// Rutas públicas donde se muestra el Navbar
+const publicRoutes = ['/', '/login', '/register', '/negocios']
+
+// Verifica si la ruta actual es pública
+const showNavbar = computed(() => {
+  return publicRoutes.includes(route.path)
+})
 </script>
 
 <template>
-  <header>
-    <nav>
-      <RouterLink to="/">Inicio</RouterLink> | 
-      <RouterLink to="/about">Acerca de</RouterLink>
-    </nav>
-  </header>
-
-  <main>
-    <h1>Bienvenido a AntojoMap 🍕</h1>
-    <p>¡Aquí empezaremos a buscar comida!</p>
-    
+  <div class="app-container">
+    <Navbar v-if="showNavbar" />
     <RouterView />
-  </main>
+  </div>
 </template>
 
-<style scoped>
-h1 {
-  color: #42b883;
-}
-nav {
-  padding: 20px 0;
+<style>
+@import './assets/main.css';
+
+.app-container {
+  min-height: 100vh;
+  background-color: var(--color-white);
 }
 </style>
