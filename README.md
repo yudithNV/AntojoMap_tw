@@ -11,6 +11,9 @@ cd backend
 ```sh
 npm install
 ```
+```sh
+npm install lucide-vue-next
+```
 2. ejecutar backend
 ```sh
 node index.js
