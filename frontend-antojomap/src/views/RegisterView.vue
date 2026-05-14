@@ -100,7 +100,7 @@
                   <p v-if="touched.user.password && formErrors.user.password" class="field-error">{{ formErrors.user.password }}</p>
                 </div>
 
-                <button type="submit" class="btn-submit" :disabled="!isUserFormValid">Registrarse</button>
+                <button type="submit" class="btn-submit" :disabled="!isUserFormValid || isLoading">{{ isLoading ? 'Registrando...' : 'Registrarse' }}</button>
                 <div v-if="registerFeedback.message && activeTab === 'usuario'" class="form-feedback" :class="registerFeedback.type" aria-live="polite">
                   {{ registerFeedback.message }}
                 </div>
@@ -124,19 +124,6 @@
                     @blur="handleFieldBlur('restaurant', 'name')"
                   />
                   <p v-if="touched.restaurant.name && formErrors.restaurant.name" class="field-error">{{ formErrors.restaurant.name }}</p>
-                </div>
-
-                <div class="form-group">
-                  <label for="rest-nit">NIT</label>
-                  <input
-                    id="rest-nit"
-                    v-model="restaurantForm.nit"
-                    type="text"
-                    placeholder="Número de identificación"
-                    required
-                    @blur="handleFieldBlur('restaurant', 'nit')"
-                  />
-                  <p v-if="touched.restaurant.nit && formErrors.restaurant.nit" class="field-error">{{ formErrors.restaurant.nit }}</p>
                 </div>
 
                 <div class="form-group">
@@ -185,11 +172,6 @@
                 </div>
 
                 <div class="form-group">
-                  <label for="rest-social">Redes Sociales (Opcional)</label>
-                  <input id="rest-social" v-model="restaurantForm.socialMedia" type="text" placeholder="@usuario o URL" />
-                </div>
-
-                <div class="form-group">
                   <label for="rest-email">Correo para el Administrador de Restaurante</label>
                   <input
                     id="rest-email"
@@ -215,7 +197,20 @@
                   <p v-if="touched.restaurant.password && formErrors.restaurant.password" class="field-error">{{ formErrors.restaurant.password }}</p>
                 </div>
 
-                <button type="submit" class="btn-submit" :disabled="!isRestaurantFormValid">Registrar Restaurante</button>
+                <div class="form-group">
+                  <label for="rest-photo">Foto del Establecimiento</label>
+                  <input
+                    id="rest-photo"
+                    v-model="restaurantForm.foto_comprobante"
+                    type="text"
+                    placeholder="URL de la foto (ej: https://..."
+                    @blur="handleFieldBlur('restaurant', 'foto_comprobante')"
+                  />
+                  <p class="field-hint">Por ahora ingresa la URL de una foto. Pronto podrás subir archivos directamente.</p>
+                  <p v-if="touched.restaurant.foto_comprobante && formErrors.restaurant.foto_comprobante" class="field-error">{{ formErrors.restaurant.foto_comprobante }}</p>
+                </div>
+
+                <button type="submit" class="btn-submit" :disabled="!isRestaurantFormValid || isLoading">{{ isLoading ? 'Enviando...' : 'Registrar Restaurante' }}</button>
                 <div v-if="registerFeedback.message && activeTab === 'restaurante'" class="form-feedback" :class="registerFeedback.type" aria-live="polite">
                   {{ registerFeedback.message }}
                 </div>
@@ -236,10 +231,12 @@
 import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { UtensilsCrossed, Utensils, Eye, EyeOff, User, Store } from 'lucide-vue-next'
+import { authService } from '../services/auth.service.js'
 
 const router = useRouter()
 const activeTab = ref('usuario')
 const showUserPassword = ref(false)
+const isLoading = ref(false)
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
@@ -251,13 +248,12 @@ const userForm = ref({
 
 const restaurantForm = ref({
   name: '',
-  nit: '',
   address: '',
   phone: '',
   category: '',
-  socialMedia: '',
   email: '',
-  password: ''
+  password: '',
+  foto_comprobante: ''
 })
 
 const formErrors = reactive({
@@ -268,12 +264,12 @@ const formErrors = reactive({
   },
   restaurant: {
     name: '',
-    nit: '',
     address: '',
     phone: '',
     category: '',
     email: '',
-    password: ''
+    password: '',
+    foto_comprobante: ''
   }
 })
 
@@ -285,12 +281,12 @@ const touched = reactive({
   },
   restaurant: {
     name: false,
-    nit: false,
     address: false,
     phone: false,
     category: false,
     email: false,
-    password: false
+    password: false,
+    foto_comprobante: false
   }
 })
 
@@ -347,7 +343,6 @@ const isUserFormValid = computed(() => {
 const isRestaurantFormValid = computed(() => {
   return (
     restaurantForm.value.name.trim() &&
-    restaurantForm.value.nit.trim() &&
     restaurantForm.value.address.trim() &&
     restaurantForm.value.phone.trim() &&
     restaurantForm.value.category.trim() &&
@@ -357,7 +352,7 @@ const isRestaurantFormValid = computed(() => {
   )
 })
 
-const handleUserRegister = () => {
+const handleUserRegister = async () => {
   touchFormFields('user')
 
   if (!validateForm('user')) {
@@ -366,13 +361,31 @@ const handleUserRegister = () => {
     return
   }
 
-  registerFeedback.value.message = 'Registro completado'
-  registerFeedback.value.type = 'success'
-  console.log('User Register:', userForm.value)
-  setTimeout(() => router.push('/login'), 350)
+  isLoading.value = true
+  try {
+    const response = await authService.registro(userForm.value.name, userForm.value.email, userForm.value.password)
+    
+    // Auto-login: Guardar token y datos
+    localStorage.setItem('token', response.token)
+    localStorage.setItem('user_id', response.usuario.id)
+    localStorage.setItem('user_email', response.usuario.email)
+    localStorage.setItem('user_name', response.usuario.nombre)
+    const normalizedRole = response.usuario.rol.toLowerCase()
+    localStorage.setItem('user_role', normalizedRole)
+    
+    registerFeedback.value.message = '¡Bienvenido! Redirigiendo a tu dashboard...'
+    registerFeedback.value.type = 'success'
+    
+    setTimeout(() => router.push('/user/feed'), 1500)
+  } catch (error) {
+    registerFeedback.value.message = error.message || 'Error en el registro'
+    registerFeedback.value.type = 'error'
+  } finally {
+    isLoading.value = false
+  }
 }
 
-const handleRestaurantRegister = () => {
+const handleRestaurantRegister = async () => {
   touchFormFields('restaurant')
 
   if (!validateForm('restaurant')) {
@@ -381,10 +394,26 @@ const handleRestaurantRegister = () => {
     return
   }
 
-  registerFeedback.value.message = 'Registro completado'
-  registerFeedback.value.type = 'success'
-  console.log('Restaurant Register:', restaurantForm.value)
-  setTimeout(() => router.push('/login'), 350)
+  isLoading.value = true
+  try {
+    await authService.solicitarRestaurante({
+      nombre_restaurante: restaurantForm.value.name,
+      direccion: restaurantForm.value.address,
+      telefono: restaurantForm.value.phone,
+      categoria: restaurantForm.value.category,
+      email: restaurantForm.value.email,
+      password: restaurantForm.value.password,
+      foto_comprobante: restaurantForm.value.foto_comprobante
+    })
+    registerFeedback.value.message = '✅ ¡Solicitud enviada! El administrador revisará tu registro pronto. Redirigiendo a login...'
+    registerFeedback.value.type = 'success'
+    setTimeout(() => router.push('/login'), 3000)
+  } catch (error) {
+    registerFeedback.value.message = error.message || 'Error en la solicitud'
+    registerFeedback.value.type = 'error'
+  } finally {
+    isLoading.value = false
+  }
 }
 </script>
 
