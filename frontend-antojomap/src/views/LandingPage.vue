@@ -17,9 +17,9 @@
               <Zap :size="18" stroke-width="2" />
               Girar la Ruleta
             </button>
-            <button class="btn-secondary">
+            <button class="btn-secondary" @click="mostrarMapa = !mostrarMapa">
               <MapPin :size="18" stroke-width="2" />
-              Ver Mapa
+              {{ mostrarMapa ? 'Ocultar Mapa' : 'Ver Mapa' }}
             </button>
           </div>
 
@@ -37,6 +37,7 @@
       </div>
     </header>
 
+   <MapaRestaurantes v-if="mostrarMapa" class="mapa-container" />
     <CategoriesSection />
     <RecommendedSection />
 
@@ -59,6 +60,10 @@ import WheelSpinner from '../components/WheelSpinner.vue'
 import CategoriesSection from '../components/CategoriesSection.vue'
 import RecommendedSection from '../components/RecommendedSection.vue'
 import { Zap, MapPin, Users } from 'lucide-vue-next'
+import { ref } from 'vue'
+import MapaRestaurantes from '@/components/MapaRestaurantes.vue'
+
+const mostrarMapa = ref(false)
 </script>
 
 <style scoped>
@@ -238,6 +243,15 @@ h1 {
 
 .footer-links a:hover {
   color: #FF6B00;
+}
+.mapa-container {
+  max-width: 1200px;
+  margin: 0 auto 2rem auto;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  position: relative;
+  z-index: 0;
 }
 
 @media (max-width: 768px) {
