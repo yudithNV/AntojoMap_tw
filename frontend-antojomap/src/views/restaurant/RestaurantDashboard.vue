@@ -1,57 +1,71 @@
 <template>
-  <DashboardLayout>
-    <div class="dashboard-header">
-      <h1>Dashboard del Restaurante</h1>
-      <p class="subtitle">Bienvenido a tu panel de control</p>
-    </div>
-
-    <div class="dashboard-grid">
-      <div class="stat-card">
-        <div class="stat-icon">
-          <Package :size="32" stroke-width="2" />
-        </div>
-        <div class="stat-content">
-          <h3>Órdenes Hoy</h3>
-          <p class="stat-number">24</p>
-        </div>
+  <div>
+    <BlockedRestaurantModal ref="blockedModal" />
+    
+    <DashboardLayout>
+      <div class="dashboard-header">
+        <h1>Dashboard del Restaurante</h1>
+        <p class="subtitle">Bienvenido a tu panel de control</p>
       </div>
 
-      <div class="stat-card">
-        <div class="stat-icon">
-          <Star :size="32" stroke-width="2" />
+      <div class="dashboard-grid">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <Package :size="32" stroke-width="2" />
+          </div>
+          <div class="stat-content">
+            <h3>Órdenes Hoy</h3>
+            <p class="stat-number">24</p>
+          </div>
         </div>
-        <div class="stat-content">
-          <h3>Calificación Promedio</h3>
-          <p class="stat-number">4.8</p>
-        </div>
-      </div>
 
-      <div class="stat-card">
-        <div class="stat-icon">
-          <DollarSign :size="32" stroke-width="2" />
+        <div class="stat-card">
+          <div class="stat-icon">
+            <Star :size="32" stroke-width="2" />
+          </div>
+          <div class="stat-content">
+            <h3>Calificación Promedio</h3>
+            <p class="stat-number">4.8</p>
+          </div>
         </div>
-        <div class="stat-content">
-          <h3>Ingresos Hoy</h3>
-          <p class="stat-number">$1,250</p>
-        </div>
-      </div>
 
-      <div class="stat-card">
-        <div class="stat-icon">
-          <Users :size="32" stroke-width="2" />
+        <div class="stat-card">
+          <div class="stat-icon">
+            <DollarSign :size="32" stroke-width="2" />
+          </div>
+          <div class="stat-content">
+            <h3>Ingresos Hoy</h3>
+            <p class="stat-number">$1,250</p>
+          </div>
         </div>
-        <div class="stat-content">
-          <h3>Clientes Nuevos</h3>
-          <p class="stat-number">8</p>
+
+        <div class="stat-card">
+          <div class="stat-icon">
+            <Users :size="32" stroke-width="2" />
+          </div>
+          <div class="stat-content">
+            <h3>Clientes Nuevos</h3>
+            <p class="stat-number">8</p>
+          </div>
         </div>
       </div>
-    </div>
-  </DashboardLayout>
+    </DashboardLayout>
+  </div>
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
 import DashboardLayout from '../../components/DashboardLayout.vue'
+import BlockedRestaurantModal from '../../components/BlockedRestaurantModal.vue'
 import { Package, Star, DollarSign, Users } from 'lucide-vue-next'
+
+const blockedModal = ref(null)
+
+onMounted(() => {
+  if (blockedModal.value) {
+    blockedModal.value.checkStatus()
+  }
+})
 </script>
 
 <style scoped>

@@ -145,7 +145,7 @@
                     id="rest-phone"
                     v-model="restaurantForm.phone"
                     type="tel"
-                    placeholder="+56 9 XXXX XXXX"
+                    placeholder="+591 XXXX XXXX"
                     required
                     @blur="handleFieldBlur('restaurant', 'phone')"
                   />

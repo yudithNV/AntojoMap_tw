@@ -24,6 +24,14 @@
         >
           Negocios
         </router-link>
+
+        <router-link 
+          to="/no-se-que-comer" 
+          class="nav-button"
+          :class="{ active: $route.path === '/no-se-que-comer' }"
+        >
+          No sé qué comer
+        </router-link>
         
         <router-link 
           to="/register" 

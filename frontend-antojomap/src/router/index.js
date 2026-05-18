@@ -3,6 +3,7 @@ import LandingPage from '../views/LandingPage.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import BusinessPage from '../views/BusinessPage.vue'
+import NoSeQueComerView from '../views/NoSeQueComerView.vue'
 
 // Admin Views
 import AdminDashboard from '../views/admin/AdminDashboard.vue'
@@ -46,6 +47,11 @@ const router = createRouter({
       path: '/negocios',
       name: 'business',
       component: BusinessPage
+    },
+    {
+      path: '/no-se-que-comer',
+      name: 'no-se-que-comer',
+      component: NoSeQueComerView
     },
     // Admin Routes
     {

@@ -7,13 +7,13 @@
 
     <!-- Search Bar -->
     <div class="search-bar">
+      <Search class="search-icon" :size="20" />
       <input
         v-model="searchQuery"
         type="text"
         placeholder="Buscar por nombre del restaurante..."
         class="search-input"
       />
-      <span class="search-icon">🔍</span>
     </div>
 
     <!-- Loading -->
@@ -98,6 +98,7 @@
 import { ref, onMounted, computed } from 'vue'
 import DashboardLayout from '../../components/DashboardLayout.vue'
 import { adminService } from '../../services/admin.service.js'
+import { Search } from 'lucide-vue-next';
 
 const solicitudes = ref([])
 const isLoading = ref(false)

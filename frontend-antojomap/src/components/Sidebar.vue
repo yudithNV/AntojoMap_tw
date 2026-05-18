@@ -100,8 +100,12 @@ const menuItems = computed(() => {
 const isActive = (path) => route.path === path
 
 const handleLogout = () => {
-  localStorage.removeItem('user_role')
+  localStorage.removeItem('token')
+  localStorage.removeItem('user_id')
   localStorage.removeItem('user_email')
+  localStorage.removeItem('user_name')
+  localStorage.removeItem('user_role')
+  localStorage.removeItem('restaurante_id')
   router.push('/')
 }
 </script>

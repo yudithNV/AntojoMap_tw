@@ -10,12 +10,12 @@
         ¡TU RULETA GASTRONÓMICA LOCAL!
       </span>
           <h1>¿Qué <span class="highlight">comerás</span> <br> hoy?</h1>
-          <p class="hero-description">Descubre los mejores sabores locales en nuestra Ruleta del Antojo. La proximidad comida favorita está a solo un giro.</p>
+          <p class="hero-description">Descubre restaurantes cerca de ti o deja que la Ruleta del Antojo decida por ti.</p>
           
           <div class="hero-actions">
-            <button class="btn-primary">
+            <button class="btn-primary" @click="irAuleta">
               <Zap :size="18" stroke-width="2" />
-              Girar la Ruleta
+              Probar la Ruleta
             </button>
             <button class="btn-secondary" @click="mostrarMapa = !mostrarMapa">
               <MapPin :size="18" stroke-width="2" />
@@ -31,13 +31,17 @@
           </div>
         </div>
 
-        <div class="hero-wheel">
-          <WheelSpinner />
+        <div class="hero-visual">
+          <WheelSpinner v-if="!mostrarMapa" />
+
+          <div v-else class="hero-map">
+            <MapaRestaurantes />
+          </div>
         </div>
       </div>
     </header>
 
-   <MapaRestaurantes v-if="mostrarMapa" class="mapa-container" />
+
     <CategoriesSection />
     <RecommendedSection />
 
@@ -61,9 +65,15 @@ import CategoriesSection from '../components/CategoriesSection.vue'
 import RecommendedSection from '../components/RecommendedSection.vue'
 import { Zap, MapPin, Users } from 'lucide-vue-next'
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import MapaRestaurantes from '@/components/MapaRestaurantes.vue'
 
+const router = useRouter()
 const mostrarMapa = ref(false)
+
+const irAuleta = () => {
+  router.push('/no-se-que-comer')
+}
 </script>
 
 <style scoped>
@@ -204,10 +214,20 @@ h1 {
   font-weight: 500;
 }
 
-.hero-wheel {
+.hero-visual {
   display: flex;
   justify-content: center;
   align-items: center;
+  min-height: 460px;
+}
+
+.hero-map {
+  width: min(560px, 100%);
+  height: 430px;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.16);
+  border: 1px solid rgba(255, 107, 0, 0.14);
 }
 
 .footer {
@@ -244,15 +264,7 @@ h1 {
 .footer-links a:hover {
   color: #FF6B00;
 }
-.mapa-container {
-  max-width: 1200px;
-  margin: 0 auto 2rem auto;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-  position: relative;
-  z-index: 0;
-}
+
 
 @media (max-width: 768px) {
   .hero-wrapper {

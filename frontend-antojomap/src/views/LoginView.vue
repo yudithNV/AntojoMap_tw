@@ -141,12 +141,22 @@ const handleLogin = async () => {
     loginFeedback.value.type = 'success'
 
     setTimeout(() => {
+      // Verificar si hay una categoría pendiente desde la ruleta
+      const pendingCategory = localStorage.getItem('pending_category')
+      
       if (normalizedRole === 'admin') {
         router.push('/admin/dashboard')
       } else if (normalizedRole === 'restaurant') {
         router.push('/restaurant/dashboard')
       } else {
-        router.push('/user/feed')
+        // Usuario normal
+        if (pendingCategory) {
+          // Limpiar la categoría pendiente y redirigir al feed con filtro
+          localStorage.removeItem('pending_category')
+          router.push({ path: '/user/feed', query: { categoria: pendingCategory } })
+        } else {
+          router.push('/user/feed')
+        }
       }
     }, 300)
   } catch (error) {

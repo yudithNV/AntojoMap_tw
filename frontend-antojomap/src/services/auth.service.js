@@ -7,5 +7,7 @@ export const authService = {
   
   solicitarRestaurante: (datos) => api.post('/auth/solicitud-restaurante', datos),
   
+  verificarEstadoSolicitud: (usuario_id) => api.get(`/auth/estado-solicitud/${usuario_id}`),
+  
   logout: () => localStorage.removeItem('token')
 }

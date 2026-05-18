@@ -28,7 +28,7 @@ const restaurants = [
     id: 2,
     name: 'Sakura Sushi',
     category: 'Sushi • Japonesa',
-    image: 'https://images.unsplash.com/photo-1553621042-f6e147245169?w=400&h=300&fit=crop',
+    image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=400&h=300',
     rating: '⭐ 4.6',
     deliveryTime: '35-45 min',
     badge: 'Nuevo'
