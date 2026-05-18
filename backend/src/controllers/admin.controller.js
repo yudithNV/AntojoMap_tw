@@ -98,3 +98,19 @@ export const getSolicitudes = async (req, res) => {
     res.status(500).json({ error: error.message })
   }
 }
+
+export const getUsuarios = async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('usuarios')
+      .select('*')
+      .order('creado_en', { ascending: false })
+
+    if (error) throw error
+
+    res.json(data)
+
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+}

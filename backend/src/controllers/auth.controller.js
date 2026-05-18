@@ -135,7 +135,7 @@ export const login = async (req, res) => {
 // SOLICITUD DE RESTAURANTE
 export const solicitarRestaurante = async (req, res) => {
   try {
-    const { nombre_restaurante, direccion, telefono, categoria, email, password } = req.body
+    const { nombre_restaurante, direccion, telefono, categoria, email, password, foto_comprobante } = req.body
 
     // 0. Validación de inputs
     if (!nombre_restaurante || !direccion || !telefono || !categoria || !email || !password) {
@@ -182,6 +182,7 @@ export const solicitarRestaurante = async (req, res) => {
         direccion,
         telefono,
         categoria,
+        foto_comprobante: foto_comprobante || null,
         estado: 'PENDIENTE'
       })
 
@@ -240,6 +241,32 @@ export const crearAdmin = async (req, res) => {
     if (error) throw error
 
     res.status(201).json({ mensaje: 'Admin creado exitosamente', usuario: { id: data.id, nombre: data.nombre, email: data.email, rol: data.rol } })
+
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+}
+
+// VERIFICAR ESTADO SOLICITUD RESTAURANTE
+export const verificarEstadoSolicitud = async (req, res) => {
+  try {
+    const { usuario_id } = req.params
+
+    const { data: solicitud, error } = await supabase
+      .from('solicitudes_restaurante')
+      .select('id, estado, nombre_restaurante')
+      .eq('usuario_id', usuario_id)
+      .single()
+
+    if (error) {
+      return res.status(404).json({ error: 'Solicitud no encontrada' })
+    }
+
+    res.json({
+      estado: solicitud.estado,
+      nombre_restaurante: solicitud.nombre_restaurante,
+      puede_acceder: solicitud.estado === 'APROBADO'
+    })
 
   } catch (error) {
     res.status(500).json({ error: error.message })

@@ -71,3 +71,18 @@ export const editarRestaurante = async (req, res) => {
     res.status(500).json({ error: error.message })
   }
 }
+
+// GET categorías de restaurantes
+export const getCategorias = async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('categorias_restaurante')
+      .select('*')
+
+    if (error) throw error
+
+    res.json(data)
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+}
