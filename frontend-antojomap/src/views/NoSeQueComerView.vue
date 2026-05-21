@@ -89,7 +89,7 @@ import { ref, onMounted, computed } from 'vue'
 import Navbar from '../components/Navbar.vue'
 import WheelSpinner from '../components/WheelSpinner.vue'
 import { Pizza, Hamburger, Fish, IceCream, Salad, Utensils, Drumstick, Soup, Leaf, Shell } from 'lucide-vue-next'
-import { api } from '@/services/api.js'
+import { restaurantesService } from '@/services/menu.service.js'
 
 const items = ref([])
 const selectedCategories = ref([])
@@ -109,7 +109,7 @@ const iconMap = {
 }
 
 onMounted(async () => {
-  const categorias = await api.get('/restaurantes/categorias')
+  const categorias = await restaurantesService.getCategorias()
   items.value = categorias.map(c => ({
     name: c.nombre,
     icon: iconMap[c.nombre] || Utensils

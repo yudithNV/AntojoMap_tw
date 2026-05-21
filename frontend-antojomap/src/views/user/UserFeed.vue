@@ -57,36 +57,50 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import DashboardLayout from '../../components/DashboardLayout.vue'
 import RestaurantCard from '../../components/RestaurantCard.vue'
+import { restaurantesService } from '../../services/menu.service.js'
 
 const route = useRoute()
 const router = useRouter()
 
 const selectedCategory = ref(route.query.categoria || '')
 const searchQuery = ref('')
-
-const categories = ['Pizza', 'Hamburguesas', 'Sushi', 'Tacos', 'Pollo', 'Pasta', 'Postres', 'Vegano', 'Mariscos', 'Ensaladas']
-
-const restaurants = [
-  { id: 1, name: 'The Burger Joint', category: 'Hamburguesas', address: 'Zona Centro', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop', rating: '4.8', badge: 'Promoción' },
-  { id: 2, name: 'Sakura Sushi', category: 'Sushi', address: 'Miraflores', image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=400&h=300', rating: '4.6', badge: 'Nuevo' },
-  { id: 3, name: 'Bella Pizza', category: 'Pizza', address: 'San Miguel', image: 'https://images.unsplash.com/photo-1604068549290-dea0e4a305ca?w=400&h=300&fit=crop', rating: '4.9', badge: 'Popular' },
-  { id: 4, name: 'Tacos Al Pastor', category: 'Tacos', address: 'Sopocachi', image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400&h=300&fit=crop', rating: '4.7', badge: null },
-  { id: 5, name: 'Pollo Loco Express', category: 'Pollo', address: 'El Alto', image: 'https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=400&h=300&fit=crop', rating: '4.5', badge: null },
-  { id: 6, name: 'Pasta Dreams', category: 'Pasta', address: 'Calacoto', image: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&h=300&fit=crop', rating: '4.8', badge: null }
-]
+const restaurants = ref([])
+const categories = ref([])
+const cargando = ref(true)
 
 const filteredRestaurants = computed(() => {
-  return restaurants.filter(r => {
-    const matchCategory = !selectedCategory.value || r.category === selectedCategory.value
+  return restaurants.value.filter(r => {
+    const matchCategory = !selectedCategory.value || r.categoria === selectedCategory.value
     const q = searchQuery.value.toLowerCase()
-    const matchSearch = !q || r.name.toLowerCase().includes(q) || r.category.toLowerCase().includes(q)
+    const matchSearch = !q || r.nombre.toLowerCase().includes(q) || r.categoria?.toLowerCase().includes(q)
     return matchCategory && matchSearch
   })
 })
+
+const cargarRestaurantes = async () => {
+  try {
+    cargando.value = true
+    const { restaurantes: data } = await restaurantesService.getRestaurantes(1, 100, selectedCategory.value)
+    restaurants.value = data || []
+  } catch (error) {
+    console.error('Error cargando restaurantes:', error)
+  } finally {
+    cargando.value = false
+  }
+}
+
+const cargarCategorias = async () => {
+  try {
+    const data = await restaurantesService.getCategorias()
+    categories.value = (data || []).map(c => c.nombre)
+  } catch (error) {
+    console.error('Error cargando categorías:', error)
+  }
+}
 
 const selectCategory = (category) => {
   selectedCategory.value = selectedCategory.value === category ? '' : category
@@ -103,6 +117,11 @@ const clearAll = () => {
   searchQuery.value = ''
   router.push({ query: {} })
 }
+
+onMounted(() => {
+  cargarCategorias()
+  cargarRestaurantes()
+})
 </script>
 
 <style scoped>

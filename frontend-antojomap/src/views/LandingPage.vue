@@ -85,9 +85,25 @@ const irAuleta = () => {
 .hero {
   padding: 60px 20px 80px;
   background: linear-gradient(135deg, #FDFDFD 0%, rgba(255, 107, 0, 0.05) 100%);
+  position: relative;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  
+  background-image: url('/seamless-repeat-pattern-background-with-hand-drawn OFICIAL.svg');
+  background-repeat: no-repeat;
+  background-size: cover;
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .hero-wrapper {
+  position: relative;
+  z-index: 1;
   max-width: 1400px;
   margin: 0 auto;
   display: grid;

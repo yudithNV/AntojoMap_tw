@@ -33,7 +33,7 @@
           No sé qué comer
         </router-link>
         
-        <router-link 
+        <router-link
           to="/register" 
           class="nav-button"
           :class="{ active: $route.path === '/register' }"
