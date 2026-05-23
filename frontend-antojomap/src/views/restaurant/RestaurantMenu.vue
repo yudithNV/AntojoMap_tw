@@ -8,11 +8,8 @@
           <span class="items-count">{{ items.length }} items</span>
         </div>
         <div class="header-actions">
-          <button class="add-btn add-plate-btn" @click="showForm = 'plato_suelto'">
-            <Plus :size="20" stroke-width="3" /> Agregar Plato
-          </button>
-          <button class="add-btn add-menu-btn" @click="showForm = 'almuerzo_completo'">
-            <Plus :size="20" stroke-width="3" /> Crear Almuerzo
+          <button class="add-btn add-plate-btn" @click="showForm = true">
+            <Plus :size="20" stroke-width="3" /> Agregar Menú
           </button>
         </div>
       </header>
@@ -24,146 +21,82 @@
 
       <div v-else-if="!showForm && items.length === 0" class="empty-state">
         <Plus :size="48" stroke-width="1.5" />
-        <p>No tienes items aún. ¡Crea tu primer plato o almuerzo!</p>
-        <div class="empty-buttons">
-          <button class="btn-create" @click="showForm = 'plato_suelto'">Crear Plato Suelto</button>
-          <button class="btn-create alt" @click="showForm = 'almuerzo_completo'">Crear Almuerzo Completo</button>
-        </div>
+        <p>No tienes items en el menú. ¡Crea tu primer menú!</p>
+        <button class="btn-create" @click="showForm = true">Crear Menú</button>
       </div>
 
       <!-- Formulario -->
       <div v-if="showForm" class="form-container">
         <div class="form-card">
           <div class="form-header">
-            <h2>{{ showForm === 'plato_suelto' ? 'Agregar Plato Suelto' : 'Crear Almuerzo Completo' }}</h2>
-            <button class="close-btn" @click="showForm = null">×</button>
+            <h2>{{ editingId ? 'Editar Menú' : 'Agregar Menú' }}</h2>
+            <button class="close-btn" @click="closeForm">×</button>
           </div>
 
-          <!-- PLATO SUELTO -->
-          <form v-if="showForm === 'plato_suelto'" @submit.prevent="guardarPlatoSuelto">
+          <form @submit.prevent="guardarMenu">
+            <!-- Tipo de menú -->
+            <div class="meal-option">
+              <label class="radio-label">
+                <input v-model="formMenu.tipo" type="radio" value="plato_suelto" />
+                Plato Suelto
+              </label>
+              <label class="radio-label">
+                <input v-model="formMenu.tipo" type="radio" value="almuerzo_completo" />
+                Almuerzo Completo (Entrada + Principal + Postre)
+              </label>
+            </div>
+
             <label>
-              Nombre del Plato *
-              <input v-model="formPlatoSuelto.nombre" type="text" required />
+              Nombre del Menú *
+              <input v-model="formMenu.nombre" type="text" required />
             </label>
 
             <label>
               Precio *
-              <input v-model="formPlatoSuelto.precio" type="number" step="0.01" min="0" required />
+              <input v-model="formMenu.precio" type="number" step="0.01" min="0" required />
             </label>
 
             <label>
               Imagen (URL) *
-              <input v-model="formPlatoSuelto.foto_url" type="url" required />
+              <input v-model="formMenu.foto_url" type="url" required />
             </label>
 
             <label>
               Descripción
-              <textarea v-model="formPlatoSuelto.descripcion" rows="3" />
+              <textarea v-model="formMenu.descripcion" rows="3" />
+            </label>
+
+            <!-- Campos para almuerzo_completo -->
+            <template v-if="formMenu.tipo === 'almuerzo_completo'">
+              <hr />
+              <h3>Componentes del Almuerzo</h3>
+              
+              <label>
+                Entrada (nombre) *
+                <input v-model="formMenu.entrada.nombre" type="text" required />
+              </label>
+
+              <label>
+                Principal (nombre) *
+                <input v-model="formMenu.principal.nombre" type="text" required />
+              </label>
+
+              <label>
+                Postre (nombre) *
+                <input v-model="formMenu.postre.nombre" type="text" required />
+              </label>
+            </template>
+
+            <label class="checkbox-label">
+              <input v-model="formMenu.disponible" type="checkbox" />
+              Disponible
             </label>
 
             <div class="form-actions">
               <button type="submit" class="btn-save" :disabled="guardando">
-                {{ guardando ? 'Guardando...' : 'Crear Plato' }}
+                {{ guardando ? 'Guardando...' : editingId ? 'Actualizar' : 'Crear Menú' }}
               </button>
-              <button type="button" class="btn-cancel" @click="showForm = null">Cancelar</button>
-            </div>
-          </form>
-
-          <!-- ALMUERZO COMPLETO -->
-          <form v-else-if="showForm === 'almuerzo_completo'" @submit.prevent="guardarAlmuerzoCompleto">
-            <h3>Información General del Almuerzo</h3>
-
-            <label>
-              Nombre del Almuerzo *
-              <input v-model="formAlmuerzo.nombre" type="text" required />
-            </label>
-
-            <label>
-              Precio Total *
-              <input v-model="formAlmuerzo.precio" type="number" step="0.01" min="0" required />
-            </label>
-
-            <label>
-              Imagen del Almuerzo (URL) *
-              <input v-model="formAlmuerzo.foto_url" type="url" required />
-            </label>
-
-            <label>
-              Descripción
-              <textarea v-model="formAlmuerzo.descripcion" rows="2" />
-            </label>
-
-            <hr />
-
-            <h3>Entrada</h3>
-            <div class="meal-option">
-              <label class="radio-label">
-                <input type="radio" v-model="formAlmuerzo.entradaTipo" value="referencia" />
-                Usar plato existente
-              </label>
-              <select v-if="formAlmuerzo.entradaTipo === 'referencia'" v-model="formAlmuerzo.entrada.plato_id">
-                <option value="">-- Selecciona un plato --</option>
-                <option v-for="plato in platosSueltos" :key="plato.id" :value="plato.id">
-                  {{ plato.nombre }} (Bs{{ plato.precio }})
-                </option>
-              </select>
-
-              <label class="radio-label">
-                <input type="radio" v-model="formAlmuerzo.entradaTipo" value="custom" />
-                Describir plato
-              </label>
-              <input v-if="formAlmuerzo.entradaTipo === 'custom'" v-model="formAlmuerzo.entrada.nombre" type="text" placeholder="Nombre del plato de entrada" />
-            </div>
-
-            <hr />
-
-            <h3>Plato Principal</h3>
-            <div class="meal-option">
-              <label class="radio-label">
-                <input type="radio" v-model="formAlmuerzo.principalTipo" value="referencia" />
-                Usar plato existente
-              </label>
-              <select v-if="formAlmuerzo.principalTipo === 'referencia'" v-model="formAlmuerzo.principal.plato_id">
-                <option value="">-- Selecciona un plato --</option>
-                <option v-for="plato in platosSueltos" :key="plato.id" :value="plato.id">
-                  {{ plato.nombre }} (Bs{{ plato.precio }})
-                </option>
-              </select>
-
-              <label class="radio-label">
-                <input type="radio" v-model="formAlmuerzo.principalTipo" value="custom" />
-                Describir plato
-              </label>
-              <input v-if="formAlmuerzo.principalTipo === 'custom'" v-model="formAlmuerzo.principal.nombre" type="text" placeholder="Nombre del plato principal" />
-            </div>
-
-            <hr />
-
-            <h3>Postre</h3>
-            <div class="meal-option">
-              <label class="radio-label">
-                <input type="radio" v-model="formAlmuerzo.postreTipo" value="referencia" />
-                Usar plato existente
-              </label>
-              <select v-if="formAlmuerzo.postreTipo === 'referencia'" v-model="formAlmuerzo.postre.plato_id">
-                <option value="">-- Selecciona un plato --</option>
-                <option v-for="plato in platosSueltos" :key="plato.id" :value="plato.id">
-                  {{ plato.nombre }} (Bs{{ plato.precio }})
-                </option>
-              </select>
-
-              <label class="radio-label">
-                <input type="radio" v-model="formAlmuerzo.postreTipo" value="custom" />
-                Describir plato
-              </label>
-              <input v-if="formAlmuerzo.postreTipo === 'custom'" v-model="formAlmuerzo.postre.nombre" type="text" placeholder="Nombre del postre" />
-            </div>
-
-            <div class="form-actions">
-              <button type="submit" class="btn-save" :disabled="guardando">
-                {{ guardando ? 'Guardando...' : 'Crear Almuerzo' }}
-              </button>
-              <button type="button" class="btn-cancel" @click="showForm = null">Cancelar</button>
+              <button type="button" class="btn-cancel" @click="closeForm">Cancelar</button>
             </div>
           </form>
         </div>
@@ -171,8 +104,9 @@
 
       <!-- Grid de Items -->
       <div v-else-if="!cargando && items.length > 0" class="items-grid">
-        <div v-for="item in items" :key="item.id" class="item-card" :class="item.tipo">
-          <div class="item-badge">{{ item.tipo === 'plato_suelto' ? 'Plato' : 'Almuerzo' }}</div>
+        <div v-for="item in items" :key="item.id" :class="['item-card', item.tipo]">
+          <div v-if="!item.disponible" class="item-badge unavailable">No disponible</div>
+          <div v-else class="item-badge">{{ item.tipo === 'plato_suelto' ? '🍽️ Plato' : '🥗 Almuerzo' }}</div>
           <div class="item-image">
             <img :src="item.foto_url" :alt="item.nombre">
           </div>
@@ -180,19 +114,22 @@
             <h3>{{ item.nombre }}</h3>
             <p class="price">Bs {{ item.precio }}</p>
             <p v-if="item.descripcion" class="description">{{ item.descripcion }}</p>
+            
+            <!-- Mostrar componentes si es almuerzo_completo -->
             <div v-if="item.tipo === 'almuerzo_completo'" class="meal-breakdown">
-              <div v-if="item.entrada" class="meal-item">
-                <strong>Entrada:</strong> {{ item.entrada.nombre }}
+              <div v-if="item.entrada_nombre" class="meal-item">
+                <strong>Entrada:</strong> {{ item.entrada_nombre }}
               </div>
-              <div v-if="item.principal" class="meal-item">
-                <strong>Principal:</strong> {{ item.principal.nombre }}
+              <div v-if="item.principal_nombre" class="meal-item">
+                <strong>Principal:</strong> {{ item.principal_nombre }}
               </div>
-              <div v-if="item.postre" class="meal-item">
-                <strong>Postre:</strong> {{ item.postre.nombre }}
+              <div v-if="item.postre_nombre" class="meal-item">
+                <strong>Postre:</strong> {{ item.postre_nombre }}
               </div>
             </div>
+
             <div class="item-actions">
-              <button class="edit-btn" @click="editItem(item.id)">
+              <button class="edit-btn" @click="editItem(item)">
                 <Pencil :size="16" /> Editar
               </button>
               <button class="delete-btn" @click="deleteItem(item.id)">
@@ -210,49 +147,55 @@
 import { useRouter } from 'vue-router'
 import DashboardLayout from '../../components/DashboardLayout.vue'
 import { Plus, Pencil, Trash2 } from 'lucide-vue-next'
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { almuerzosService } from '../../services/menu.service.js'
 
 const router = useRouter()
 const items = ref([])
 const cargando = ref(true)
 const guardando = ref(false)
-const showForm = ref(null)
+const showForm = ref(false)
 const editingId = ref(null)
 const restaurante_id = localStorage.getItem('restaurante_id')
 
-// Formulario Plato Suelto
-const formPlatoSuelto = ref({
-  nombre: '',
-  precio: '',
-  foto_url: '',
-  descripcion: ''
-})
-
-// Formulario Almuerzo Completo
-const formAlmuerzo = ref({
+// Formulario Menú
+const formMenu = ref({
+  tipo: 'plato_suelto',
   nombre: '',
   precio: '',
   foto_url: '',
   descripcion: '',
-  entradaTipo: 'custom',
-  entrada: { nombre: '', plato_id: '' },
-  principalTipo: 'custom',
-  principal: { nombre: '', plato_id: '' },
-  postreTipo: 'custom',
-  postre: { nombre: '', plato_id: '' }
+  disponible: true,
+  entrada: { nombre: '' },
+  principal: { nombre: '' },
+  postre: { nombre: '' }
 })
 
-// Platos sueltos para referenciar en almuerzos
-const platosSueltos = computed(() => {
-  return items.value.filter(item => item.tipo === 'plato_suelto')
-})
+const resetForm = () => {
+  editingId.value = null
+  formMenu.value = {
+    tipo: 'plato_suelto',
+    nombre: '',
+    precio: '',
+    foto_url: '',
+    descripcion: '',
+    disponible: true,
+    entrada: { nombre: '' },
+    principal: { nombre: '' },
+    postre: { nombre: '' }
+  }
+  showForm.value = false
+}
+
+const closeForm = () => {
+  resetForm()
+}
 
 const cargarItems = async () => {
   try {
     cargando.value = true
     if (restaurante_id) {
-      const data = await almuerzosService.getAlmuerdos ? await almuerzosService.getAlmuerdos(restaurante_id) : await almuerzosService.getAlmuerzos(restaurante_id)
+      const data = await almuerzosService.getAlmuerzos(restaurante_id)
       items.value = data || []
     }
   } catch (error) {
@@ -262,35 +205,34 @@ const cargarItems = async () => {
   }
 }
 
-const resetPlatoForm = () => {
-  editingId.value = null
-  formPlatoSuelto.value = { nombre: '', precio: '', foto_url: '', descripcion: '' }
-}
-
-const resetAlmuerzoForm = () => {
-  editingId.value = null
-  formAlmuerzo.value = {
-    nombre: '', precio: '', foto_url: '', descripcion: '',
-    entradaTipo: 'custom', entrada: { nombre: '', plato_id: '' },
-    principalTipo: 'custom', principal: { nombre: '', plato_id: '' },
-    postreTipo: 'custom', postre: { nombre: '', plato_id: '' }
-  }
-}
-
-const guardarPlatoSuelto = async () => {
-  if (!formPlatoSuelto.value.nombre || !formPlatoSuelto.value.precio || !formPlatoSuelto.value.foto_url) {
+const guardarMenu = async () => {
+  if (!formMenu.value.nombre || !formMenu.value.precio || !formMenu.value.foto_url) {
     alert('Por favor completa los campos requeridos')
     return
   }
 
+  if (formMenu.value.tipo === 'almuerzo_completo') {
+    if (!formMenu.value.entrada.nombre || !formMenu.value.principal.nombre || !formMenu.value.postre.nombre) {
+      alert('Por favor completa entrada, principal y postre')
+      return
+    }
+  }
+
   guardando.value = true
   try {
     const payload = {
-      tipo: 'plato_suelto',
-      nombre: formPlatoSuelto.value.nombre,
-      precio: parseFloat(formPlatoSuelto.value.precio),
-      foto_url: formPlatoSuelto.value.foto_url,
-      descripcion: formPlatoSuelto.value.descripcion || null
+      tipo: formMenu.value.tipo,
+      nombre: formMenu.value.nombre,
+      precio: parseFloat(formMenu.value.precio),
+      foto_url: formMenu.value.foto_url,
+      descripcion: formMenu.value.descripcion || null,
+      disponible: formMenu.value.disponible
+    }
+
+    if (formMenu.value.tipo === 'almuerzo_completo') {
+      payload.entrada = { nombre: formMenu.value.entrada.nombre }
+      payload.principal = { nombre: formMenu.value.principal.nombre }
+      payload.postre = { nombre: formMenu.value.postre.nombre }
     }
 
     if (editingId.value) {
@@ -299,161 +241,54 @@ const guardarPlatoSuelto = async () => {
       await almuerzosService.crearMenu(restaurante_id, payload)
     }
 
-    showForm.value = null
-    resetPlatoForm()
+    resetForm()
     await cargarItems()
   } catch (error) {
-    console.error('Error guardando plato:', error)
-    alert('Error al guardar el plato')
+    console.error('Error guardando menú:', error)
+    alert('Error al guardar el menú')
   } finally {
     guardando.value = false
   }
 }
 
-const guardarAlmuerzoCompleto = async () => {
-  const entrada = formAlmuerzo.value.entradaTipo === 'referencia' 
-    ? { plato_id: formAlmuerzo.value.entrada.plato_id }
-    : { nombre: formAlmuerzo.value.entrada.nombre }
-  
-  const principal = formAlmuerzo.value.principalTipo === 'referencia' 
-    ? { plato_id: formAlmuerzo.value.principal.plato_id }
-    : { nombre: formAlmuerzo.value.principal.nombre }
-  
-  const postre = formAlmuerzo.value.postreTipo === 'referencia' 
-    ? { plato_id: formAlmuerzo.value.postre.plato_id }
-    : { nombre: formAlmuerzo.value.postre.nombre }
-
-  if (!entrada.plato_id && !entrada.nombre) {
-    alert('Por favor selecciona o describe la entrada')
-    return
+const editItem = (item) => {
+  editingId.value = item.id
+  formMenu.value = {
+    tipo: item.tipo || 'plato_suelto',
+    nombre: item.nombre,
+    precio: item.precio,
+    foto_url: item.foto_url,
+    descripcion: item.descripcion || '',
+    disponible: item.disponible !== false,
+    entrada: { nombre: item.entrada_nombre || '' },
+    principal: { nombre: item.principal_nombre || '' },
+    postre: { nombre: item.postre_nombre || '' }
   }
-  if (!principal.plato_id && !principal.nombre) {
-    alert('Por favor selecciona o describe el plato principal')
-    return
-  }
-  if (!postre.plato_id && !postre.nombre) {
-    alert('Por favor selecciona o describe el postre')
-    return
-  }
-
-  guardando.value = true
-  try {
-    const payload = {
-      tipo: 'almuerzo_completo',
-      nombre: formAlmuerzo.value.nombre,
-      precio: parseFloat(formAlmuerzo.value.precio),
-      foto_url: formAlmuerzo.value.foto_url,
-      descripcion: formAlmuerzo.value.descripcion || null,
-      entrada,
-      principal,
-      postre
-    }
-
-    if (editingId.value) {
-      await almuerzosService.editarMenu(editingId.value, payload)
-    } else {
-      await almuerzosService.crearMenu(restaurante_id, payload)
-    }
-
-    showForm.value = null
-    resetAlmuerzoForm()
-    await cargarItems()
-  } catch (error) {
-    console.error('Error guardando almuerzo:', error)
-    alert('Error al guardar el almuerzo')
-  } finally {
-    guardando.value = false
-  }
-}
-
-const editItem = async (id) => {
-  try {
-    const { data } = await almuerzosService.getAlmuerzo(id)
-    const item = data || data === null ? data : null
-    // Some API wrappers return response directly; handle both shapes
-    const menu = data && data.id ? data : (data && data.data) ? data.data : item
-    if (!menu) {
-      // Fallback: try to find in items list
-      const found = items.value.find(i => i.id === id)
-      if (!found) return alert('Item no encontrado para editar')
-      return prefillFormForItem(found)
-    }
-    prefillFormForItem(menu)
-  } catch (error) {
-    console.error('Error al obtener item para editar:', error)
-    alert('No se pudo cargar el item para editar')
-  }
-}
-
-const prefillFormForItem = (menu) => {
-  editingId.value = menu.id
-  showForm.value = menu.tipo === 'plato_suelto' ? 'plato_suelto' : 'almuerzo_completo'
-
-  if (menu.tipo === 'plato_suelto') {
-    formPlatoSuelto.value = {
-      nombre: menu.nombre || '',
-      precio: menu.precio || '',
-      foto_url: menu.foto_url || '',
-      descripcion: menu.descripcion || ''
-    }
-  } else {
-    // Almuerzo completo
-    formAlmuerzo.value.nombre = menu.nombre || ''
-    formAlmuerzo.value.precio = menu.precio || ''
-    formAlmuerzo.value.foto_url = menu.foto_url || ''
-    formAlmuerzo.value.descripcion = menu.descripcion || ''
-
-    // Entrada
-    if (menu.entrada && menu.entrada.plato && menu.entrada.plato.id) {
-      formAlmuerzo.value.entradaTipo = 'referencia'
-      formAlmuerzo.value.entrada.plato_id = menu.entrada.plato.id
-      formAlmuerzo.value.entrada.nombre = ''
-    } else {
-      formAlmuerzo.value.entradaTipo = 'custom'
-      formAlmuerzo.value.entrada.nombre = (menu.entrada && menu.entrada.nombre) || ''
-      formAlmuerzo.value.entrada.plato_id = ''
-    }
-
-    // Principal
-    if (menu.principal && menu.principal.plato && menu.principal.plato.id) {
-      formAlmuerzo.value.principalTipo = 'referencia'
-      formAlmuerzo.value.principal.plato_id = menu.principal.plato.id
-      formAlmuerzo.value.principal.nombre = ''
-    } else {
-      formAlmuerzo.value.principalTipo = 'custom'
-      formAlmuerzo.value.principal.nombre = (menu.principal && menu.principal.nombre) || ''
-      formAlmuerzo.value.principal.plato_id = ''
-    }
-
-    // Postre
-    if (menu.postre && menu.postre.plato && menu.postre.plato.id) {
-      formAlmuerzo.value.postreTipo = 'referencia'
-      formAlmuerzo.value.postre.plato_id = menu.postre.plato.id
-      formAlmuerzo.value.postre.nombre = ''
-    } else {
-      formAlmuerzo.value.postreTipo = 'custom'
-      formAlmuerzo.value.postre.nombre = (menu.postre && menu.postre.nombre) || ''
-      formAlmuerzo.value.postre.plato_id = ''
-    }
-  }
+  showForm.value = true
 }
 
 const deleteItem = async (id) => {
-  if (confirm('¿Estás seguro de que deseas eliminar este item?')) {
+  if (confirm('¿Estás seguro de que quieres eliminar este menú?')) {
     try {
       await almuerzosService.eliminarMenu(id)
-      items.value = items.value.filter(i => i.id !== id)
+      await cargarItems()
     } catch (error) {
-      console.error('Error eliminando item:', error)
-      alert('Error al eliminar el item')
+      console.error('Error eliminando menú:', error)
+      alert('Error al eliminar el menú')
     }
   }
 }
 
-onMounted(() => {
-  cargarItems()
+onMounted(async () => {
+  if (!restaurante_id) {
+    alert('No se encontró el ID del restaurante')
+    router.push('/')
+    return
+  }
+  await cargarItems()
 })
 </script>
+
 
 <style scoped>
 .menu-container {
@@ -656,6 +491,20 @@ form label {
   gap: 8px;
   font-weight: 600;
   color: #4a2c2c;
+}
+
+.checkbox-label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
 }
 
 form input[type="text"],

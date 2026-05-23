@@ -26,17 +26,40 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import DashboardLayout from '../../components/DashboardLayout.vue'
 import RestaurantCard from '../../components/RestaurantCard.vue'
 import { Heart } from 'lucide-vue-next'
+import { favoritosService, restaurantesService } from '../../services/menu.service.js'
 
 const router = useRouter()
+const favorites = ref([])
 
-const favorites = ref(
-  JSON.parse(localStorage.getItem('favorite_restaurants') || '[]')
-)
+onMounted(async () => {
+  try {
+    const likes = await favoritosService.misFavoritos()
+    const restauranteIds = (likes || []).map(l => l.restaurante_id).filter(Boolean)
+    
+    if (restauranteIds.length === 0) return
+
+    const restaurantes = await Promise.all(
+      restauranteIds.map(id => restaurantesService.getRestaurante(id))
+    )
+
+    favorites.value = restaurantes.map((r, i) => ({
+      ...r,
+      likeId: likes[i].id,
+      name: r.nombre,
+      category: r.restaurante_categorias?.[0]?.categorias_restaurante?.nombre || '',
+      image: r.foto_portada || '',
+      address: r.direccion,
+      rating: '—'
+    }))
+  } catch (e) {
+    console.error('Error cargando favoritos:', e)
+  }
+})
 </script>
 
 <style scoped>

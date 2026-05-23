@@ -1,19 +1,25 @@
 import express from 'express'
-import { crearFeedback, getFeedbacksRestaurante, getPromedioCalificaciones, getMisFeedbacks } from '../controllers/feedback.controller.js'
+import { crearReview, getReviewsRestaurante, getPromedioPuntuaciones, getMisReviews, editarReview, eliminarReview } from '../controllers/feedback.controller.js'
 import { verificarToken } from '../middlewares/auth.middleware.js'
 
 const router = express.Router()
 
-// POST crear feedback (protegido)
-router.post('/', verificarToken, crearFeedback)
+// POST crear review (protegido)
+router.post('/', verificarToken, crearReview)
 
-// GET feedbacks de un restaurante
-router.get('/restaurante/:restaurante_id', getFeedbacksRestaurante)
+// GET reviews de un restaurante
+router.get('/restaurante/:restaurante_id', getReviewsRestaurante)
 
-// GET promedio de calificaciones
-router.get('/restaurante/:restaurante_id/promedio', getPromedioCalificaciones)
+// GET promedio de puntuaciones
+router.get('/restaurante/:restaurante_id/promedio', getPromedioPuntuaciones)
 
-// GET mis feedbacks (protegido)
-router.get('/usuario/mis-feedbacks', verificarToken, getMisFeedbacks)
+// GET mis reviews (protegido)
+router.get('/usuario/mis-reviews', verificarToken, getMisReviews)
+
+// PUT editar review (protegido)
+router.put('/:id', verificarToken, editarReview)
+
+// DELETE eliminar review (protegido)
+router.delete('/:id', verificarToken, eliminarReview)
 
 export default router

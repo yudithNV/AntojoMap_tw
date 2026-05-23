@@ -51,31 +51,37 @@ export const almuerzosService = {
 }
 
 export const feedbackService = {
-  // POST crear feedback
+  // POST crear review (feedback)
   crearFeedback: (datos) => api.post('/feedbacks', datos),
   
-  // GET feedbacks de un restaurante
+  // GET reviews de un restaurante
   getFeedbacksRestaurante: (restaurante_id) => api.get(`/feedbacks/restaurante/${restaurante_id}`),
   
-  // GET promedio de calificaciones
+  // GET promedio de puntuaciones
   getPromedioCalificaciones: (restaurante_id) => api.get(`/feedbacks/restaurante/${restaurante_id}/promedio`),
   
-  // GET mis feedbacks
-  getMisFeedbacks: () => api.get('/feedbacks/usuario/mis-feedbacks')
+  // GET mis reviews
+  getMisFeedbacks: () => api.get('/feedbacks/usuario/mis-reviews'),
+  
+  // PUT editar review
+  editarFeedback: (id, datos) => api.put(`/feedbacks/${id}`, datos),
+  
+  // DELETE eliminar review
+  eliminarFeedback: (id) => api.delete(`/feedbacks/${id}`)
 }
 
 export const favoritosService = {
-  // POST agregar a favoritos
-  agregarFavorito: (restaurante_id) => api.post('/favoritos', { restaurante_id }),
+  // POST agregar a favoritos o likes 
+  agregarFavorito: (restaurante_id) => api.post('/likes', { restaurante_id }),
   
   // GET mis favoritos
-  misFavoritos: () => api.get('/favoritos/mis-favoritos'),
+  misFavoritos: () => api.get('/likes/usuario/mis-likes'),
   
   // GET verificar si es favorito
-  esFavorito: (restaurante_id) => api.get(`/favoritos/${restaurante_id}/es-favorito`),
+  //esFavorito: (restaurante_id) => api.get(`/likes/${restaurante_id}/es-favorito`),
   
   // DELETE remover de favoritos
-  removerFavorito: (restaurante_id) => api.delete(`/favoritos/${restaurante_id}`)
+  removerFavorito: (like_id) => api.delete(`/likes/${like_id}`)
 }
 
 export const reportesService = {

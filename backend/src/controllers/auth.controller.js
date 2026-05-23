@@ -45,7 +45,7 @@ export const registro = async (req, res) => {
     // 3. Guardar en la DB
     const { data, error } = await supabase
       .from('usuarios')
-      .insert({ nombre, email, password: passwordHash, rol: 'USER' })
+      .insert({ nombre, email, password: passwordHash, rol: 'USER', activo: true })
       .select()
       .single()
 
@@ -82,7 +82,7 @@ export const login = async (req, res) => {
       .eq('email', email)
       .single()
 
-    if (!usuario) {
+    if (!usuario || !usuario.activo) {
       return res.status(401).json({ error: 'Email o contraseña incorrectos' })
     }
 
@@ -167,13 +167,14 @@ export const solicitarRestaurante = async (req, res) => {
     // 3. Crear usuario con rol RESTAURANTE
     const { data: nuevoUsuario, error: errorUsuario } = await supabase
       .from('usuarios')
-      .insert({ nombre: nombre_restaurante, email, password: passwordHash, rol: 'RESTAURANTE' })
+      .insert({ nombre: nombre_restaurante, email, password: passwordHash, rol: 'RESTAURANTE', activo: true })
       .select()
       .single()
 
     if (errorUsuario) throw errorUsuario
 
     // 4. Crear solicitud vinculada al usuario
+    // categoria ahora es categoria_id (FK), así que asumimos que es un UUID válido
     const { error: errorSolicitud } = await supabase
       .from('solicitudes_restaurante')
       .insert({
@@ -181,12 +182,15 @@ export const solicitarRestaurante = async (req, res) => {
         nombre_restaurante,
         direccion,
         telefono,
-        categoria,
+        categoria_id: categoria, // ahora es FK a categorias_restaurante
         foto_comprobante: foto_comprobante || null,
         estado: 'PENDIENTE'
       })
 
-    if (errorSolicitud) throw errorSolicitud
+    if (errorSolicitud) {
+      await supabase.from('usuarios').delete().eq('id', nuevoUsuario.id)
+      throw errorSolicitud
+    }
 
     res.status(201).json({ mensaje: '¡Solicitud enviada! El administrador revisará tu registro pronto.' })
 
@@ -234,7 +238,7 @@ export const crearAdmin = async (req, res) => {
     // 3. Crear admin
     const { data, error } = await supabase
       .from('usuarios')
-      .insert({ nombre, email, password: passwordHash, rol: 'ADMIN' })
+      .insert({ nombre, email, password: passwordHash, rol: 'ADMIN', activo: true })
       .select()
       .single()
 

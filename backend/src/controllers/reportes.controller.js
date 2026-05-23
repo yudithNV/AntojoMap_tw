@@ -3,24 +3,31 @@ import { supabase } from '../config/supabase.js'
 // GET estadísticas generales
 export const obtenerEstadisticas = async (req, res) => {
   try {
-    // Total de usuarios
+    // Total de usuarios activos
     const { data: usuarios } = await supabase
       .from('usuarios')
       .select('id', { count: 'exact' })
+      .eq('activo', true)
 
-    // Total de restaurantes
+    // Total de restaurantes activos
     const { data: restaurantes } = await supabase
       .from('restaurantes')
       .select('id', { count: 'exact' })
+      .eq('estado', 'activo')
 
     // Total de platos
     const { data: platos } = await supabase
       .from('platos')
       .select('id', { count: 'exact' })
 
-    // Total de feedbacks
-    const { data: feedbacks } = await supabase
-      .from('feedbacks')
+    // Total de reviews
+    const { data: reviews } = await supabase
+      .from('reviews')
+      .select('id', { count: 'exact' })
+
+    // Total de likes
+    const { data: likes } = await supabase
+      .from('likes')
       .select('id', { count: 'exact' })
 
     // Solicitudes pendientes
@@ -33,7 +40,8 @@ export const obtenerEstadisticas = async (req, res) => {
       total_usuarios: usuarios?.length || 0,
       total_restaurantes: restaurantes?.length || 0,
       total_platos: platos?.length || 0,
-      total_feedbacks: feedbacks?.length || 0,
+      total_reviews: reviews?.length || 0,
+      total_likes: likes?.length || 0,
       solicitudes_pendientes: solicitudesPendientes?.length || 0
     })
 
@@ -50,38 +58,39 @@ export const topRestaurantes = async (req, res) => {
     const { data: restaurantes } = await supabase
       .from('restaurantes')
       .select('id, nombre, descripcion, direccion')
+      .eq('estado', 'activo')
 
     if (!restaurantes) {
       return res.json([])
     }
 
-    // Obtener calificaciones para cada restaurante
-    const { data: feedbacks } = await supabase
-      .from('feedbacks')
-      .select('restaurante_id, calificacion')
+    // Obtener puntuaciones para cada restaurante
+    const { data: reviews } = await supabase
+      .from('reviews')
+      .select('restaurante_id, puntuacion')
 
-    const feedbacksMap = {}
-    feedbacks?.forEach(f => {
-      if (!feedbacksMap[f.restaurante_id]) {
-        feedbacksMap[f.restaurante_id] = []
+    const reviewsMap = {}
+    reviews?.forEach(r => {
+      if (!reviewsMap[r.restaurante_id]) {
+        reviewsMap[r.restaurante_id] = []
       }
-      feedbacksMap[f.restaurante_id].push(f.calificacion)
+      reviewsMap[r.restaurante_id].push(r.puntuacion)
     })
 
     const restaurantesConCalificacion = restaurantes.map(r => {
-      const calificaciones = feedbacksMap[r.id] || []
-      const promedio = calificaciones.length > 0
-        ? (calificaciones.reduce((a, b) => a + b, 0) / calificaciones.length).toFixed(1)
+      const puntuaciones = reviewsMap[r.id] || []
+      const promedio = puntuaciones.length > 0
+        ? (puntuaciones.reduce((a, b) => a + b, 0) / puntuaciones.length).toFixed(1)
         : 0
       return {
         ...r,
-        promedio_calificacion: parseFloat(promedio),
-        total_feedbacks: calificaciones.length
+        promedio_puntuacion: parseFloat(promedio),
+        total_reviews: puntuaciones.length
       }
     })
 
     const topRestaurantes = restaurantesConCalificacion
-      .sort((a, b) => b.promedio_calificacion - a.promedio_calificacion)
+      .sort((a, b) => b.promedio_puntuacion - a.promedio_puntuacion)
       .slice(0, parseInt(limit))
 
     res.json(topRestaurantes)
@@ -96,19 +105,19 @@ export const actividadUsuarios = async (req, res) => {
   try {
     const limite = req.query.limite || 30
 
-    const { data: feedbacks } = await supabase
-      .from('feedbacks')
+    const { data: reviews } = await supabase
+      .from('reviews')
       .select(`
         id,
         creado_en,
-        calificacion,
+        puntuacion,
         usuario:usuarios(id, nombre),
         restaurante:restaurantes(id, nombre)
       `)
       .order('creado_en', { ascending: false })
       .limit(parseInt(limite))
 
-    res.json(feedbacks || [])
+    res.json(reviews || [])
 
   } catch (error) {
     res.status(500).json({ error: error.message })
@@ -121,6 +130,7 @@ export const distribucionPorCategoria = async (req, res) => {
     const { data: restaurantes } = await supabase
       .from('restaurantes')
       .select('id, categoria')
+      .eq('estado', 'activo')
 
     const distribucion = {}
 

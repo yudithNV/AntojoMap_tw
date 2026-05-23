@@ -161,13 +161,9 @@
                     @blur="handleFieldBlur('restaurant', 'category')"
                   >
                     <option value="">Selecciona una categoría</option>
-                    <option value="tacos">Tacos</option>
-                    <option value="burgers">Hamburguesas</option>
-                    <option value="sushi">Sushi</option>
-                    <option value="pizza">Pizza</option>
-                    <option value="postres">Postres</option>
-                    <option value="veggie">Veggie</option>
-                    <option value="otros">Otros</option>
+                    <option v-for="cat in categorias" :key="cat.id" :value="cat.id">
+                      {{ cat.nombre }}
+                    </option>
                   </select>
                 </div>
 
@@ -228,10 +224,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { UtensilsCrossed, Utensils, Eye, EyeOff, User, Store } from 'lucide-vue-next'
 import { authService } from '../services/auth.service.js'
+import { api } from '../services/api.js'  // ya lo tenés en el proyecto
+
+const categorias = ref([])
+
 
 const router = useRouter()
 const activeTab = ref('usuario')
@@ -415,6 +415,14 @@ const handleRestaurantRegister = async () => {
     isLoading.value = false
   }
 }
+onMounted(async () => {
+  try {
+    const data = await api.get('/restaurantes/categorias')
+    categorias.value = data
+  } catch (e) {
+    console.error('Error cargando categorías:', e)
+  }
+})
 </script>
 
 <style scoped>

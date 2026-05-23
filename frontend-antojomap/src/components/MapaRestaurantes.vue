@@ -15,14 +15,19 @@ onMounted(async () => {
     attribution: '© OpenStreetMap'
   }).addTo(mapa)
 
-  const restaurantes = await api.get('/restaurantes')
+  try {
+    const respuesta = await api.get('/restaurantes')
+    const restaurantes = Array.isArray(respuesta) ? respuesta : respuesta.restaurantes || []
 
-  restaurantes.forEach(r => {
-    if (r.latitud && r.longitud) {
-      L.marker([r.latitud, r.longitud])
-        .addTo(mapa)
-        .bindPopup(`<b>${r.nombre}</b><br>${r.direccion}`)
-    }
-  })
+    restaurantes.forEach(r => {
+      if (r.latitud && r.longitud) {
+        L.marker([r.latitud, r.longitud])
+          .addTo(mapa)
+          .bindPopup(`<b>${r.nombre}</b><br>${r.direccion}`)
+      }
+    })
+  } catch (error) {
+    console.error('Error al cargar restaurantes:', error)
+  }
 })
 </script>

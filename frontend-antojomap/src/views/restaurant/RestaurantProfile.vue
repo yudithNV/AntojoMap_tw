@@ -142,6 +142,7 @@ onMounted(async () => {
       telefono: data.telefono || '',
       latitud: data.latitud,
       longitud: data.longitud
+      // foto_portada si la necesitás
     }
     Object.assign(initialForm, form.value)
   } catch (e) {

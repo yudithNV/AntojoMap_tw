@@ -74,9 +74,10 @@ const cargando = ref(true)
 
 const filteredRestaurants = computed(() => {
   return restaurants.value.filter(r => {
-    const matchCategory = !selectedCategory.value || r.categoria === selectedCategory.value
+    const catNombre = r.restaurante_categorias?.[0]?.categorias_restaurante?.nombre || ''
+    const matchCategory = !selectedCategory.value || catNombre === selectedCategory.value
     const q = searchQuery.value.toLowerCase()
-    const matchSearch = !q || r.nombre.toLowerCase().includes(q) || r.categoria?.toLowerCase().includes(q)
+    const matchSearch = !q || r.nombre.toLowerCase().includes(q) || catNombre.toLowerCase().includes(q)
     return matchCategory && matchSearch
   })
 })
@@ -84,8 +85,15 @@ const filteredRestaurants = computed(() => {
 const cargarRestaurantes = async () => {
   try {
     cargando.value = true
-    const { restaurantes: data } = await restaurantesService.getRestaurantes(1, 100, selectedCategory.value)
-    restaurants.value = data || []
+    const { restaurantes: data } = await restaurantesService.getRestaurantes(1, 100)
+    restaurants.value = (data || []).map(r => ({
+      ...r,
+      name: r.nombre,
+      category: r.restaurante_categorias?.[0]?.categorias_restaurante?.nombre || 'Sin categoría',
+      image: r.foto_portada || '',
+      address: r.direccion,
+      rating: r.puntuacion_promedio || '—',
+    }))
   } catch (error) {
     console.error('Error cargando restaurantes:', error)
   } finally {

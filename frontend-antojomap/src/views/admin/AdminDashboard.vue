@@ -41,8 +41,8 @@
           <TrendingUp :size="28" stroke-width="2" />
         </div>
         <div class="stat-content">
-          <h3>Total de Feedbacks</h3>
-          <p class="stat-number">{{ estadisticas.total_feedbacks }}</p>
+          <h3>Total de Reviews</h3>
+          <p class="stat-number">{{ estadisticas.total_reviews }}</p>
         </div>
       </div>
     </div>
@@ -64,7 +64,7 @@
             <p class="activity-text">
               <strong>{{ actividad.usuario.nombre }}</strong> calificó a 
               <strong>{{ actividad.restaurante.nombre }}</strong> con 
-              <strong>{{ actividad.calificacion }} ⭐</strong>
+              <strong>{{ actividad.puntuacion }} ⭐</strong>
             </p>
             <p class="activity-date">{{ formatDate(actividad.creado_en) }}</p>
           </div>
@@ -83,7 +83,7 @@ import { reportesService } from '../../services/menu.service.js'
 const estadisticas = ref({
   total_usuarios: 0,
   total_restaurantes: 0,
-  total_feedbacks: 0,
+  total_reviews: 0,
   solicitudes_pendientes: 0
 })
 

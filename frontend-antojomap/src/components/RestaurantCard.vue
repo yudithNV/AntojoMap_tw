@@ -35,9 +35,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { UtensilsCrossed, Heart, MapPin } from 'lucide-vue-next'
+import { favoritosService } from '../services/menu.service.js'
 
 const props = defineProps({
   restaurant: { type: Object, required: true },
@@ -47,9 +48,36 @@ const props = defineProps({
 const router = useRouter()
 const imgError = ref(false)
 const isFavorite = ref(false)
+const likeId = ref(null)
+
+onMounted(async () => {
+  try {
+    const likes = await favoritosService.misFavoritos()
+    const found = (likes || []).find(l => l.restaurante_id === props.restaurant.id)
+    if (found) {
+      isFavorite.value = true
+      likeId.value = found.id
+    }
+  } catch (e) {}
+})
 
 const goToMenu = () => router.push(props.linkTo)
-const toggleFavorite = () => { isFavorite.value = !isFavorite.value }
+
+const toggleFavorite = async () => {
+  try {
+    if (isFavorite.value) {
+      await favoritosService.removerFavorito(likeId.value)
+      isFavorite.value = false
+      likeId.value = null
+    } else {
+      const data = await favoritosService.agregarFavorito(props.restaurant.id)
+      isFavorite.value = true
+      likeId.value = data.id
+    }
+  } catch (e) {
+    console.error('Error toggling favorito:', e)
+  }
+}
 </script>
 
 <style scoped>

@@ -6,7 +6,7 @@ const router = express.Router()
 
 router.get('/categorias', getCategorias)
 router.get('/', getRestaurantes)
-router.get('/:id', getRestaurante)
+router.get('/:id', verificarToken, getRestaurante)
 router.put('/:id', verificarToken, soloRestaurante, editarRestaurante)
 
 export default router

@@ -41,11 +41,11 @@
             <span class="ranking">{{ index + 1 }}</span>
             <div class="info">
               <p class="name">{{ rest.nombre }}</p>
-              <p class="stats">{{ rest.total_feedbacks }} valoraciones</p>
+              <p class="stats">{{ rest.total_reviews }} valoraciones</p>
             </div>
             <div class="rating">
               <span class="stars">⭐</span>
-              <span class="score">{{ rest.promedio_calificacion }}</span>
+              <span class="score">{{ rest.promedio_puntuacion }}</span>
             </div>
           </div>
         </div>

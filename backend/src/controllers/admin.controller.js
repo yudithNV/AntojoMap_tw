@@ -3,6 +3,7 @@ import { supabase } from '../config/supabase.js'
 export const aprobarSolicitud = async (req, res) => {
   try {
     const { id } = req.params
+    const admin_id = req.usuario.id
 
     // 1. Buscar la solicitud
     const { data: solicitud, error: errorSolicitud } = await supabase
@@ -16,20 +17,37 @@ export const aprobarSolicitud = async (req, res) => {
     }
 
     // 2. Crear el restaurante
-    const { error: errorRestaurante } = await supabase
+    const { data: nuevoRestaurante, error: errorRestaurante } = await supabase
       .from('restaurantes')
       .insert({
         propietario_id: solicitud.usuario_id,
         nombre: solicitud.nombre_restaurante,
-        direccion: solicitud.direccion
+        direccion: solicitud.direccion,
+        estado: 'activo'
       })
+      .select()
+      .single()
 
     if (errorRestaurante) throw errorRestaurante
 
-    // 3. Actualizar estado de la solicitud
+    // 2.5 Asignar categoría si la solicitud tiene categoria_id
+    if (solicitud.categoria_id) {
+      const { error: errorCat } = await supabase
+        .from('restaurante_categorias')
+        .insert({
+          restaurante_id: nuevoRestaurante.id,
+          categoria_id: solicitud.categoria_id
+        })
+      if (errorCat) throw errorCat
+    }
+    // 3. Actualizar estado de la solicitud con fecha_revision y revisado_por
     const { error: errorUpdate } = await supabase
       .from('solicitudes_restaurante')
-      .update({ estado: 'APROBADO' })
+      .update({ 
+        estado: 'APROBADO',
+        fecha_revision: new Date().toISOString(),
+        revisado_por: admin_id
+      })
       .eq('id', id)
 
     if (errorUpdate) throw errorUpdate
@@ -44,10 +62,15 @@ export const aprobarSolicitud = async (req, res) => {
 export const rechazarSolicitud = async (req, res) => {
   try {
     const { id } = req.params
+    const admin_id = req.usuario.id
 
     const { error } = await supabase
       .from('solicitudes_restaurante')
-      .update({ estado: 'RECHAZADO' })
+      .update({ 
+        estado: 'RECHAZADO',
+        fecha_revision: new Date().toISOString(),
+        revisado_por: admin_id
+      })
       .eq('id', id)
 
     if (error) throw error
@@ -55,13 +78,11 @@ export const rechazarSolicitud = async (req, res) => {
     res.json({ mensaje: 'Solicitud rechazada' })
 
   } catch (error) {
-    res.status(500).json({ error: error.message })
+    res.status(500).json({ error: error.message })  
   }
 }
-
 export const getSolicitudes = async (req, res) => {
   try {
-    // Primero obtenemos todas las solicitudes
     const { data: solicitudes, error: solicitudesError } = await supabase
       .from('solicitudes_restaurante')
       .select('*')
@@ -69,10 +90,9 @@ export const getSolicitudes = async (req, res) => {
 
     if (solicitudesError) throw solicitudesError
 
-    // Luego obtenemos los IDs únicos de usuarios
     const usuarioIds = [...new Set(solicitudes.map(s => s.usuario_id))]
+    const categoriaIds = [...new Set(solicitudes.map(s => s.categoria_id).filter(Boolean))]
 
-    // Obtenemos los usuarios
     const { data: usuarios, error: usuariosError } = await supabase
       .from('usuarios')
       .select('id, email, nombre')
@@ -80,16 +100,23 @@ export const getSolicitudes = async (req, res) => {
 
     if (usuariosError) throw usuariosError
 
-    // Creamos un mapa de usuarios por ID
-    const usuariosMap = {}
-    usuarios.forEach(u => {
-      usuariosMap[u.id] = u
-    })
+    const { data: categorias, error: categoriasError } = await supabase
+      .from('categorias_restaurante')
+      .select('id, nombre')
+      .in('id', categoriaIds)
 
-    // Combinamos los datos
+    if (categoriasError) throw categoriasError
+
+    const usuariosMap = {}
+    usuarios.forEach(u => { usuariosMap[u.id] = u })
+
+    const categoriasMap = {}
+    categorias.forEach(c => { categoriasMap[c.id] = c })
+
     const solicitudesConUsuario = solicitudes.map(solicitud => ({
       ...solicitud,
-      usuario: usuariosMap[solicitud.usuario_id] || null
+      usuario: usuariosMap[solicitud.usuario_id] || null,
+      categoria: categoriasMap[solicitud.categoria_id]?.nombre || '—'
     }))
 
     res.json(solicitudesConUsuario)

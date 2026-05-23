@@ -39,7 +39,7 @@
             </div>
             <div class="rating-badge">
               <span class="stars">⭐</span>
-              <span class="score">{{ feedback.calificacion }}/5</span>
+              <span class="score">{{ feedback.puntuacion }}/5</span>
             </div>
           </div>
           <p v-if="feedback.comentario" class="feedback-comment">{{ feedback.comentario }}</p>
@@ -62,7 +62,7 @@ const restaurante_id = localStorage.getItem('restaurante_id')
 
 const promedio = computed(() => {
   if (feedbacks.value.length === 0) return 0
-  const sum = feedbacks.value.reduce((acc, f) => acc + f.calificacion, 0)
+  const sum = feedbacks.value.reduce((acc, f) => acc + f.puntuacion, 0)
   return (sum / feedbacks.value.length).toFixed(1)
 })
 
