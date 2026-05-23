@@ -1,7 +1,7 @@
 <template>
   <div class="auth-page">
     <div class="auth-container">
-      <!-- Left side - Branding (Igual, solo ajusté padding) -->
+      <!-- Left side - Branding -->
       <div class="auth-left">
         <div class="auth-visual">
           <div class="food-image">
@@ -13,7 +13,7 @@
 
       <!-- Right side - Form -->
       <div class="auth-right">
-        <!-- Logo FIJO arriba del todo, como en la imagen original -->
+        <!-- Logo FIJO arriba del todo -->
         <div class="auth-header-fixed">
           <div class="logo">
             <div class="logo-icon">
@@ -26,7 +26,7 @@
           </div>
         </div>
 
-        <!-- TABS debajo del logo y ANTES del contenido scrolleable -->
+        <!-- TABS debajo del logo -->
         <div class="tabs-navigation">
           <div class="tabs-container">
             <button
@@ -46,7 +46,7 @@
           </div>
         </div>
 
-        <!-- Contenido que SÍ puede tener scroll, pero con mejor padding -->
+        <!-- Contenido scrolleable -->
         <div class="form-scroll-content">
           <div class="auth-form-wrapper">
             <!-- Usuario Form -->
@@ -199,7 +199,7 @@
                     id="rest-photo"
                     v-model="restaurantForm.foto_comprobante"
                     type="text"
-                    placeholder="URL de la foto (ej: https://..."
+                    placeholder="URL de la foto (ej: https://...)"
                     @blur="handleFieldBlur('restaurant', 'foto_comprobante')"
                   />
                   <p class="field-hint">Por ahora ingresa la URL de una foto. Pronto podrás subir archivos directamente.</p>
@@ -228,11 +228,9 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { UtensilsCrossed, Utensils, Eye, EyeOff, User, Store } from 'lucide-vue-next'
 import { authService } from '../services/auth.service.js'
-import { api } from '../services/api.js'  // ya lo tenés en el proyecto
+import { api } from '../services/api.js'
 
 const categorias = ref([])
-
-
 const router = useRouter()
 const activeTab = ref('usuario')
 const showUserPassword = ref(false)
@@ -365,7 +363,6 @@ const handleUserRegister = async () => {
   try {
     const response = await authService.registro(userForm.value.name, userForm.value.email, userForm.value.password)
     
-    // Auto-login: Guardar token y datos
     localStorage.setItem('token', response.token)
     localStorage.setItem('user_id', response.usuario.id)
     localStorage.setItem('user_email', response.usuario.email)
@@ -415,6 +412,7 @@ const handleRestaurantRegister = async () => {
     isLoading.value = false
   }
 }
+
 onMounted(async () => {
   try {
     const data = await api.get('/restaurantes/categorias')
@@ -434,6 +432,8 @@ onMounted(async () => {
   justify-content: center;
   padding: 24px;
   color: #4a2c2c;
+  /* 🔥 PADDING TOP PARA QUE NO SE SUPERPONGA CON EL NAVBAR 🔥 */
+  padding-top: 120px;
 }
 
 .auth-container {
@@ -619,6 +619,13 @@ label {
   font-size: 0.85rem;
   margin-top: 8px;
   line-height: 1.4;
+}
+
+.field-hint {
+  color: #6b2121;
+  font-size: 0.8rem;
+  margin-top: 6px;
+  opacity: 0.7;
 }
 
 .form-feedback {
@@ -823,6 +830,10 @@ select:focus,
 }
 
 @media (max-width: 768px) {
+  .auth-page {
+    padding-top: 90px;
+  }
+
   .auth-container {
     border-radius: 18px;
     margin-top: 20px;

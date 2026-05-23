@@ -48,7 +48,8 @@ const restaurants = [
 <style scoped>
 .recommended-section {
   padding: 60px 20px;
-  background-color: white;
+  /* 🔥 FONDO VINO CLARO - COINCIDENTE CON LANDING PAGE 🔥 */
+  background: linear-gradient(135deg, #8B2A4E 0%, #6B1B3C 100%);
 }
 
 .section-header {
@@ -59,12 +60,12 @@ const restaurants = [
 
 .section-header h2 {
   font-size: 2.2rem;
-  color: var(--plum);
+  color: #FFF8F0;
   margin: 0 0 10px 0;
 }
 
 .section-header p {
-  color: var(--dusty-coral);
+  color: #E8D5B5;
   font-size: 1rem;
   margin: 0;
 }
@@ -75,6 +76,30 @@ const restaurants = [
   gap: 30px;
   max-width: 1200px;
   margin: 0 auto;
+}
+
+/* Ajustes para las tarjetas internas (RestaurantCard) */
+:deep(.restaurant-card) {
+  background: rgba(255, 255, 255, 0.95);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+:deep(.restaurant-card:hover) {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 35px rgba(0, 0, 0, 0.2);
+}
+
+:deep(.restaurant-card h3) {
+  color: #4a122a;
+}
+
+:deep(.restaurant-card p) {
+  color: #6b4a3a;
+}
+
+:deep(.restaurant-card .badge) {
+  background: #75162D;
+  color: #E8D5B5;
 }
 
 @media (max-width: 768px) {

@@ -2,14 +2,17 @@
   <div class="no-se-page">
     <Navbar />
 
+    <!-- 🔥 HERO SECTION - SOLO VINO, SIN PATRÓN SVG 🔥 -->
     <div class="hero-section">
-      <h1 class="page-title">No sé qué comer</h1>
-      <p class="page-subtitle">
-        Cuando nadie se decide, deja que la Ruleta del Antojo elija por ti.
-      </p>
-      <p class="page-description">
-        Selecciona tus antojos favoritos y descubre una opción para comer hoy.
-      </p>
+      <div class="hero-container">
+        <h1 class="page-title">No sé qué comer</h1>
+        <p class="page-subtitle">
+          Cuando nadie se decide, deja que la Ruleta del Antojo elija por ti.
+        </p>
+        <p class="page-description">
+          Selecciona tus antojos favoritos y descubre una opción para comer hoy.
+        </p>
+      </div>
     </div>
 
     <div class="content-wrapper">
@@ -149,37 +152,73 @@ const filteredCategoriesForWheel = computed(() => {
 <style scoped>
 .no-se-page {
   min-height: 100vh;
-  background-color: #FDFDFD;
+  background: linear-gradient(135deg, #8B2A4E 0%, #6B1B3C 100%);
   display: flex;
   flex-direction: column;
+  padding-top: 80px;
+  position: relative;
 }
 
+/* 🔥 PATRÓN SVG SOLO EN EL FONDO DE ABAJO (content-wrapper) 🔥 */
+.no-se-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('/seamless-repeat-pattern-background-with-hand-drawn OFICIAL.svg');
+  background-repeat: repeat;
+  background-size: 200px;
+  opacity: 0.06;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 🔥 HERO SECTION - FONDO VINO SIN PATRÓN (más grande) 🔥 */
 .hero-section {
-  padding: 50px 20px 30px;
-  background: linear-gradient(135deg, #FDFDFD 0%, rgba(255, 107, 0, 0.05) 100%);
+  position: relative;
+  padding: 80px 20px 60px;
+  background: linear-gradient(135deg, #8B2A4E 0%, #6B1B3C 100%);
   text-align: center;
-  border-bottom: 1px solid rgba(255, 107, 0, 0.1);
+  border-bottom: 1px solid rgba(232, 213, 181, 0.2);
+  z-index: 1;
+}
+
+/* 🔥 ELIMINAMOS CUALQUIER PATRÓN EN EL HERO 🔥 */
+.hero-section::before {
+  display: none;
+}
+
+.hero-container {
+  position: relative;
+  max-width: 900px;
+  margin: 0 auto;
+  z-index: 1;
 }
 
 .page-title {
-  font-size: 2.8rem;
-  color: #212121;
-  margin: 0;
-  font-weight: 700;
+  font-size: 3.5rem;
+  color: #FFF8F0;
+  margin: 0 0 20px 0;
+  font-weight: 800;
   font-family: var(--font-family-display);
+  letter-spacing: -1px;
 }
+
 .page-subtitle {
-  margin: 18px auto 0;
-  max-width: 620px;
-  color: #481827;
-  font-size: 1.1rem;
+  margin: 0 auto 16px;
+  max-width: 700px;
+  color: #E8D5B5;
+  font-size: 1.2rem;
   font-weight: 600;
   line-height: 1.5;
 }
+
 .page-description {
-  margin: 8px auto 0;
-  max-width: 620px;
-  color: #666;
+  margin: 0 auto;
+  max-width: 650px;
+  color: #E0D0C0;
   font-size: 1rem;
   line-height: 1.6;
 }
@@ -193,6 +232,8 @@ const filteredCategoriesForWheel = computed(() => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 60px;
+  position: relative;
+  z-index: 1;
 }
 
 .controls-panel {
@@ -209,7 +250,7 @@ const filteredCategoriesForWheel = computed(() => {
 
 .intro-title {
   font-size: 1.3rem;
-  color: #212121;
+  color: #FFF8F0;
   margin: 0;
   font-weight: 600;
   line-height: 1.5;
@@ -217,7 +258,7 @@ const filteredCategoriesForWheel = computed(() => {
 
 .intro-text {
   font-size: 1rem;
-  color: #666;
+  color: #E0D0C0;
   margin: 0;
   line-height: 1.6;
 }
@@ -226,13 +267,13 @@ const filteredCategoriesForWheel = computed(() => {
   margin-top: 12px;
   padding: 18px;
   border-radius: 16px;
-  background: rgba(255, 107, 0, 0.06);
-  border: 1px solid rgba(255, 107, 0, 0.14);
+  background: rgba(232, 213, 181, 0.1);
+  border: 1px solid rgba(232, 213, 181, 0.2);
 }
 
 .steps-title {
   margin: 0 0 14px;
-  color: #212121;
+  color: #FFF8F0;
   font-size: 0.95rem;
   font-weight: 700;
   text-align: center;
@@ -248,11 +289,11 @@ const filteredCategoriesForWheel = computed(() => {
 .steps-list span {
   padding: 8px 12px;
   border-radius: 999px;
-  background: white;
-  color: #A33333;
+  background: rgba(255, 255, 255, 0.95);
+  color: #75162D;
   font-size: 0.86rem;
   font-weight: 700;
-  box-shadow: 0 2px 8px rgba(163, 51, 51, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .filters-section {
@@ -263,7 +304,7 @@ const filteredCategoriesForWheel = computed(() => {
 
 .filters-title {
   font-size: 0.95rem;
-  color: #212121;
+  color: #E8D5B5;
   margin: 0;
   font-weight: 700;
   text-transform: uppercase;
@@ -279,9 +320,9 @@ const filteredCategoriesForWheel = computed(() => {
 .chip {
   padding: 10px 18px;
   border-radius: 20px;
-  border: 1.5px solid #FF6B00;
+  border: 1.5px solid #E8D5B5;
   background-color: transparent;
-  color: #FF6B00;
+  color: #E8D5B5;
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
@@ -290,13 +331,13 @@ const filteredCategoriesForWheel = computed(() => {
 }
 
 .chip:hover {
-  background-color: rgba(255, 107, 0, 0.08);
+  background-color: rgba(232, 213, 181, 0.15);
 }
 
 .chip.active {
-  background-color: #FF6B00;
-  color: white;
-  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+  background-color: #E8D5B5;
+  color: #4a122a;
+  box-shadow: 0 4px 12px rgba(232, 213, 181, 0.3);
 }
 
 .category-chip {
@@ -316,9 +357,9 @@ const filteredCategoriesForWheel = computed(() => {
 .action-button {
   padding: 10px 16px;
   border-radius: 20px;
-  border: 1px solid #A33333;
-  background-color: #A33333;
-  color: white;
+  border: 1px solid #E8D5B5;
+  background-color: #E8D5B5;
+  color: #4a122a;
   font-weight: 600;
   font-size: 0.85rem;
   cursor: pointer;
@@ -329,9 +370,9 @@ const filteredCategoriesForWheel = computed(() => {
 }
 
 .action-button:hover {
-  background-color: #C64445;
-  border-color: #C64445;
-  box-shadow: 0 4px 12px rgba(163, 51, 51, 0.3);
+  background-color: #F0E5D0;
+  border-color: #F0E5D0;
+  box-shadow: 0 4px 12px rgba(232, 213, 181, 0.3);
 }
 
 .action-button:active {
@@ -344,70 +385,19 @@ const filteredCategoriesForWheel = computed(() => {
 }
 
 .action-button.disabled:hover {
-  background-color: #A33333;
-  border-color: #A33333;
+  background-color: #E8D5B5;
+  border-color: #E8D5B5;
   box-shadow: none;
 }
 
 .action-button.clear {
   background-color: transparent;
-  color: #A33333;
-  border: 1.5px solid #A33333;
+  color: #E8D5B5;
+  border: 1.5px solid #E8D5B5;
 }
 
 .action-button.clear:hover {
-  background-color: rgba(163, 51, 51, 0.1);
-}
-
-.legend-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.legend-title {
-  font-size: 0.95rem;
-  color: #212121;
-  margin: 0;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.legend-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background-color: #F5F5F5;
-  border-radius: 12px;
-  transition: all 0.2s ease;
-}
-
-.legend-item:hover {
-  background-color: rgba(255, 107, 0, 0.08);
-  transform: translateX(4px);
-}
-
-.legend-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-}
-
-.legend-name {
-  font-size: 0.9rem;
-  color: #212121;
-  font-weight: 500;
+  background-color: rgba(232, 213, 181, 0.15);
 }
 
 .wheel-panel {
@@ -423,11 +413,13 @@ const filteredCategoriesForWheel = computed(() => {
 }
 
 .footer {
-  background-color: #212121;
+  background: linear-gradient(135deg, #3a0a1c 0%, #1a0308 100%);
   color: #FDFDFD;
   padding: 32px 20px;
   text-align: center;
   margin-top: auto;
+  position: relative;
+  z-index: 1;
 }
 
 .footer-content {
@@ -455,22 +447,26 @@ const filteredCategoriesForWheel = computed(() => {
 }
 
 .footer-links a:hover {
-  color: #FF6B00;
+  color: #E8D5B5;
 }
 
 @media (max-width: 768px) {
+  .hero-section {
+    padding: 60px 20px 40px;
+  }
+
+  .page-title {
+    font-size: 2.5rem;
+  }
+
+  .page-subtitle {
+    font-size: 1rem;
+  }
+
   .content-wrapper {
     grid-template-columns: 1fr;
     gap: 40px;
     padding: 40px 20px;
-  }
-
-  .page-title {
-    font-size: 2rem;
-  }
-
-  .legend-grid {
-    grid-template-columns: 1fr;
   }
 
   .footer-links {

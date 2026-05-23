@@ -1,6 +1,6 @@
 <template>
   <section class="categories-section">
-    <div class="section-container">
+    <div class="categories-wrapper">
       <div class="section-header">
         <span class="section-badge">🍽️ Sabores locales</span>
         <h2>Categorías <span class="highlight">Populares</span></h2>
@@ -38,15 +38,8 @@ const categories = [
   { id: 6, name: 'Postres', icon: IceCream },
 ]
 
-// Función para manejar el click con feedback táctil
 const handleCategoryClick = (categoryName) => {
-  // Feedback visual táctil - puedes agregar un console.log o emitir un evento
   console.log(`Categoría seleccionada: ${categoryName}`)
-  
-  // Aquí puedes agregar cualquier lógica adicional que necesites
-  // Por ejemplo: emit('category-selected', categoryName)
-  
-  // Efecto háptico simulado (vibración si está disponible)
   if (navigator.vibrate) {
     navigator.vibrate(50)
   }
@@ -54,61 +47,60 @@ const handleCategoryClick = (categoryName) => {
 </script>
 
 <style scoped>
-/* ===== PALETA DE COLORES ===== */
-/* Chocolate: #643016 */
-/* Alert Tan: #974F2C */
-/* Dark Tan: #9F6A4A */
-/* Fallow: #CB9870 */
-/* ============================ */
-
 .categories-section {
-  padding: 70px 20px;
-  background: linear-gradient(145deg, #FDF8F2 0%, #F5EDE4 100%);
-  position: relative;
-  overflow: hidden;
+  padding: 60px 20px;
+  display: flex;
+  justify-content: center;
 }
 
-/* Decoración de fondo */
-.categories-section::before {
+.categories-wrapper {
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 48px 40px;
+  background: linear-gradient(145deg, rgba(139, 42, 78, 0.9) 0%, rgba(107, 27, 60, 0.95) 100%);
+  backdrop-filter: blur(4px);
+  border-radius: 48px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(232, 213, 181, 0.15);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.categories-wrapper::before {
   content: '';
   position: absolute;
-  top: -50%;
-  right: -20%;
-  width: 80%;
-  height: 150%;
-  background: radial-gradient(circle, rgba(203,152,112,0.08) 0%, transparent 70%);
+  inset: 0;
+  background-image: url('/seamless-repeat-pattern-background-with-hand-drawn OFICIAL.svg');
+  background-repeat: repeat;
+  background-size: 150px;
+  opacity: 0.06;
   pointer-events: none;
 }
 
-.categories-section::after {
+.categories-wrapper::after {
   content: '';
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  top: 0;
+  left: 10%;
+  right: 10%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, #CB9870, #974F2C, #CB9870, transparent);
-  opacity: 0.3;
-}
-
-.section-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  position: relative;
-  z-index: 1;
+  background: linear-gradient(90deg, transparent, rgba(232, 213, 181, 0.5), transparent);
+  pointer-events: none;
 }
 
 .section-header {
   text-align: center;
-  margin-bottom: 50px;
-  animation: fadeInUp 0.6s ease-out;
+  margin-bottom: 40px;
+  position: relative;
+  z-index: 1;
 }
 
 .section-badge {
   display: inline-block;
-  background: rgba(151, 79, 44, 0.1);
+  background: rgba(232, 213, 181, 0.15);
   backdrop-filter: blur(8px);
-  color: #974F2C;
+  color: #E8D5B5;
   padding: 6px 16px;
   border-radius: 40px;
   font-size: 0.75rem;
@@ -116,19 +108,19 @@ const handleCategoryClick = (categoryName) => {
   margin-bottom: 16px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  border: 1px solid rgba(151, 79, 44, 0.2);
+  border: 1px solid rgba(232, 213, 181, 0.25);
 }
 
 .section-header h2 {
-  font-size: 2.5rem;
-  color: #643016;
+  font-size: 2.2rem;
+  color: #FFF8F0;
   margin: 0 0 12px 0;
   font-weight: 800;
   letter-spacing: -0.5px;
 }
 
 .highlight {
-  color: #974F2C;
+  color: #E8D5B5;
   position: relative;
   display: inline-block;
 }
@@ -140,27 +132,27 @@ const handleCategoryClick = (categoryName) => {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #974F2C, #CB9870);
+  background: linear-gradient(90deg, #E8D5B5, #C4A77D);
   border-radius: 3px;
   animation: expandWidth 0.6s ease-out 0.3s both;
 }
 
 .section-subtitle {
-  color: #9F6A4A;
+  color: #E0D0C0;
   font-size: 1rem;
   margin-top: 8px;
   font-weight: 500;
 }
 
-/* Grid de categorías */
 .categories-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
   justify-content: center;
+  position: relative;
+  z-index: 1;
 }
 
-/* Tarjeta de categoría moderna */
 .category-card {
   position: relative;
   display: flex;
@@ -168,18 +160,17 @@ const handleCategoryClick = (categoryName) => {
   align-items: center;
   gap: 12px;
   padding: 24px 28px;
-  background: white;
+  background: rgba(255, 255, 255, 0.95);
   border: none;
   border-radius: 28px;
   cursor: pointer;
   transition: all 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
   min-width: 130px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   animation: fadeInScale 0.5s ease-out backwards;
   overflow: hidden;
 }
 
-/* Efecto de brillo al hover */
 .category-card::before {
   content: '';
   position: absolute;
@@ -187,7 +178,7 @@ const handleCategoryClick = (categoryName) => {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
   transition: left 0.5s ease;
   z-index: 0;
 }
@@ -196,14 +187,13 @@ const handleCategoryClick = (categoryName) => {
   left: 100%;
 }
 
-/* Efecto glow al hover */
 .category-card .category-glow {
   position: absolute;
   inset: 0;
   border-radius: 28px;
   opacity: 0;
   transition: opacity 0.4s ease;
-  background: radial-gradient(circle at center, rgba(151,79,44,0.15) 0%, transparent 70%);
+  background: radial-gradient(circle at center, rgba(139, 42, 78, 0.15) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -211,13 +201,11 @@ const handleCategoryClick = (categoryName) => {
   opacity: 1;
 }
 
-/* Efecto táctil al hacer click (active) */
 .category-card:active {
   transform: scale(0.96);
   transition: transform 0.08s linear;
 }
 
-/* Icono wrapper */
 .category-icon-wrapper {
   width: 70px;
   height: 70px;
@@ -232,29 +220,27 @@ const handleCategoryClick = (categoryName) => {
 }
 
 .category-icon {
-  color: #974F2C;
+  color: #75162D;
   transition: all 0.35s ease;
 }
 
-/* Nombre de la categoría */
 .category-name {
   font-size: 1rem;
   font-weight: 700;
-  color: #643016;
+  color: #4a122a;
   transition: all 0.3s ease;
   position: relative;
   z-index: 1;
 }
 
-/* Estados HOVER mejorados */
 .category-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 20px 35px rgba(100, 48, 22, 0.15);
-  background: linear-gradient(145deg, white, #FDF8F2);
+  box-shadow: 0 20px 35px rgba(0, 0, 0, 0.2);
+  background: white;
 }
 
 .category-card:hover .category-icon-wrapper {
-  background: linear-gradient(135deg, #643016, #974F2C);
+  background: linear-gradient(135deg, #75162D, #560B18);
   transform: scale(1.05);
 }
 
@@ -264,50 +250,12 @@ const handleCategoryClick = (categoryName) => {
 }
 
 .category-card:hover .category-name {
-  color: #974F2C;
-}
-
-/* Efecto táctil para dispositivos móviles (touch feedback) */
-@media (hover: none) {
-  .category-card:active {
-    transform: scale(0.97);
-    background: linear-gradient(145deg, #FDF8F2, #F5EDE4);
-  }
-  
-  .category-card:active .category-icon-wrapper {
-    background: linear-gradient(135deg, #643016, #974F2C);
-  }
-  
-  .category-card:active .category-icon {
-    color: white;
-  }
-  
-  .category-card:active .category-name {
-    color: #974F2C;
-  }
-}
-
-/* ===== ANIMACIONES ===== */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  color: #75162D;
 }
 
 @keyframes fadeInScale {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes expandWidth {
@@ -315,62 +263,19 @@ const handleCategoryClick = (categoryName) => {
   to { width: 100%; opacity: 1; }
 }
 
-/* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
-  .categories-section {
-    padding: 50px 20px;
-  }
-
-  .section-header h2 {
-    font-size: 1.8rem;
-  }
-
-  .categories-grid {
-    gap: 15px;
-  }
-
-  .category-card {
-    padding: 18px 20px;
-    min-width: 100px;
-  }
-
-  .category-icon-wrapper {
-    width: 55px;
-    height: 55px;
-  }
-
-  .category-icon {
-    width: 22px;
-    height: 22px;
-  }
-
-  .category-name {
-    font-size: 0.85rem;
-  }
+  .categories-section { padding: 40px 16px; }
+  .categories-wrapper { padding: 32px 24px; border-radius: 32px; }
+  .section-header h2 { font-size: 1.8rem; }
+  .category-card { padding: 18px 20px; min-width: 100px; }
+  .category-icon-wrapper { width: 55px; height: 55px; }
+  .category-name { font-size: 0.85rem; }
 }
 
 @media (max-width: 480px) {
-  .categories-grid {
-    gap: 12px;
-  }
-
-  .category-card {
-    padding: 14px 16px;
-    min-width: 85px;
-  }
-
-  .category-icon-wrapper {
-    width: 45px;
-    height: 45px;
-  }
-
-  .category-icon {
-    width: 18px;
-    height: 18px;
-  }
-
-  .category-name {
-    font-size: 0.75rem;
-  }
+  .categories-wrapper { padding: 24px 16px; border-radius: 24px; }
+  .category-card { padding: 14px 16px; min-width: 85px; }
+  .category-icon-wrapper { width: 45px; height: 45px; }
+  .category-name { font-size: 0.75rem; }
 }
 </style>

@@ -34,7 +34,8 @@
               <div class="avatar">{{ feedback.usuario?.nombre?.charAt(0) || 'U' }}</div>
               <div>
                 <p class="user-name">{{ feedback.usuario?.nombre || 'Usuario anónimo' }}</p>
-                <p class="feedback-date">{{ formatDate(feedback.creado_en) }}</p>
+                <!-- 🔥 SOLO CAMBIO: creado_en → fecha 🔥 -->
+                <p class="feedback-date">{{ formatDate(feedback.fecha) }}</p>
               </div>
             </div>
             <div class="rating-badge">
@@ -66,7 +67,9 @@ const promedio = computed(() => {
   return (sum / feedbacks.value.length).toFixed(1)
 })
 
+// 🔥 SOLO CAMBIO: formato de fecha recibe 'fecha' 🔥
 const formatDate = (fecha) => {
+  if (!fecha) return ''
   return new Date(fecha).toLocaleDateString('es-ES', {
     year: 'numeric',
     month: 'short',

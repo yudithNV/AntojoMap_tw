@@ -4,10 +4,10 @@ import { verificarToken } from '../middlewares/auth.middleware.js'
 
 const router = express.Router()
 
-// POST crear review (protegido)
+// POST crear review (protegido) - usa /feedbacks
 router.post('/', verificarToken, crearReview)
 
-// GET reviews de un restaurante
+// GET reviews de un restaurante - usa /feedbacks/restaurante/:id
 router.get('/restaurante/:restaurante_id', getReviewsRestaurante)
 
 // GET promedio de puntuaciones

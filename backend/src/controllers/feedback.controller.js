@@ -6,6 +6,8 @@ export const crearReview = async (req, res) => {
     const { restaurante_id, comentario, puntuacion } = req.body
     const usuario_id = req.usuario.id
 
+    console.log('📝 Creando review:', { restaurante_id, usuario_id, puntuacion, comentario })
+
     // Validación
     if (!restaurante_id || puntuacion === undefined) {
       return res.status(400).json({ error: 'restaurante_id y puntuacion son requeridos' })
@@ -16,30 +18,41 @@ export const crearReview = async (req, res) => {
     }
 
     // Verificar que el restaurante existe
-    const { data: restaurante } = await supabase
+    const { data: restaurante, error: errRest } = await supabase
       .from('restaurantes')
       .select('id')
       .eq('id', restaurante_id)
       .single()
 
-    if (!restaurante) return res.status(404).json({ error: 'Restaurante no encontrado' })
+    if (errRest || !restaurante) {
+      console.log('❌ Restaurante no encontrado:', restaurante_id)
+      return res.status(404).json({ error: 'Restaurante no encontrado' })
+    }
 
+    // Insertar en la tabla 'reviews'
     const { data, error } = await supabase
       .from('reviews')
       .insert({
         usuario_id,
         restaurante_id,
         comentario: comentario || null,
-        puntuacion: parseInt(puntuacion)
+        puntuacion: parseInt(puntuacion),
+        creado_en: new Date(),
+        fecha: new Date()
       })
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('❌ Error al insertar:', error)
+      throw error
+    }
 
+    console.log('✅ Review creada:', data)
     res.status(201).json(data)
 
   } catch (error) {
+    console.error('❌ Error en crearReview:', error)
     res.status(500).json({ error: error.message })
   }
 }
@@ -48,15 +61,7 @@ export const crearReview = async (req, res) => {
 export const getReviewsRestaurante = async (req, res) => {
   try {
     const { restaurante_id } = req.params
-
-    // Verificar que el restaurante existe
-    const { data: restaurante } = await supabase
-      .from('restaurantes')
-      .select('id')
-      .eq('id', restaurante_id)
-      .single()
-
-    if (!restaurante) return res.status(404).json({ error: 'Restaurante no encontrado' })
+    console.log('🔍 Buscando reviews para restaurante:', restaurante_id)
 
     const { data, error } = await supabase
       .from('reviews')
@@ -65,16 +70,22 @@ export const getReviewsRestaurante = async (req, res) => {
         puntuacion,
         comentario,
         fecha,
-        usuario:usuarios(id, nombre)
+        creado_en,
+        usuario:usuarios(id, nombre, email)
       `)
       .eq('restaurante_id', restaurante_id)
       .order('creado_en', { ascending: false })
 
-    if (error) throw error
+    if (error) {
+      console.error('❌ Error en consulta:', error)
+      return res.status(500).json({ error: error.message })
+    }
 
+    console.log(`✅ Encontradas ${data?.length || 0} reviews`)
     res.json(data || [])
 
   } catch (error) {
+    console.error('❌ Error en getReviewsRestaurante:', error)
     res.status(500).json({ error: error.message })
   }
 }
@@ -83,15 +94,6 @@ export const getReviewsRestaurante = async (req, res) => {
 export const getPromedioPuntuaciones = async (req, res) => {
   try {
     const { restaurante_id } = req.params
-
-    // Verificar que el restaurante existe
-    const { data: restaurante } = await supabase
-      .from('restaurantes')
-      .select('id')
-      .eq('id', restaurante_id)
-      .single()
-
-    if (!restaurante) return res.status(404).json({ error: 'Restaurante no encontrado' })
 
     const { data, error } = await supabase
       .from('reviews')
@@ -149,7 +151,6 @@ export const editarReview = async (req, res) => {
     const { comentario, puntuacion } = req.body
     const usuario_id = req.usuario.id
 
-    // Verificar que la review pertenece al usuario
     const { data: review } = await supabase
       .from('reviews')
       .select('usuario_id')
@@ -192,7 +193,6 @@ export const eliminarReview = async (req, res) => {
     const { id } = req.params
     const usuario_id = req.usuario.id
 
-    // Verificar que la review pertenece al usuario
     const { data: review } = await supabase
       .from('reviews')
       .select('usuario_id')

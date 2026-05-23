@@ -142,7 +142,6 @@ const handleLogin = async () => {
     loginFeedback.value.type = 'success'
 
     setTimeout(() => {
-      // Verificar si hay una categoría pendiente desde la ruleta
       const pendingCategory = localStorage.getItem('pending_category')
       
       if (normalizedRole === 'admin') {
@@ -150,9 +149,7 @@ const handleLogin = async () => {
       } else if (normalizedRole === 'restaurant') {
         router.push('/restaurant/dashboard')
       } else {
-        // Usuario normal
         if (pendingCategory) {
-          // Limpiar la categoría pendiente y redirigir al feed con filtro
           localStorage.removeItem('pending_category')
           router.push({ path: '/user/feed', query: { categoria: pendingCategory } })
         } else {
@@ -178,6 +175,8 @@ const handleLogin = async () => {
   justify-content: center;
   padding: 24px;
   color: #4a2c2c;
+  /* 🔥 PADDING TOP MÁS GRANDE - BAJA MÁS EL CONTENIDO 🔥 */
+  padding-top: 130px;
 }
 
 .auth-container {
@@ -509,6 +508,10 @@ input[type="text"]:focus {
 }
 
 @media (max-width: 768px) {
+  .auth-page {
+    padding-top: 100px;
+  }
+
   .auth-container {
     grid-template-columns: 1fr;
     height: auto;

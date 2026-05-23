@@ -79,12 +79,14 @@ const irAuleta = () => {
 <style scoped>
 .landing {
   min-height: 100vh;
-  background-color: #FDFDFD;
+  background: linear-gradient(135deg, #8B2A4E 0%, #6B1B3C 50%, #5a1532 100%);
+  /* 🔥 PADDING TOP AÚN MÁS GRANDE - RECTÁNGULO SUPERIOR GRANDE 🔥 */
+  padding-top: 120px;
 }
 
 .hero {
   padding: 60px 20px 80px;
-  background: linear-gradient(135deg, #FDFDFD 0%, rgba(255, 107, 0, 0.05) 100%);
+  background: transparent;
   position: relative;
 }
 
@@ -92,11 +94,10 @@ const irAuleta = () => {
   content: '';
   position: absolute;
   inset: 0;
-  
   background-image: url('/seamless-repeat-pattern-background-with-hand-drawn OFICIAL.svg');
   background-repeat: no-repeat;
   background-size: cover;
-  opacity: 0.15;
+  opacity: 0.08;
   pointer-events: none;
   z-index: 0;
 }
@@ -116,8 +117,8 @@ const irAuleta = () => {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background-color: rgba(230, 81, 0, 0.1); /* Un naranja más profundo */
-  color: #E65100; /* Naranja intenso, no neón */
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #E8D5B5;
   padding: 8px 16px;
   border-radius: 20px;
   font-size: 0.8rem;
@@ -126,11 +127,12 @@ const irAuleta = () => {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-family: var(--font-family);
+  backdrop-filter: blur(4px);
 }
 
 h1 {
   font-size: 3.5rem;
-  color: #212121;
+  color: #FFF8F0;
   margin: 0 0 20px 0;
   line-height: 1.1;
   font-weight: 700;
@@ -138,7 +140,7 @@ h1 {
 }
 
 .highlight {
-  color: #E65100;
+  color: #E8D5B5;
   text-decoration: none;
   position: relative;
 }
@@ -150,13 +152,13 @@ h1 {
   left: 0;
   right: 0;
   height: 3px;
-  background-color: #E65100;
+  background-color: #E8D5B5;
   border-radius: 2px;
 }
 
 .hero-description {
   font-size: 1.1rem;
-  color: #212121;
+  color: #F0E0D0;
   margin: 0 0 32px 0;
   line-height: 1.6;
   font-weight: 400;
@@ -184,14 +186,15 @@ h1 {
 }
 
 .btn-primary {
-  background-color: #F57C00; /* Un naranja vibrante y elegante */
-  box-shadow: 0 4px 12px rgba(230, 81, 0, 0.3);
+  background: linear-gradient(135deg, #E8D5B5 0%, #C4A77D 100%);
+  color: #4a122a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .btn-primary:hover {
-  background-color: #E65100; /* Se oscurece al pasar el mouse */
+  background: linear-gradient(135deg, #F0E5D0 0%, #D4B88C 100%);
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(230, 81, 0, 0.4);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
 }
 
 .btn-primary:active {
@@ -199,14 +202,17 @@ h1 {
 }
 
 .btn-secondary {
-  background-color: #F57C00; /* Un naranja vibrante y elegante */
-  box-shadow: 0 4px 12px rgba(230, 81, 0, 0.3);
+  background-color: transparent;
+  color: #E8D5B5;
+  border: 2px solid #E8D5B5;
+  box-shadow: none;
 }
 
 .btn-secondary:hover {
-  background-color: #E65100; /* Se oscurece al pasar el mouse */
+  background-color: rgba(232, 213, 181, 0.15);
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(230, 81, 0, 0.4);
+  border-color: #F0E5D0;
+  color: #F0E5D0;
 }
 
 .social-proof {
@@ -219,12 +225,12 @@ h1 {
   font-size: 1.8rem;
   display: inline-flex;
   align-items: center;
-  color: #F57C00;
+  color: #E8D5B5;
 }
 
 .social-text {
   font-size: 0.9rem;
-  color: #212121;
+  color: #F0E0D0;
   font-weight: 500;
 }
 
@@ -240,12 +246,12 @@ h1 {
   height: 430px;
   border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.16);
-  border: 1px solid rgba(230, 81, 0, 0.2);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(232, 213, 181, 0.3);
 }
 
 .footer {
-  background-color: #212121;
+  background: linear-gradient(135deg, #3a0a1c 0%, #1a0308 100%);
   color: #FDFDFD;
   padding: 32px 20px;
   text-align: center;
@@ -276,11 +282,35 @@ h1 {
 }
 
 .footer-links a:hover {
-  color: #E65100;
+  color: #E8D5B5;
 }
 
+/* Ajustes para componentes internos */
+:deep(.category-card),
+:deep(.recommended-card) {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+:deep(.category-card h3),
+:deep(.recommended-card h3) {
+  color: #4a122a;
+}
+
+:deep(.category-card p),
+:deep(.recommended-card p) {
+  color: #6b4a3a;
+}
+
+:deep(.category-card:hover),
+:deep(.recommended-card:hover) {
+  border-color: #E8D5B5;
+}
 
 @media (max-width: 768px) {
+  .landing {
+    padding-top: 90px;
+  }
+  
   .hero-wrapper {
     grid-template-columns: 1fr;
     gap: 40px;
