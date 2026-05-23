@@ -1,9 +1,14 @@
 <template>
   <div class="wheel-container">
-    <div class="wheel" :style="{ transform: `rotate(${rotation}deg)` }">
-      <div v-for="(item, index) in items" :key="index" class="wheel-section" :style="{ transform: `rotate(${(360 / items.length) * index}deg)` }">
-        <div class="section-icon" :style="{ transform: `rotate(${(360 / items.length) / 2}deg)` }">
-          <!-- Renderizamos el componente del icono -->
+    <div
+      class="wheel"
+      :style="{
+        transform: `rotate(${rotation}deg)`,
+        background: wheelGradient
+      }"
+    >
+      <div v-for="(item, index) in itemsToUse" :key="index" class="wheel-section" :style="{ transform: `rotate(${(360 / itemsToUse.length) * index + (360 / itemsToUse.length) / 2}deg)` }">
+        <div class="section-icon">
           <component :is="item.icon" :size="32" color="white" />
         </div>
       </div>
@@ -15,55 +20,47 @@
 
     <div v-if="showResult" class="result-modal">
       <div class="result-card">
-<<<<<<< Updated upstream
-        <p class="result-label">¡La ruleta se detuvo en:</p>
-=======
         <button class="result-x" @click="closeResult" aria-label="Cerrar resultado">
           ×
         </button>
         <div class="result-icon">
-          <component v-if="selectedItem" :is="selectedItem.icon" :size="48" color="#3F1D0E" />
+          <component v-if="selectedItem" :is="selectedItem.icon" :size="48" color="#A33333" />
         </div>
         <p class="result-label">Hoy toca:</p>
->>>>>>> Stashed changes
         <h3 class="result-title">{{ selectedItem ? selectedItem.name : 'Sorpresa' }}</h3>
-        <button class="result-close" @click="closeResult">Cerrar</button>
+        <div class="result-actions">
+          <button class="result-button primary" @click="goToRestaurants">Ver restaurantes</button>
+          <button class="result-button secondary" @click="spinAgain">Girar otra vez</button>
+        </div>
       </div>
+    </div>
+
+    <div v-if="isSpinning" class="spinning-feedback">
+      <p class="spinning-text">Girando...</p>
+      <p class="spinning-subtext">Buscando tu antojo...</p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-// Importamos los iconos que necesitamos
-import { Pizza, Ham, Fish, IceCream, Salad, Utensils } from 'lucide-vue-next'
+import { ref, onMounted, computed } from 'vue'
+import { Pizza, Hamburger, Fish, IceCream, Salad, Utensils, Drumstick, Soup, Leaf, Shell } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
+import { api } from '@/services/api.js'
 
+const props = defineProps({
+  filteredCategories: {
+    type: Array,
+    default: null
+  }
+})
+
+const router = useRouter()
 const rotation = ref(0)
 const isSpinning = ref(false)
 const selectedItem = ref(null)
 const showResult = ref(false)
-
-<<<<<<< Updated upstream
-// Reemplazamos los strings de emojis por los componentes importados
-const items = [
-  { name: 'Tacos', icon: Utensils },
-  { name: 'Burgers', icon: Ham },
-  { name: 'Sushi', icon: Fish },
-  { name: 'Pizza', icon: Pizza },
-  { name: 'Postres', icon: IceCream },
-  { name: 'Veggie', icon: Salad },
-]
-
-=======
-// Categorías por defecto (fallback si la API falla)
-const defaultCategories = [
-  { name: 'Pizza', icon: Pizza },
-  { name: 'Hamburguesas', icon: Hamburger },
-  { name: 'Sushi', icon: Fish },
-  { name: 'Tacos', icon: Utensils },
-  { name: 'Postres', icon: IceCream },
-  { name: 'Ensaladas', icon: Salad }
-]
+const items = ref([])
 
 // Mapeo nombre → icono
 const iconMap = {
@@ -80,20 +77,11 @@ const iconMap = {
 }
 
 onMounted(async () => {
-  try {
-    const categorias = await api.get('/restaurantes/categorias')
-    if (categorias && categorias.length > 0) {
-      items.value = categorias.map(c => ({
-        name: c.nombre,
-        icon: iconMap[c.nombre] || Utensils
-      }))
-    } else {
-      items.value = defaultCategories
-    }
-  } catch (error) {
-    console.error('Error cargando categorías para la ruleta:', error)
-    items.value = defaultCategories
-  }
+  const categorias = await api.get('/restaurantes/categorias')
+  items.value = categorias.map(c => ({
+    name: c.nombre,
+    icon: iconMap[c.nombre] || Utensils
+  }))
 })
 
 // Categorías a usar en la ruleta (filtradas o todas)
@@ -101,89 +89,72 @@ const itemsToUse = computed(() => {
   if (props.filteredCategories && props.filteredCategories.length > 0) {
     return props.filteredCategories
   }
-  if (items.value.length > 0) {
-    return items.value
-  }
-  return defaultCategories
-})
-
-// ===== COLORES DE LA RULETA =====
-// Caramel: #A2663C
-// Cream: #E4CDB0
-// ================================
-const wheelColors = [
-  '#A2663C',  // Caramel
-  '#E4CDB0',  // Cream
-  '#A2663C',  // Caramel
-  '#E4CDB0',  // Cream
-  '#A2663C',  // Caramel
-  '#E4CDB0',  // Cream
-  '#A2663C',  // Caramel
-  '#E4CDB0'   // Cream
-]
-
-// Gradiente de la ruleta
-const wheelGradient = computed(() => {
-  const itemsLen = itemsToUse.value.length
-  if (itemsLen === 0) {
-    return 'conic-gradient(from 0deg, #A2663C 0deg 360deg)'
-  }
-
-  const sectionAngle = 360 / itemsLen
-  let gradientStops = []
-  
-  for (let i = 0; i < itemsLen; i++) {
-    const start = i * sectionAngle
-    const end = (i + 1) * sectionAngle
-    const color = wheelColors[i % wheelColors.length]
-    gradientStops.push(`${color} ${start}deg ${end}deg`)
-  }
-  
-  return `conic-gradient(from 0deg, ${gradientStops.join(', ')})`
+  return items.value
 })
 
 // Lógica para girar la ruleta
->>>>>>> Stashed changes
 const spinWheel = () => {
-  if (isSpinning.value) return
+  if (isSpinning.value || !itemsToUse.value.length) return
+
   isSpinning.value = true
-<<<<<<< Updated upstream
-  const sectionAngle = 360 / items.length
-  const targetIndex = Math.floor(Math.random() * items.length)
-  const randomTurns = 1440
-  const targetRotation = randomTurns + targetIndex * sectionAngle
-  rotation.value += targetRotation
-=======
 
   const sectionAngle = 360 / itemsToUse.value.length
   const targetIndex = Math.floor(Math.random() * itemsToUse.value.length)
 
   const currentRotation = ((rotation.value % 360) + 360) % 360
   
-  // Centro del segmento ganador
+  // Centro del segmento ganador (en ángulo cónico desde 0°)
   const itemCenterAngle = targetIndex * sectionAngle + sectionAngle / 2
   
-  // Alinear el segmento ganador con la flecha superior
+  // Alinear el segmento ganador con la flecha superior (0°)
+  // La flecha apunta a 0°, así que rotamos hasta que itemCenterAngle coincida con 0°
   const desiredRotation = (-itemCenterAngle + 360) % 360
 
   const extraTurns = 1440
   const deltaRotation = extraTurns + ((desiredRotation - currentRotation + 360) % 360)
 
   rotation.value += deltaRotation
->>>>>>> Stashed changes
 
   setTimeout(() => {
     isSpinning.value = false
-    selectedItem.value = items[targetIndex]
+    selectedItem.value = itemsToUse.value[targetIndex]
     showResult.value = true
-  }, 1600)
+  }, 1900)
 }
 
+const wheelColors = [
+  '#8A1A36',
+  '#A33333',
+  '#C64445',
+  '#7B1C32',
+  '#B63A36',
+  '#8F2038',
+  '#C84A4A',
+  '#6F1D2E',
+  '#AA3434',
+  '#D04A3F'
+]
+
+const wheelGradient = computed(() => {
+  if (!itemsToUse.value.length) {
+    return 'conic-gradient(#8A1A36 0deg 360deg)'
+  }
+
+  const sectionAngle = 360 / itemsToUse.value.length
+
+  const sections = itemsToUse.value.map((item, index) => {
+    const start = index * sectionAngle
+    const end = (index + 1) * sectionAngle
+    const color = wheelColors[index % wheelColors.length]
+
+    return `${color} ${start}deg ${end}deg`
+  })
+
+  return `conic-gradient(from 0deg, ${sections.join(', ')})`
+})
 const closeResult = () => {
   showResult.value = false
 }
-<<<<<<< Updated upstream
-=======
 
 const goToRestaurants = () => {
   if (!selectedItem.value) return
@@ -192,8 +163,10 @@ const goToRestaurants = () => {
   const categoryName = selectedItem.value.name
   
   if (hasToken) {
+    // Usuario ya está logueado
     router.push({ path: '/user/feed', query: { categoria: categoryName } })
   } else {
+    // Usuario no está logueado, guardar categoría y mandar al login
     localStorage.setItem('pending_category', categoryName)
     router.push('/login')
   }
@@ -205,23 +178,9 @@ const spinAgain = () => {
   spinWheel()
 }
 
-// Si no hay items después del montaje, forzar defaults
-onMounted(() => {
-  if (items.value.length === 0) {
-    items.value = defaultCategories
-  }
-})
->>>>>>> Stashed changes
 </script>
 
 <style scoped>
-/* ===== PALETA DE COLORES ===== */
-/* Caramel: #A2663C - Color A de segmentos y CENTRO de la ruleta */
-/* Cream: #E4CDB0 - Color B de segmentos y hover del GO */
-/* Coffee: #3F1D0E - Flecha/pointer, borde de ruleta y texto principal */
-/* Milk: #E6E2D7 - Fondos secundarios */
-/* ============================= */
-
 .wheel-container {
   position: relative;
   display: flex;
@@ -238,7 +197,7 @@ onMounted(() => {
   height: 0;
   border-left: 18px solid transparent;
   border-right: 18px solid transparent;
-  border-top: 30px solid #3F1D0E;  /* Coffee */
+  border-top: 30px solid #A33333;
   z-index: 20;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.24));
   transition: transform 0.2s ease, filter 0.2s ease;
@@ -251,7 +210,7 @@ onMounted(() => {
   left: -8px;
   width: 16px;
   height: 16px;
-  background-color: #3F1D0E;  /* Coffee */
+  background-color: #A33333;
   border-radius: 50%;
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.22);
 }
@@ -260,20 +219,10 @@ onMounted(() => {
   width: 430px;
   height: 430px;
   border-radius: 50%;
-<<<<<<< Updated upstream
   background: conic-gradient(
-    from 0deg,
-    #8A1A36 0deg 60deg,
-    #A33333 60deg 120deg,
-    #C64445 120deg 180deg,
-    #7B1C32 180deg 240deg,
-    #A33333 240deg 300deg,
-    #8A1A36 300deg 360deg
+    
   );
   border: 6px solid rgba(107, 33, 33, 0.92);
-=======
-  border: 6px solid #A2663C;  /* Caramel */
->>>>>>> Stashed changes
   display: flex;
   align-items: center;
   justify-content: center;
@@ -283,7 +232,7 @@ onMounted(() => {
 }
 
 .wheel:hover {
-  box-shadow: 0 28px 45px -16px rgba(63, 29, 14, 0.3), inset 0 2px 6px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 28px 45px -16px rgba(107, 33, 33, 0.3), inset 0 2px 6px rgba(255, 255, 255, 0.2);
   transform: scale(1.01);
 }
 
@@ -294,7 +243,7 @@ onMounted(() => {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding-top: 28px;
+  padding-top: 30px;
 }
 
 .section-icon {
@@ -313,29 +262,29 @@ onMounted(() => {
 .wheel-center {
   width: 140px;
   height: 140px;
-  background-color: #A2663C;  /* Caramel - CENTRO DE LA RULETA */
+  background-color: #FFFBF2;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 15;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.2), inset 0 2px 6px rgba(255, 255, 255, 0.3);
-  border: 2px solid rgba(63, 29, 14, 0.16);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.2), inset 0 2px 6px rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(163, 51, 51, 0.26);
 }
 
 .go-button {
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background-color: #3F1D0E;  /* Coffee */
-  color: #E6E2D7;  /* Milk */
+  background-color: #A33333;
+  color: #FFFBF2;
   border: none;
   font-size: 1.8rem;
   font-weight: 800;
   letter-spacing: 1px;
   cursor: pointer;
   transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 10px 26px rgba(163, 51, 51, 0.35);
   font-family: inherit;
   text-transform: uppercase;
 }
@@ -343,49 +292,45 @@ onMounted(() => {
 .go-button.spinning,
 .go-button.spinning {
   animation: buttonPulse 0.85s ease-in-out infinite;
-  background-color: #E4CDB0;  /* Cream */
-  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.12), 0 18px 42px rgba(0, 0, 0, 0.35);
-  color: #3F1D0E;
+  background-color: #bf3641;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.12), 0 18px 42px rgba(163, 51, 51, 0.55);
 }
 
 .go-button:hover:not(:disabled) {
   transform: scale(1.07);
-  background-color: #E4CDB0;  /* Cream */
-  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.12), 0 14px 34px rgba(0, 0, 0, 0.35);
-  color: #3F1D0E;
+  background-color: #C64445;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.12), 0 14px 34px rgba(163, 51, 51, 0.45);
 }
 
 .go-button:active:not(:disabled) {
   transform: scale(0.96);
   transition: transform 0.08s linear;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 6px 16px rgba(163, 51, 51, 0.35);
 }
 
 .go-button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
   transform: scale(0.98);
-  background-color: #E4CDB0;  /* Cream */
+  background-color: #8A1A36;
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
-  color: #3F1D0E;
 }
 
 @keyframes buttonPulse {
   0%, 100% {
     transform: scale(1);
-    box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.12), 0 18px 42px rgba(0, 0, 0, 0.35);
+    box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.12), 0 18px 42px rgba(163, 51, 51, 0.55);
   }
   50% {
     transform: scale(1.08);
-    box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.12), 0 22px 52px rgba(0, 0, 0, 0.45);
+    box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.12), 0 22px 52px rgba(163, 51, 51, 0.65);
   }
 }
 
 .result-modal {
   position: fixed;
   inset: 0;
-  background: rgba(63, 29, 14, 0.46);  /* Coffee transparente */
-  backdrop-filter: blur(4px);
+  background: rgba(19, 2, 10, 0.46);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -394,38 +339,16 @@ onMounted(() => {
 }
 
 .result-card {
-<<<<<<< Updated upstream
-  width: min(360px, 100%);
+  width: min(380px, 100%);
   background: rgba(255, 251, 242, 0.98);
   border: 1px solid rgba(163, 51, 51, 0.18);
-=======
-  width: min(380px, 100%);
-  background: rgba(230, 226, 215, 0.98);  /* Milk */
-  border: 1px solid rgba(63, 29, 14, 0.18);
->>>>>>> Stashed changes
   border-radius: 22px;
-  padding: 28px 24px;
+  padding: 36px 28px;
   text-align: center;
-  box-shadow: 0 24px 60px rgba(63, 29, 14, 0.18);
+  box-shadow: 0 24px 60px rgba(107, 33, 33, 0.18);
   animation: popIn 0.34s cubic-bezier(0.25, 0.8, 0.25, 1);
-<<<<<<< Updated upstream
-}
-
-.result-label {
-  margin: 0 0 12px;
-  color: #6b2121;
-  font-size: 0.95rem;
-  font-weight: 600;
-}
-
-.result-title {
-  margin: 0 0 24px;
-  font-size: 2rem;
-  color: #A33333;
-=======
   position: relative;
 }
-
 .result-x {
   position: absolute;
   top: 14px;
@@ -435,7 +358,7 @@ onMounted(() => {
   border: none;
   border-radius: 50%;
   background: transparent;
-  color: #3F1D0E;  /* Coffee */
+  color: #A33333;
   font-size: 1.8rem;
   line-height: 1;
   cursor: pointer;
@@ -443,9 +366,8 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
 }
-
 .result-x:hover {
-  background: rgba(63, 29, 14, 0.1);
+  background: rgba(163, 51, 51, 0.1);
 }
 
 .result-icon {
@@ -456,7 +378,7 @@ onMounted(() => {
 
 .result-label {
   margin: 0 0 8px;
-  color: #A2663C;  /* Caramel */
+  color: #6b2121;
   font-size: 0.9rem;
   font-weight: 500;
   text-transform: uppercase;
@@ -466,37 +388,37 @@ onMounted(() => {
 .result-title {
   margin: 0 0 28px;
   font-size: 2.2rem;
-  color: #3F1D0E;  /* Coffee */
->>>>>>> Stashed changes
+  color: #A33333;
   font-weight: 800;
+  line-height: 1.2;
 }
 
-.result-close {
-  padding: 12px 18px;
-  border-radius: 999px;
+.result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.result-button {
+  padding: 14px 24px;
+  border-radius: 12px;
   border: none;
-  background: #A33333;
-  color: #fff;
   cursor: pointer;
   font-weight: 700;
   font-size: 0.95rem;
-  transition: transform 0.25s ease, filter 0.25s ease;
+  transition: all 0.25s ease;
+  font-family: inherit;
 }
 
-<<<<<<< Updated upstream
-.result-close:hover {
-  transform: scale(1.02);
-  filter: brightness(1.05);
-=======
 .result-button.primary {
-  background: #3F1D0E;  /* Coffee */
-  color: #E6E2D7;  /* Milk */
+  background: #A33333;
+  color: #fff;
 }
 
 .result-button.primary:hover {
-  background: #A2663C;  /* Caramel */
+  background: #C64445;
   transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(63, 29, 14, 0.25);
+  box-shadow: 0 8px 16px rgba(163, 51, 51, 0.25);
 }
 
 .result-button.primary:active {
@@ -504,14 +426,14 @@ onMounted(() => {
 }
 
 .result-button.secondary {
-  background: rgba(63, 29, 14, 0.1);
-  color: #3F1D0E;  /* Coffee */
-  border: 1px solid rgba(63, 29, 14, 0.2);
+  background: rgba(163, 51, 51, 0.1);
+  color: #A33333;
+  border: 1px solid rgba(163, 51, 51, 0.2);
 }
 
 .result-button.secondary:hover {
-  background: rgba(63, 29, 14, 0.15);
-  border-color: rgba(63, 29, 14, 0.3);
+  background: rgba(163, 51, 51, 0.15);
+  border-color: rgba(163, 51, 51, 0.3);
 }
 
 .result-button.secondary:active {
@@ -531,14 +453,14 @@ onMounted(() => {
 .spinning-text {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #3F1D0E;  /* Coffee */
+  color: #A33333;
   margin: 0 0 8px 0;
   animation: pulse 1.5s ease-in-out infinite;
 }
 
 .spinning-subtext {
   font-size: 0.9rem;
-  color: #A2663C;  /* Caramel */
+  color: #6b2121;
   margin: 0;
   animation: fadeInOut 2s ease-in-out infinite;
 }
@@ -568,7 +490,6 @@ onMounted(() => {
   50% {
     opacity: 1;
   }
->>>>>>> Stashed changes
 }
 
 @keyframes popIn {
@@ -608,7 +529,7 @@ onMounted(() => {
     top: -12px;
     border-left: 12px solid transparent;
     border-right: 12px solid transparent;
-    border-top: 20px solid #3F1D0E;  /* Coffee */
+    border-top: 20px solid #A33333;
   }
 
   .pointer::after {

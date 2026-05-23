@@ -3,6 +3,7 @@ import LandingPage from '../views/LandingPage.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import BusinessPage from '../views/BusinessPage.vue'
+import NoSeQueComerView from '../views/NoSeQueComerView.vue'
 
 // Admin Views
 import AdminDashboard from '../views/admin/AdminDashboard.vue'
@@ -23,6 +24,7 @@ import MenuView from '../views/restaurant/MenuView.vue'
 import UserFeed from '../views/user/UserFeed.vue'
 import UserFavorites from '../views/user/UserFavorites.vue'
 import UserProfile from '../views/user/UserProfile.vue'
+import UserMenuView from '../views/user/UserMenuView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -46,6 +48,11 @@ const router = createRouter({
       path: '/negocios',
       name: 'business',
       component: BusinessPage
+    },
+    {
+      path: '/no-se-que-comer',
+      name: 'no-se-que-comer',
+      component: NoSeQueComerView
     },
     // Admin Routes
     {
@@ -124,9 +131,9 @@ const router = createRouter({
       meta: { requiresAuth: true, role: 'user' }
     },
     {
-      path: '/user/menu',
+      path: '/user/menu/:id',
       name: 'user-menu',
-      component: MenuView,
+      component: UserMenuView,
       meta: { requiresAuth: true, role: 'user' }
     },
     {

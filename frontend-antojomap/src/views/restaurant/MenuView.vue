@@ -1,44 +1,218 @@
 <template>
   <div class="menu-container">
-    <!-- Encabezado con título y botón -->
+    <button @click="goBack" class="back-btn">← Volver</button>
+
     <header class="menu-header">
       <div class="header-text">
-        <h1>Platos del Día</h1>
-        <span>3 items</span>
+        <h1>{{ restauranteNombre }}</h1>
+        <p v-if="restauranteDescripcion" class="description">{{ restauranteDescripcion }}</p>
       </div>
-      <button class="add-plate-btn">
-        <Plus :size="20" /> Agregar Plato
-      </button>
     </header>
 
-    <!-- Grid de tarjetas -->
-    <div class="plates-grid">
-      <div v-for="plate in plates" :key="plate.id" class="plate-card">
-        <div class="plate-image">
-          <img :src="plate.image" :alt="plate.name">
-        </div>
-        <div class="plate-info">
-          <h3>{{ plate.name }}</h3>
-          <p class="price">${{ plate.price }}</p>
-          <div class="plate-actions">
-            <button class="edit-btn"><Pencil :size="16" /> Editar</button>
-            <button class="delete-btn"><Trash2 :size="16" /></button>
+    <div v-if="cargando" class="loading">Cargando menú...</div>
+    <div v-else-if="menu.length === 0" class="empty">No hay platos disponibles</div>
+    <div v-else>
+      <div class="menu-grid">
+        <div v-for="item in menu" :key="item.id" class="menu-item-card">
+          <img v-if="item.foto_url" :src="item.foto_url" :alt="item.nombre" class="item-image" />
+          <div class="item-info">
+            <h3>{{ item.nombre }}</h3>
+            <p v-if="item.descripcion" class="description">{{ item.descripcion }}</p>
+            <div class="item-type">
+              <span class="badge" :class="item.tipo">{{ item.tipo === 'plato_suelto' ? '🍽️ Plato' : '🥗 Almuerzo Completo' }}</span>
+            </div>
+            <p class="price">Bs {{ item.precio }}</p>
           </div>
         </div>
       </div>
     </div>
   </div>
 </template>
-<script setup>
-import { ref } from 'vue'
-import { Plus, Pencil, Trash2 } from 'lucide-vue-next'
 
-const plates = ref([
-  { id: 1, name: 'Bowl de Quinoa', price: '12.50', image: 'url_imagen_1' },
-  { id: 2, name: 'Hamburguesa Clásica', price: '15.00', image: 'url_imagen_2' },
-  { id: 3, name: 'Pasta Alfredo', price: '14.00', image: 'url_imagen_3' }
-])
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { restaurantesService } from '@/services/menu.service.js'
+
+const router = useRouter()
+const route = useRoute()
+
+const restauranteId = route.params.id
+const menu = ref([])
+const cargando = ref(true)
+const restauranteNombre = ref('')
+const restauranteDescripcion = ref('')
+
+const cargarMenu = async () => {
+  try {
+    cargando.value = true
+    const { menu: data } = await restaurantesService.getRestaurante(restauranteId)
+    menu.value = data || []
+  } catch (error) {
+    console.error('Error cargando menú:', error)
+  } finally {
+    cargando.value = false
+  }
+}
+
+const cargarRestaurante = async () => {
+  try {
+    const data = await restaurantesService.getRestaurante(restauranteId)
+    restauranteNombre.value = data.nombre
+    restauranteDescripcion.value = data.descripcion
+  } catch (error) {
+    console.error('Error cargando restaurante:', error)
+  }
+}
+
+const goBack = () => {
+  router.back()
+}
+
+onMounted(() => {
+  cargarRestaurante()
+  cargarMenu()
+})
 </script>
+
+<style scoped>
+.menu-container {
+  min-height: 100vh;
+  background: #f9f9f9;
+  padding: 20px;
+}
+
+.back-btn {
+  margin-bottom: 20px;
+  padding: 8px 16px;
+  background: #481827;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.back-btn:hover {
+  background: #6b2540;
+}
+
+.menu-header {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.header-text h1 {
+  margin: 0;
+  font-size: 2rem;
+  color: #212121;
+}
+
+.description {
+  margin: 10px 0 0;
+  color: #666;
+  font-size: 1rem;
+}
+
+.loading, .empty {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.menu-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.menu-item-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.menu-item-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.item-image {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.item-info {
+  padding: 16px;
+}
+
+.item-info h3 {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+  color: #212121;
+}
+
+.item-info .description {
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin: 0 0 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.item-type {
+  margin: 8px 0;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #666;
+}
+
+.badge.plato_suelto {
+  background: #ffe8cc;
+  color: #d97706;
+}
+
+.badge.almuerzo_completo {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.price {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #ff6b00;
+}
+
+@media (max-width: 768px) {
+  .menu-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .header-text h1 {
+    font-size: 1.5rem;
+  }
+}
+</style>
 <style scoped>
 .menu-container {
   padding: 40px;

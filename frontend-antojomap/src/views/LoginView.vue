@@ -70,7 +70,9 @@
                 <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
               </div>
 
-              <button type="submit" class="btn-submit">Iniciar Sesión</button>
+              <button type="submit" class="btn-submit" :disabled="isLoading">
+                {{ isLoading ? 'Cargando...' : 'Iniciar Sesión' }}
+              </button>
 
               <div v-if="loginFeedback.message" class="form-feedback" :class="loginFeedback.type" aria-live="polite">
                 {{ loginFeedback.message }}
@@ -91,9 +93,13 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { UtensilsCrossed, Eye, EyeOff, Ham } from 'lucide-vue-next'
+import { authService } from '../services/auth.service.js'
+import { useAuthStore } from '../stores/auth.store.js'
 
+const authStore = useAuthStore()
 const router = useRouter()
 const showPassword = ref(false)
+const isLoading = ref(false)
 const form = ref({
   email: '',
   password: '',
@@ -101,34 +107,64 @@ const form = ref({
 })
 const loginFeedback = ref({ message: '', type: '' })
 
-const handleLogin = () => {
+const handleLogin = async () => {
   const { email, password } = form.value
   loginFeedback.value.message = ''
   loginFeedback.value.type = ''
 
-  if (email === 'admin@test.com' && password === 'admin123') {
-    localStorage.setItem('user_role', 'admin')
-    localStorage.setItem('user_email', email)
-    loginFeedback.value.message = 'Ingreso exitoso'
-    loginFeedback.value.type = 'success'
-    setTimeout(() => router.push('/admin/dashboard'), 300)
-  } else if (email === 'rest@test.com' && password === 'rest123') {
-    localStorage.setItem('user_role', 'restaurant')
-    localStorage.setItem('user_email', email)
-    localStorage.setItem('restaurant_name', 'La Casa del Antojo')
-    localStorage.setItem('restaurant_company', 'AntojoMap Bistro')
-    loginFeedback.value.message = 'Ingreso exitoso'
-    loginFeedback.value.type = 'success'
-    setTimeout(() => router.push('/restaurant/menu'), 300)
-  } else if (email === 'user@test.com' && password === 'user123') {
-    localStorage.setItem('user_role', 'user')
-    localStorage.setItem('user_email', email)
-    loginFeedback.value.message = 'Ingreso exitoso'
-    loginFeedback.value.type = 'success'
-    setTimeout(() => router.push('/user/feed'), 300)
-  } else {
-    loginFeedback.value.message = 'Credenciales incorrectas'
+  if (!email || !password) {
+    loginFeedback.value.message = 'Por favor completa todos los campos'
     loginFeedback.value.type = 'error'
+    return
+  }
+
+  isLoading.value = true
+  try {
+    const response = await authService.login(email, password)
+    
+    let normalizedRole = response.usuario.rol.toLowerCase()
+    if (normalizedRole === 'restaurante') normalizedRole = 'restaurant'
+
+    authStore.setUsuario({
+      token: response.token,
+      id: response.usuario.id,
+      email: response.usuario.email,
+      nombre: response.usuario.nombre,
+      rol: normalizedRole,
+      foto_perfil: response.usuario.foto_perfil || ''
+    })
+
+    if (response.usuario.restaurante_id) {
+      localStorage.setItem('restaurante_id', response.usuario.restaurante_id)
+    }
+
+    loginFeedback.value.message = 'Ingreso exitoso'
+    loginFeedback.value.type = 'success'
+
+    setTimeout(() => {
+      // Verificar si hay una categoría pendiente desde la ruleta
+      const pendingCategory = localStorage.getItem('pending_category')
+      
+      if (normalizedRole === 'admin') {
+        router.push('/admin/dashboard')
+      } else if (normalizedRole === 'restaurant') {
+        router.push('/restaurant/dashboard')
+      } else {
+        // Usuario normal
+        if (pendingCategory) {
+          // Limpiar la categoría pendiente y redirigir al feed con filtro
+          localStorage.removeItem('pending_category')
+          router.push({ path: '/user/feed', query: { categoria: pendingCategory } })
+        } else {
+          router.push('/user/feed')
+        }
+      }
+    }, 300)
+  } catch (error) {
+    loginFeedback.value.message = error.message || 'Credenciales incorrectas'
+    loginFeedback.value.type = 'error'
+  } finally {
+    isLoading.value = false
   }
 }
 </script>

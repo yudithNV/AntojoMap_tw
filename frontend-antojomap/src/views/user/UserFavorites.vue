@@ -1,20 +1,61 @@
 <template>
   <DashboardLayout>
     <div class="page-header">
-      <h1>Favoritos</h1>
-      <p class="subtitle">Tus restaurantes y platos guardados</p>
+      <h1>Tus favoritos</h1>
+      <p class="subtitle">Guarda restaurantes para encontrarlos rápido después.</p>
     </div>
 
-    <div class="content-placeholder">
-      <Heart :size="48" stroke-width="1.5" />
-      <p>Lista de favoritos en construcción</p>
+    <!-- Estado vacío -->
+    <div v-if="favorites.length === 0" class="empty-state">
+      <Heart :size="56" stroke-width="1.5" />
+      <h3>Todavía no tienes favoritos.</h3>
+      <p>Explora restaurantes y toca el corazón para guardarlos.</p>
+      <button class="btn-explorar" @click="router.push('/user/feed')">Explorar restaurantes</button>
+    </div>
+
+    <!-- Grid de favoritos -->
+    <div v-else class="restaurants-grid">
+      <RestaurantCard
+        v-for="restaurant in favorites"
+        :key="restaurant.id"
+        :restaurant="restaurant""
+      />
     </div>
   </DashboardLayout>
 </template>
 
 <script setup>
+import { computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import DashboardLayout from '../../components/DashboardLayout.vue'
+import RestaurantCard from '../../components/RestaurantCard.vue'
 import { Heart } from 'lucide-vue-next'
+import { useFavoritosStore } from '../../stores/favoritos.store.js'
+import { restaurantesService } from '../../services/menu.service.js'
+import { ref } from 'vue'
+
+const router = useRouter()
+const favoritosStore = useFavoritosStore()
+const restaurantes = ref([])
+
+onMounted(async () => {
+  await favoritosStore.cargarFavoritos()
+  
+  const ids = favoritosStore.favoritos.map(f => f.restaurante_id).filter(Boolean)
+  if (ids.length === 0) return
+
+  const data = await Promise.all(ids.map(id => restaurantesService.getRestaurante(id)))
+  restaurantes.value = data.map(r => ({
+    ...r,
+    name: r.nombre,
+    category: r.restaurante_categorias?.[0]?.categorias_restaurante?.nombre || '',
+    image: r.foto_portada || '',
+    address: r.direccion,
+    rating: '—'
+  }))
+})
+
+const favorites = computed(() => restaurantes.value)
 </script>
 
 <style scoped>
@@ -25,7 +66,7 @@ import { Heart } from 'lucide-vue-next'
 .page-header h1 {
   color: var(--plum);
   font-size: 2rem;
-  margin: 0 0 10px 0;
+  margin: 0 0 8px 0;
 }
 
 .subtitle {
@@ -34,26 +75,67 @@ import { Heart } from 'lucide-vue-next'
   margin: 0;
 }
 
-.content-placeholder {
+.empty-state {
   background: white;
   padding: 60px 20px;
   border-radius: 15px;
   text-align: center;
-  color: var(--dusty-coral);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  color: var(--dusty-coral);
 }
 
-.content-placeholder p {
-  font-size: 1.1rem;
+.empty-state svg {
+  color: var(--blood-orange);
+  opacity: 0.6;
+}
+
+.empty-state h3 {
+  font-size: 1.2rem;
+  color: var(--plum);
+  margin: 0;
+}
+
+.empty-state p {
+  font-size: 0.95rem;
   margin: 0;
   color: var(--dusty-coral);
 }
 
-.content-placeholder svg {
-  color: var(--color-blood-orange);
+.btn-explorar {
+  margin-top: 8px;
+  padding: 12px 24px;
+  background: var(--blood-orange);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-explorar:hover {
+  background: var(--dusty-coral);
+}
+
+.restaurants-grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 1024px) {
+  .restaurants-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .page-header h1 { font-size: 1.5rem; }
+  .restaurants-grid { grid-template-columns: 1fr; }
 }
 </style>

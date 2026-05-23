@@ -3,11 +3,7 @@
     <Navbar />
 
     <div class="hero-section">
-      <div class="hero-badge">
-        <Zap :size="18" stroke-width="2" />
-        <span>¡SIN INDECISIONES!</span>
-      </div>
-      <h1 class="page-title">No sé <span class="highlight">qué comer</span></h1>
+      <h1 class="page-title">No sé qué comer</h1>
       <p class="page-subtitle">
         Cuando nadie se decide, deja que la Ruleta del Antojo elija por ti.
       </p>
@@ -19,34 +15,23 @@
     <div class="content-wrapper">
       <div class="controls-panel">
         <div class="intro-section">
-          <div class="intro-icon">
-            <Utensils :size="28" stroke-width="1.5" />
-          </div>
           <p class="intro-title">Elige tus antojos</p>
           <p class="intro-text">
             Selecciona una o varias categorías y la ruleta decidirá entre tus favoritas.
           </p>
 
           <div class="steps-box">
-            <div class="steps-header">
-              <Sparkles :size="18" stroke-width="1.5" />
-              <p class="steps-title">¿Cómo funciona?</p>
-            </div>
+            <p class="steps-title">¿Cómo funciona?</p>
             <div class="steps-list">
-              <span class="step">🎯 1. Elige categorías</span>
-              <span class="step">🎲 2. Gira la ruleta</span>
-              <span class="step">✨ 3. Disfruta tu elección</span>
+              <span>1. Elige categorías</span>
+              <span>2. Gira la ruleta</span>
+              <span>3. Disfruta tu elección</span>
             </div>
           </div>
         </div>
 
         <div class="filters-section">
-          <div class="filters-header">
-            <h3 class="filters-title">Categorías</h3>
-            <span class="filters-count" v-if="selectedCategories.length > 0">
-              {{ selectedCategories.length }} seleccionadas
-            </span>
-          </div>
+          <h3 class="filters-title">Categorías</h3>
           <div class="filter-chips">
             <button 
               v-for="item in items" 
@@ -55,7 +40,7 @@
               :class="{ active: selectedCategories.includes(item.name) }"
               @click="toggleCategory(item.name)"
             >
-              <component :is="item.icon" :size="16" />
+              <component :is="item.icon" :size="18" />
               {{ item.name }}
             </button>
           </div>
@@ -66,14 +51,14 @@
               :class="{ disabled: selectedCategories.length === 0 }"
               @click="selectAll"
             >
-              <Check :size="14" /> Todas
+              Todas
             </button>
             <button 
               v-if="selectedCategories.length > 0"
               class="action-button clear"
               @click="clearSelection"
             >
-              <X :size="14" /> Limpiar
+              Limpiar selección
             </button>
           </div>
         </div>
@@ -88,16 +73,11 @@
 
     <footer class="footer">
       <div class="footer-content">
-        <div class="footer-brand">
-          <span class="footer-logo">🍜</span>
-          <span>AntojoMap</span>
-        </div>
-        <p>&copy; 2026 AntojoMap - Tu guía gastronómica local</p>
+        <p>&copy; 2026 AntojoMap - Encuentra tu comida favorita</p>
         <div class="footer-links">
           <a href="#">Privacidad</a>
           <a href="#">Términos</a>
           <a href="#">Contacto</a>
-          <a href="#">Blog</a>
         </div>
       </div>
     </footer>
@@ -108,10 +88,7 @@
 import { ref, onMounted, computed } from 'vue'
 import Navbar from '../components/Navbar.vue'
 import WheelSpinner from '../components/WheelSpinner.vue'
-import { 
-  Pizza, Hamburger, Fish, IceCream, Salad, Utensils, 
-  Drumstick, Soup, Leaf, Shell, Zap, Sparkles, Check, X 
-} from 'lucide-vue-next'
+import { Pizza, Hamburger, Fish, IceCream, Salad, Utensils, Drumstick, Soup, Leaf, Shell } from 'lucide-vue-next'
 import { restaurantesService } from '@/services/menu.service.js'
 
 const items = ref([])
@@ -160,6 +137,7 @@ const clearSelection = () => {
 }
 
 // Categorías filtradas para la ruleta
+// Si hay seleccionadas, usa esas; si no, usa todas
 const filteredCategoriesForWheel = computed(() => {
   if (selectedCategories.value.length === 0) {
     return items.value
@@ -169,105 +147,39 @@ const filteredCategoriesForWheel = computed(() => {
 </script>
 
 <style scoped>
-/* ===== PALETA DE COLORES ===== */
-/* Chocolate: #643016 */
-/* Alert Tan: #974F2C */
-/* Dark Tan: #9F6A4A */
-/* Fallow: #CB9870 */
-/* ============================ */
-
 .no-se-page {
   min-height: 100vh;
-  background: linear-gradient(145deg, #FDF8F2 0%, #F5EDE4 100%);
+  background-color: #FDFDFD;
   display: flex;
   flex-direction: column;
 }
 
 .hero-section {
-  padding: 50px 20px 40px;
-  background: linear-gradient(145deg, #CB9870 0%, rgba(151, 79, 44, 0.08) 100%);
+  padding: 50px 20px 30px;
+  background: linear-gradient(135deg, #FDFDFD 0%, rgba(255, 107, 0, 0.05) 100%);
   text-align: center;
-  position: relative;
-  overflow: hidden;
-}
-
-.hero-section::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -20%;
-  width: 80%;
-  height: 150%;
-  background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
-  pointer-events: none;
-}
-
-.hero-section::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(100,48,22,0.2), transparent);
-}
-
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(100, 48, 22, 0.12);
-  backdrop-filter: blur(10px);
-  color: #643016;
-  padding: 6px 16px;
-  border-radius: 40px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  margin-bottom: 20px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  border: 1px solid rgba(100, 48, 22, 0.15);
+  border-bottom: 1px solid rgba(255, 107, 0, 0.1);
 }
 
 .page-title {
-  font-size: 3rem;
-  color: #643016;
+  font-size: 2.8rem;
+  color: #212121;
   margin: 0;
-  font-weight: 800;
-  letter-spacing: -1px;
+  font-weight: 700;
+  font-family: var(--font-family-display);
 }
-
-.highlight {
-  color: #974F2C;
-  position: relative;
-  display: inline-block;
-}
-
-.highlight::after {
-  content: '';
-  position: absolute;
-  bottom: 5px;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #974F2C, #CB9870);
-  border-radius: 3px;
-  animation: expandWidth 0.6s ease-out 0.3s both;
-}
-
 .page-subtitle {
   margin: 18px auto 0;
   max-width: 620px;
-  color: #5a2a14;
+  color: #481827;
   font-size: 1.1rem;
   font-weight: 600;
   line-height: 1.5;
 }
-
 .page-description {
   margin: 8px auto 0;
   max-width: 620px;
-  color: #9F6A4A;
+  color: #666;
   font-size: 1rem;
   line-height: 1.6;
 }
@@ -290,65 +202,40 @@ const filteredCategoriesForWheel = computed(() => {
 }
 
 .intro-section {
-  background: white;
-  border-radius: 28px;
-  padding: 28px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(100, 48, 22, 0.08);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.intro-section:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 32px rgba(100, 48, 22, 0.1);
-}
-
-.intro-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #643016, #974F2C);
-  border-radius: 24px;
-  color: white;
-  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .intro-title {
   font-size: 1.3rem;
-  color: #643016;
-  margin: 0 0 8px 0;
-  font-weight: 700;
+  color: #212121;
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
 .intro-text {
-  font-size: 0.95rem;
-  color: #9F6A4A;
-  margin: 0 0 20px 0;
+  font-size: 1rem;
+  color: #666;
+  margin: 0;
   line-height: 1.6;
 }
 
 .steps-box {
-  background: linear-gradient(145deg, #FDF8F2, #F5EDE4);
-  border-radius: 20px;
-  padding: 20px;
-}
-
-.steps-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: center;
-  margin-bottom: 16px;
-  color: #643016;
+  margin-top: 12px;
+  padding: 18px;
+  border-radius: 16px;
+  background: rgba(255, 107, 0, 0.06);
+  border: 1px solid rgba(255, 107, 0, 0.14);
 }
 
 .steps-title {
-  margin: 0;
-  font-size: 1rem;
+  margin: 0 0 14px;
+  color: #212121;
+  font-size: 0.95rem;
   font-weight: 700;
-  color: #643016;
+  text-align: center;
 }
 
 .steps-list {
@@ -358,126 +245,97 @@ const filteredCategoriesForWheel = computed(() => {
   justify-content: center;
 }
 
-.step {
-  padding: 8px 16px;
-  border-radius: 40px;
+.steps-list span {
+  padding: 8px 12px;
+  border-radius: 999px;
   background: white;
-  color: #974F2C;
-  font-size: 0.85rem;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
-}
-
-.step:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(100, 48, 22, 0.1);
+  color: #A33333;
+  font-size: 0.86rem;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(163, 51, 51, 0.08);
 }
 
 .filters-section {
-  background: white;
-  border-radius: 28px;
-  padding: 28px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(100, 48, 22, 0.08);
-}
-
-.filters-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .filters-title {
-  font-size: 1rem;
-  color: #643016;
+  font-size: 0.95rem;
+  color: #212121;
   margin: 0;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.filters-count {
-  font-size: 0.75rem;
-  color: #974F2C;
-  background: rgba(151, 79, 44, 0.1);
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-weight: 600;
-}
-
 .filter-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 20px;
 }
 
 .chip {
   padding: 10px 18px;
-  border-radius: 40px;
-  border: 1.5px solid #CB9870;
-  background-color: white;
-  color: #643016;
+  border-radius: 20px;
+  border: 1.5px solid #FF6B00;
+  background-color: transparent;
+  color: #FF6B00;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+  transition: all 0.25s ease;
   font-family: inherit;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
 }
 
 .chip:hover {
-  transform: translateY(-2px);
-  border-color: #974F2C;
-  background-color: rgba(151, 79, 44, 0.05);
+  background-color: rgba(255, 107, 0, 0.08);
 }
 
 .chip.active {
-  background: linear-gradient(135deg, #643016, #974F2C);
+  background-color: #FF6B00;
   color: white;
-  border-color: transparent;
-  box-shadow: 0 6px 14px rgba(100, 48, 22, 0.25);
+  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
 }
 
 .category-chip {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
+  padding: 12px 16px;
 }
 
 .filter-actions {
   display: flex;
   gap: 12px;
+  margin-top: 12px;
 }
 
 .action-button {
-  padding: 10px 20px;
-  border-radius: 40px;
-  border: none;
-  background: linear-gradient(135deg, #643016, #974F2C);
+  padding: 10px 16px;
+  border-radius: 20px;
+  border: 1px solid #A33333;
+  background-color: #A33333;
   color: white;
   font-weight: 600;
   font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.25s ease;
   font-family: inherit;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.action-button:hover:not(.disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(100, 48, 22, 0.25);
+.action-button:hover {
+  background-color: #C64445;
+  border-color: #C64445;
+  box-shadow: 0 4px 12px rgba(163, 51, 51, 0.3);
 }
 
-.action-button:active:not(.disabled) {
-  transform: translateY(0);
+.action-button:active {
+  transform: scale(0.96);
 }
 
 .action-button.disabled {
@@ -485,15 +343,71 @@ const filteredCategoriesForWheel = computed(() => {
   cursor: not-allowed;
 }
 
+.action-button.disabled:hover {
+  background-color: #A33333;
+  border-color: #A33333;
+  box-shadow: none;
+}
+
 .action-button.clear {
-  background: transparent;
-  color: #643016;
-  border: 1.5px solid #643016;
+  background-color: transparent;
+  color: #A33333;
+  border: 1.5px solid #A33333;
 }
 
 .action-button.clear:hover {
-  background: rgba(100, 48, 22, 0.05);
-  transform: translateY(-2px);
+  background-color: rgba(163, 51, 51, 0.1);
+}
+
+.legend-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.legend-title {
+  font-size: 0.95rem;
+  color: #212121;
+  margin: 0;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.legend-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background-color: #F5F5F5;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.legend-item:hover {
+  background-color: rgba(255, 107, 0, 0.08);
+  transform: translateX(4px);
+}
+
+.legend-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.legend-name {
+  font-size: 0.9rem;
+  color: #212121;
+  font-weight: 500;
 }
 
 .wheel-panel {
@@ -509,22 +423,11 @@ const filteredCategoriesForWheel = computed(() => {
 }
 
 .footer {
-  background: linear-gradient(135deg, #643016, #4a2412);
-  color: #CB9870;
+  background-color: #212121;
+  color: #FDFDFD;
   padding: 32px 20px;
   text-align: center;
   margin-top: auto;
-  position: relative;
-}
-
-.footer::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(203,152,112,0.3), transparent);
 }
 
 .footer-content {
@@ -532,57 +435,30 @@ const filteredCategoriesForWheel = computed(() => {
   margin: 0 auto;
 }
 
-.footer-brand {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  font-size: 1.2rem;
-  font-weight: 700;
-  margin-bottom: 16px;
-  color: #CB9870;
-}
-
-.footer-logo {
-  font-size: 1.6rem;
-}
-
 .footer-content p {
-  margin: 0 0 20px 0;
-  font-size: 0.9rem;
+  margin: 0 0 16px 0;
+  font-size: 0.95rem;
   font-weight: 400;
-  opacity: 0.8;
 }
 
 .footer-links {
   display: flex;
   justify-content: center;
   gap: 32px;
-  flex-wrap: wrap;
 }
 
 .footer-links a {
-  color: #CB9870;
+  color: #FDFDFD;
   text-decoration: none;
   font-weight: 500;
-  transition: all 0.3s ease;
-  opacity: 0.7;
+  transition: color 0.2s;
 }
 
 .footer-links a:hover {
-  opacity: 1;
-  color: #ffffff;
-  transform: translateY(-2px);
+  color: #FF6B00;
 }
 
-/* ===== ANIMACIONES ===== */
-@keyframes expandWidth {
-  from { width: 0; opacity: 0; }
-  to { width: 100%; opacity: 1; }
-}
-
-/* ===== RESPONSIVE ===== */
-@media (max-width: 968px) {
+@media (max-width: 768px) {
   .content-wrapper {
     grid-template-columns: 1fr;
     gap: 40px;
@@ -590,68 +466,16 @@ const filteredCategoriesForWheel = computed(() => {
   }
 
   .page-title {
-    font-size: 2.3rem;
-  }
-
-  .hero-section {
-    padding: 40px 20px 30px;
-  }
-}
-
-@media (max-width: 768px) {
-  .page-title {
     font-size: 2rem;
   }
 
-  .page-subtitle {
-    font-size: 1rem;
-  }
-
-  .intro-section, .filters-section {
-    padding: 20px;
-  }
-
-  .filter-chips {
-    gap: 10px;
-  }
-
-  .chip {
-    padding: 8px 14px;
-    font-size: 0.8rem;
+  .legend-grid {
+    grid-template-columns: 1fr;
   }
 
   .footer-links {
     flex-direction: column;
     gap: 12px;
-  }
-
-  .steps-list {
-    flex-direction: column;
-    align-items: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .page-title {
-    font-size: 1.6rem;
-  }
-
-  .hero-badge {
-    font-size: 0.7rem;
-  }
-
-  .filters-header {
-    flex-direction: column;
-    gap: 8px;
-    text-align: center;
-  }
-
-  .filter-actions {
-    flex-direction: column;
-  }
-
-  .action-button {
-    justify-content: center;
   }
 }
 </style>

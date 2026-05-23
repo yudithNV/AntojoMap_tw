@@ -1,33 +1,34 @@
 # AnjotoMap
 
-Proyecto con Frontend (Vue 3 + Vite) y Backend (Node.js + Express).
+Plataforma de comida basada en ubicación. Usuarios pueden explorar restaurantes, ver menús y guardar favoritos. Restaurantes pueden gestionar sus menús y perfiles.
 
-## Cómo usar Backend ⚙️
+**Stack:**
+- Frontend: Vue 3 + Vite + Vue Router + Pinia
+- Backend: Node.js + Express 
+- Base de Datos: PostgreSQL (Supabase)
 
-```sh
+---
+
+## 🚀 Inicio Rápido
+
+### Backend
+
+```bash
 cd backend
-```
-1. instalar dependencias
-```sh
 npm install
+npm install express cors dotenv @supabase/supabase-js bcryptjs jsonwebtoken
+npm start
 ```
-2. ejecutar backend
-```sh
-node index.js
-```
-## Cómo usar el Frontend 💻 
 
-```sh
+El backend estará en `http://localhost:3000`
+
+### Frontend
+
+```bash
 cd frontend-antojomap
-```
-1. instalar dependencias
-```sh
 npm install
-```
-```sh
-npm install lucide-vue-next
-```
-2. ejecutar frontend
-```sh
+npm install leaflet lucide-vue-next vue-router
 npm run dev
 ```
+
+El frontend estará en `http://localhost:5173`
