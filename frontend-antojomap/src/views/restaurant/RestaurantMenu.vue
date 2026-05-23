@@ -1,7 +1,6 @@
 <template>
   <DashboardLayout>
     <div class="menu-container">
-      <!-- Encabezado -->
       <header class="menu-header">
         <div class="header-text">
           <h1>Menú del Restaurante</h1>
@@ -14,7 +13,6 @@
         </div>
       </header>
 
-      <!-- Loading/Empty states -->
       <div v-if="cargando" class="loading-state">
         <p>Cargando menú...</p>
       </div>
@@ -25,86 +23,91 @@
         <button class="btn-create" @click="showForm = true">Crear Menú</button>
       </div>
 
-      <!-- Formulario -->
-      <div v-if="showForm" class="form-container">
+      <div v-if="showForm" class="form-overlay">
         <div class="form-card">
           <div class="form-header">
             <h2>{{ editingId ? 'Editar Menú' : 'Agregar Menú' }}</h2>
             <button class="close-btn" @click="closeForm">×</button>
           </div>
 
+          <div class="tabs-nav">
+            <button class="tab-btn" :class="{ active: formMenu.tipo === 'plato_suelto' }" @click="formMenu.tipo = 'plato_suelto'">Plato Individual</button>
+            <button class="tab-btn" :class="{ active: formMenu.tipo === 'almuerzo_completo' }" @click="formMenu.tipo = 'almuerzo_completo'">Almuerzo Completo</button>
+          </div>
+
           <form @submit.prevent="guardarMenu">
-            <!-- Tipo de menú -->
-            <div class="meal-option">
-              <label class="radio-label">
-                <input v-model="formMenu.tipo" type="radio" value="plato_suelto" />
-                Plato Suelto
-              </label>
-              <label class="radio-label">
-                <input v-model="formMenu.tipo" type="radio" value="almuerzo_completo" />
-                Almuerzo Completo (Entrada + Principal + Postre)
-              </label>
+            <!-- Upload area -->
+            <div class="upload-area">
+              <img v-if="formMenu.foto_url" :src="formMenu.foto_url" class="upload-preview" />
+              <div v-else class="upload-placeholder">
+                <ImagePlus :size="32" stroke-width="1.5" />
+                <p>Subir foto {{ formMenu.tipo === 'plato_suelto' ? 'del plato' : 'del menú completo' }}</p>
+                <span>PNG, JPG hasta 5MB</span>
+              </div>
+              <input v-model="formMenu.foto_url" type="url" placeholder="O pega una URL de imagen" class="url-input" />
             </div>
 
-            <label>
-              Nombre del Menú *
-              <input v-model="formMenu.nombre" type="text" required />
-            </label>
+            <template v-if="formMenu.tipo === 'plato_suelto'">
+              <div class="field">
+                <label>Título del Plato</label>
+                <input v-model="formMenu.nombre" type="text" placeholder="Ej. Hamburguesa Clásica" required />
+              </div>
+              <div class="field">
+                <label>Precio</label>
+                <div class="price-input">
+                  <span>Bs</span>
+                  <input v-model="formMenu.precio" type="number" step="0.01" min="0" placeholder="0.00" required />
+                </div>
+              </div>
+              <div class="field">
+                <label>Detalle de cocción o ingredientes</label>
+                <textarea v-model="formMenu.descripcion" rows="3" placeholder="Describe los ingredientes y preparación..." />
+              </div>
+            </template>
 
-            <label>
-              Precio *
-              <input v-model="formMenu.precio" type="number" step="0.01" min="0" required />
-            </label>
-
-            <label>
-              Imagen (URL) *
-              <input v-model="formMenu.foto_url" type="url" required />
-            </label>
-
-            <label>
-              Descripción
-              <textarea v-model="formMenu.descripcion" rows="3" />
-            </label>
-
-            <!-- Campos para almuerzo_completo -->
-            <template v-if="formMenu.tipo === 'almuerzo_completo'">
-              <hr />
-              <h3>Componentes del Almuerzo</h3>
-              
-              <label>
-                Entrada (nombre) *
-                <input v-model="formMenu.entrada.nombre" type="text" required />
-              </label>
-
-              <label>
-                Principal (nombre) *
-                <input v-model="formMenu.principal.nombre" type="text" required />
-              </label>
-
-              <label>
-                Postre (nombre) *
-                <input v-model="formMenu.postre.nombre" type="text" required />
-              </label>
+            <template v-else>
+              <div class="field">
+                <label>Precio del Almuerzo</label>
+                <div class="price-input">
+                  <span>Bs</span>
+                  <input v-model="formMenu.precio" type="number" step="0.01" min="0" placeholder="0.00" required />
+                </div>
+              </div>
+              <div class="meal-section">
+                <div class="meal-section-title">🍴 Entrada</div>
+                <div class="field"><label>Título</label><input v-model="formMenu.entrada.nombre" placeholder="Ej. Sopa de tomate" required /></div>
+                <div class="field"><label>Detalle o ingredientes</label><textarea v-model="formMenu.entrada.descripcion" placeholder="Breve descripción..." rows="2" /></div>
+              </div>
+              <div class="meal-section">
+                <div class="meal-section-title">🍗 Plato Principal</div>
+                <div class="field"><label>Título</label><input v-model="formMenu.principal.nombre" placeholder="Ej. Milanesa con puré" required /></div>
+                <div class="field"><label>Detalle o ingredientes</label><textarea v-model="formMenu.principal.descripcion" placeholder="Breve descripción..." rows="2" /></div>
+              </div>
+              <div class="meal-section">
+                <div class="meal-section-title">🍰 Postre</div>
+                <div class="field"><label>Título</label><input v-model="formMenu.postre.nombre" placeholder="Ej. Flan casero" required /></div>
+              </div>
+              <div class="field">
+                <label>Nombre del almuerzo</label>
+                <input v-model="formMenu.nombre" placeholder="Ej. Almuerzo Ejecutivo" required />
+              </div>
             </template>
 
             <label class="checkbox-label">
               <input v-model="formMenu.disponible" type="checkbox" />
-              Disponible
+              <span>Disponible para venta</span>
             </label>
 
             <div class="form-actions">
-              <button type="submit" class="btn-save" :disabled="guardando">
-                {{ guardando ? 'Guardando...' : editingId ? 'Actualizar' : 'Crear Menú' }}
-              </button>
+              <button type="submit" class="btn-save" :disabled="guardando">{{ guardando ? 'Guardando...' : 'Guardar y Publicar' }}</button>
               <button type="button" class="btn-cancel" @click="closeForm">Cancelar</button>
             </div>
           </form>
         </div>
       </div>
 
-      <!-- Grid de Items -->
       <div v-else-if="!cargando && items.length > 0" class="items-grid">
-        <div v-for="item in items" :key="item.id" :class="['item-card', item.tipo]">
+        <div v-for="item in items" :key="item.id" :class="['item-card', item.tipo, { 'not-available': !item.disponible }]">
           <div v-if="!item.disponible" class="item-badge unavailable">No disponible</div>
           <div v-else class="item-badge">{{ item.tipo === 'plato_suelto' ? '🍽️ Plato' : '🥗 Almuerzo' }}</div>
           <div class="item-image">
@@ -115,7 +118,6 @@
             <p class="price">Bs {{ item.precio }}</p>
             <p v-if="item.descripcion" class="description">{{ item.descripcion }}</p>
             
-            <!-- Mostrar componentes si es almuerzo_completo -->
             <div v-if="item.tipo === 'almuerzo_completo'" class="meal-breakdown">
               <div v-if="item.entrada_nombre" class="meal-item">
                 <strong>Entrada:</strong> {{ item.entrada_nombre }}
@@ -146,7 +148,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import DashboardLayout from '../../components/DashboardLayout.vue'
-import { Plus, Pencil, Trash2 } from 'lucide-vue-next'
+import { Plus, Pencil, Trash2, ImagePlus } from 'lucide-vue-next'
 import { ref, onMounted } from 'vue'
 import { almuerzosService } from '../../services/menu.service.js'
 
@@ -289,7 +291,6 @@ onMounted(async () => {
 })
 </script>
 
-
 <style scoped>
 .menu-container {
   padding: 20px;
@@ -306,7 +307,7 @@ onMounted(async () => {
 }
 
 .header-text h1 {
-  color: var(--plum);
+  color: var(--plum, #4a2c2c);
   font-size: 2.2rem;
   margin: 0;
   font-weight: 800;
@@ -338,23 +339,13 @@ onMounted(async () => {
 }
 
 .add-plate-btn {
-  background-color: #f2a359;
-  box-shadow: 0 4px 15px rgba(242, 163, 89, 0.3);
+  background: linear-gradient(135deg, #D4AF37 0%, #E0A96D 100%);
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
 }
 
 .add-plate-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(242, 163, 89, 0.4);
-}
-
-.add-menu-btn {
-  background-color: #7e57c2;
-  box-shadow: 0 4px 15px rgba(126, 87, 194, 0.3);
-}
-
-.add-menu-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(126, 87, 194, 0.4);
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
 }
 
 .loading-state, .empty-state {
@@ -381,13 +372,6 @@ onMounted(async () => {
   font-size: 1.1rem;
 }
 
-.empty-buttons {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
 .btn-create {
   background-color: #f2a359;
   color: white;
@@ -403,14 +387,6 @@ onMounted(async () => {
   background-color: #e0933e;
 }
 
-.btn-create.alt {
-  background-color: #7e57c2;
-}
-
-.btn-create.alt:hover {
-  background-color: #6d46b6;
-}
-
 .form-container {
   background: rgba(0, 0, 0, 0.5);
   position: fixed;
@@ -424,65 +400,82 @@ onMounted(async () => {
   z-index: 100;
   padding: 20px;
 }
+.form-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+
 
 .form-card {
   background: white;
   border-radius: 20px;
-  max-width: 600px;
   width: 100%;
+  max-width: 480px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
 }
 
 .form-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px;
+  padding: 20px 24px;
   border-bottom: 1px solid #f0f0f0;
 }
 
 .form-header h2 {
   margin: 0;
-  color: var(--plum);
-  font-size: 1.5rem;
+  color: var(--plum, #4a2c2c);
+  font-size: 1.3rem;
 }
 
 .close-btn {
-  background: none;
-  border: none;
-  font-size: 28px;
-  cursor: pointer;
-  color: #999;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: none; border: none; font-size: 24px;
+  cursor: pointer; color: #999; line-height: 1;
 }
 
 .close-btn:hover {
   color: #333;
 }
 
+/* Tabs Nav Styling */
+.tabs-nav {
+  display: flex;
+  gap: 10px;
+  padding: 10px 24px;
+  background: #fdfcfb;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: #f1f4f9;
+  color: #555;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-btn.active {
+  background-color: #f2a359;
+  color: white;
+}
+
 form {
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-}
-
-form h3 {
-  margin: 12px 0 12px 0;
-  color: var(--plum);
-  font-size: 1.1rem;
-}
-
-form hr {
-  border: none;
-  border-top: 1px solid #f0f0f0;
-  margin: 12px 0;
+  gap: 16px;
 }
 
 form label {
@@ -492,26 +485,99 @@ form label {
   font-weight: 600;
   color: #4a2c2c;
 }
+.upload-area {
+  border: 2px dashed #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.upload-placeholder {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #aaa;
+}
+
+.upload-placeholder p { margin: 0; font-weight: 500; color: #666; }
+.upload-placeholder span { font-size: 0.8rem; }
+
+.upload-preview {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+.url-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  border-top: 1px solid #f0f0f0;
+  font-size: 0.85rem;
+  outline: none;
+  box-sizing: border-box;
+  color: #666;
+}
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 0.88rem; font-weight: 600; color: #4a2c2c; }
+.field input, .field textarea {
+  padding: 12px 14px;
+  border: 1.5px solid #eee;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.field input:focus, .field textarea:focus { border-color: #f2a359; }
+.field textarea { resize: vertical; }
+
+.price-input {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid #eee;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.price-input span {
+  padding: 12px 14px;
+  background: #f9f9f9;
+  color: #888;
+  font-weight: 600;
+  border-right: 1px solid #eee;
+}
+.price-input input {
+  flex: 1; border: none; padding: 12px 14px;
+  font-size: 0.95rem; outline: none;
+}
+.meal-section {
+  background: #fafafa;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.meal-section-title {
+  font-weight: 700;
+  color: var(--plum);
+  font-size: 0.95rem;
+}
 
 .checkbox-label {
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 8px;
+  font-size: 0.9rem;
   font-weight: 500;
-  cursor: pointer;
-}
-
-.checkbox-label input[type="checkbox"] {
-  margin: 0;
   cursor: pointer;
 }
 
 form input[type="text"],
 form input[type="number"],
 form input[type="url"],
-form textarea,
-form select {
+form textarea {
   padding: 12px 14px;
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -522,8 +588,7 @@ form select {
 }
 
 form input:focus,
-form textarea:focus,
-form select:focus {
+form textarea:focus {
   border-color: #f2a359;
 }
 
@@ -531,47 +596,35 @@ form textarea {
   resize: vertical;
 }
 
-.meal-option {
+.meal-components {
   display: flex;
   flex-direction: column;
   gap: 12px;
   background: #fafafa;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px dashed #ddd;
 }
 
-.radio-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  margin: 0;
-}
-
-.radio-label input[type="radio"] {
-  margin: 0;
+.meal-group-header {
+  font-weight: 700;
+  color: var(--plum, #4a2c2c);
+  margin-bottom: 4px;
 }
 
 .form-actions {
   display: flex;
+  flex-direction: column;
   gap: 12px;
   margin-top: 12px;
 }
 
-.btn-save, .btn-cancel {
-  flex: 1;
-  padding: 12px 20px;
-  border: none;
-  border-radius: 8px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
 .btn-save {
-  background-color: #f2a359;
-  color: white;
+  width: 100%; padding: 14px;
+  background: #f2a359; color: white;
+  border: none; border-radius: 12px;
+  font-size: 1rem; font-weight: 700; cursor: pointer;
+  transition: background 0.2s;
 }
 
 .btn-save:hover:not(:disabled) {
@@ -584,10 +637,11 @@ form textarea {
 }
 
 .btn-cancel {
-  background-color: #f0f0f0;
-  color: #555;
+  width: 100%; padding: 12px;
+  background: none; color: #888;
+  border: none; font-size: 0.95rem;
+  cursor: pointer; font-weight: 500;
 }
-
 .btn-cancel:hover {
   background-color: #e0e0e0;
 }
@@ -641,7 +695,7 @@ form textarea {
 .item-info h3 {
   margin: 12px 0 4px;
   font-size: 1.1rem;
-  color: var(--plum);
+  color: var(--plum, #4a2c2c);
 }
 
 .price {
@@ -675,7 +729,7 @@ form textarea {
 }
 
 .meal-item strong {
-  color: var(--plum);
+  color: var(--plum, #4a2c2c);
 }
 
 .item-actions {

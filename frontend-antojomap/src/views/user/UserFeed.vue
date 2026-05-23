@@ -32,7 +32,7 @@
         @click="clearFilter"
       >Todos</button>
       <button
-        v-for="cat in categories"
+        v-for="cat in restaurantesStore.categorias"
         :key="cat"
         class="category-chip"
         :class="{ active: selectedCategory === cat }"
@@ -46,7 +46,7 @@
         v-for="restaurant in filteredRestaurants"
         :key="restaurant.id"
         :restaurant="restaurant"
-        linkTo="/user/menu"
+        :linkTo="`/user/menu/${restaurant.id}`"
       />
       <div v-if="filteredRestaurants.length === 0" class="no-restaurants">
         <p>No encontramos restaurantes con ese filtro.</p>
@@ -61,54 +61,26 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import DashboardLayout from '../../components/DashboardLayout.vue'
 import RestaurantCard from '../../components/RestaurantCard.vue'
-import { restaurantesService } from '../../services/menu.service.js'
+import { useRestaurantesStore } from '../../stores/restaurantes.store.js'
+import { useFavoritosStore } from '../../stores/favoritos.store.js'
 
 const route = useRoute()
 const router = useRouter()
+const restaurantesStore = useRestaurantesStore()
+const favoritosStore = useFavoritosStore()
 
 const selectedCategory = ref(route.query.categoria || '')
 const searchQuery = ref('')
-const restaurants = ref([])
-const categories = ref([])
-const cargando = ref(true)
 
 const filteredRestaurants = computed(() => {
-  return restaurants.value.filter(r => {
-    const catNombre = r.restaurante_categorias?.[0]?.categorias_restaurante?.nombre || ''
+  return restaurantesStore.restaurantes.filter(r => {
+    const catNombre = r.category || ''
     const matchCategory = !selectedCategory.value || catNombre === selectedCategory.value
     const q = searchQuery.value.toLowerCase()
     const matchSearch = !q || r.nombre.toLowerCase().includes(q) || catNombre.toLowerCase().includes(q)
     return matchCategory && matchSearch
   })
 })
-
-const cargarRestaurantes = async () => {
-  try {
-    cargando.value = true
-    const { restaurantes: data } = await restaurantesService.getRestaurantes(1, 100)
-    restaurants.value = (data || []).map(r => ({
-      ...r,
-      name: r.nombre,
-      category: r.restaurante_categorias?.[0]?.categorias_restaurante?.nombre || 'Sin categoría',
-      image: r.foto_portada || '',
-      address: r.direccion,
-      rating: r.puntuacion_promedio || '—',
-    }))
-  } catch (error) {
-    console.error('Error cargando restaurantes:', error)
-  } finally {
-    cargando.value = false
-  }
-}
-
-const cargarCategorias = async () => {
-  try {
-    const data = await restaurantesService.getCategorias()
-    categories.value = (data || []).map(c => c.nombre)
-  } catch (error) {
-    console.error('Error cargando categorías:', error)
-  }
-}
 
 const selectCategory = (category) => {
   selectedCategory.value = selectedCategory.value === category ? '' : category
@@ -127,8 +99,9 @@ const clearAll = () => {
 }
 
 onMounted(() => {
-  cargarCategorias()
-  cargarRestaurantes()
+  restaurantesStore.cargarRestaurantes()
+  restaurantesStore.cargarCategorias()
+  favoritosStore.cargarFavoritos()
 })
 </script>
 
@@ -155,18 +128,20 @@ onMounted(() => {
 
 .btn-ruleta {
   padding: 10px 20px;
-  background: #FF6B00;
+  background: linear-gradient(135deg, #8A9A8B 0%, #7D8F81 100%); /* Verde Salvia */
   color: white;
   border: none;
   border-radius: 20px;
   font-weight: 600;
   font-size: 0.95rem;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(125, 143, 129, 0.3);
 }
 
 .btn-ruleta:hover {
-  background: #E05F00;
+  background: linear-gradient(135deg, #7D8F81 0%, #657869 100%);
+  transform: translateY(-2px);
 }
 
 .active-filter {
@@ -174,8 +149,8 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  background-color: rgba(255, 107, 0, 0.08);
-  border-left: 4px solid #FF6B00;
+  background-color: rgba(125, 143, 129, 0.1); /* Verde suave */
+  border-left: 4px solid #7D8F81;
   border-radius: 8px;
   color: #212121;
   font-weight: 500;
@@ -183,7 +158,7 @@ onMounted(() => {
 }
 
 .active-filter strong {
-  color: #FF6B00;
+  color: #481827; /* Vino */
 }
 
 .search-bar {
@@ -203,7 +178,7 @@ onMounted(() => {
 }
 
 .search-input:focus {
-  border-color: #FF6B00;
+  border-color: #7D8F81; /* Verde Salvia */
 }
 
 .category-filter {
@@ -218,9 +193,9 @@ onMounted(() => {
 .category-chip {
   padding: 8px 16px;
   border-radius: 20px;
-  border: 1.5px solid #FF6B00;
+  border: 1.5px solid #D893A1;
   background: transparent;
-  color: #FF6B00;
+  color: #D893A1; /* Rosado */
   font-weight: 600;
   font-size: 0.88rem;
   cursor: pointer;
@@ -229,13 +204,14 @@ onMounted(() => {
 }
 
 .category-chip:hover {
-  background: rgba(255, 107, 0, 0.08);
+  background: rgba(216, 147, 161, 0.08); /* Rosado suave */
 }
 
 .category-chip.active {
-  background: #FF6B00;
+  background: #481827; /* Vino */
   color: white;
-  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+  border: 1.5px solid #481827;
+  box-shadow: 0 4px 12px rgba(72, 24, 39, 0.3);
 }
 
 .restaurants-grid {
@@ -265,17 +241,19 @@ onMounted(() => {
 
 .clear-filter-btn {
   padding: 8px 16px;
-  background: #FF6B00;
+  background: linear-gradient(135deg, #8A9A8B 0%, #7D8F81 100%); /* Degradado Verde */
   color: white;
   border: none;
   border-radius: 8px;
   font-weight: 600;
   font-size: 0.85rem;
   cursor: pointer;
+  transition: all 0.3s;
 }
 
 .clear-filter-btn:hover {
-  background: #E05F00;
+  background: linear-gradient(135deg, #7D8F81 0%, #657869 100%);
+  transform: translateY(-2px);
 }
 
 @media (max-width: 1024px) {

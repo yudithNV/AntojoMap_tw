@@ -94,7 +94,9 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { UtensilsCrossed, Eye, EyeOff, Ham } from 'lucide-vue-next'
 import { authService } from '../services/auth.service.js'
+import { useAuthStore } from '../stores/auth.store.js'
 
+const authStore = useAuthStore()
 const router = useRouter()
 const showPassword = ref(false)
 const isLoading = ref(false)
@@ -120,19 +122,18 @@ const handleLogin = async () => {
   try {
     const response = await authService.login(email, password)
     
-    localStorage.setItem('token', response.token)
-    localStorage.setItem('user_id', response.usuario.id)
-    localStorage.setItem('user_email', response.usuario.email)
-    localStorage.setItem('user_name', response.usuario.nombre)
-    
-    // Normalizar rol: RESTAURANTE → restaurant, ADMIN → admin, USER → user
     let normalizedRole = response.usuario.rol.toLowerCase()
-    if (normalizedRole === 'restaurante') {
-      normalizedRole = 'restaurant'
-    }
-    localStorage.setItem('user_role', normalizedRole)
+    if (normalizedRole === 'restaurante') normalizedRole = 'restaurant'
 
-    // Si es restaurante, guardar el restaurante_id
+    authStore.setUsuario({
+      token: response.token,
+      id: response.usuario.id,
+      email: response.usuario.email,
+      nombre: response.usuario.nombre,
+      rol: normalizedRole,
+      foto_perfil: response.usuario.foto_perfil || ''
+    })
+
     if (response.usuario.restaurante_id) {
       localStorage.setItem('restaurante_id', response.usuario.restaurante_id)
     }

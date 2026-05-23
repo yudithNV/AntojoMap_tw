@@ -35,44 +35,31 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { UtensilsCrossed, Heart, MapPin } from 'lucide-vue-next'
-import { favoritosService } from '../services/menu.service.js'
+import { useFavoritosStore } from '../stores/favoritos.store.js'
+
 
 const props = defineProps({
   restaurant: { type: Object, required: true },
-  linkTo: { type: String, default: '/login' }
 })
 
 const router = useRouter()
+const favoritosStore = useFavoritosStore()
 const imgError = ref(false)
-const isFavorite = ref(false)
-const likeId = ref(null)
 
-onMounted(async () => {
-  try {
-    const likes = await favoritosService.misFavoritos()
-    const found = (likes || []).find(l => l.restaurante_id === props.restaurant.id)
-    if (found) {
-      isFavorite.value = true
-      likeId.value = found.id
-    }
-  } catch (e) {}
-})
+const isFavorite = computed(() => favoritosStore.esFavorito(props.restaurant.id))
 
-const goToMenu = () => router.push(props.linkTo)
+const goToMenu = () => router.push(`/user/menu/${props.restaurant.id}`)
 
 const toggleFavorite = async () => {
   try {
     if (isFavorite.value) {
-      await favoritosService.removerFavorito(likeId.value)
-      isFavorite.value = false
-      likeId.value = null
+      const likeId = favoritosStore.getLikeId(props.restaurant.id)
+      await favoritosStore.remover(likeId, props.restaurant.id)
     } else {
-      const data = await favoritosService.agregarFavorito(props.restaurant.id)
-      isFavorite.value = true
-      likeId.value = data.id
+      await favoritosStore.agregar(props.restaurant.id)
     }
   } catch (e) {
     console.error('Error toggling favorito:', e)

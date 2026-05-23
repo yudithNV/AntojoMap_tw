@@ -116,8 +116,8 @@ const irAuleta = () => {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background-color: rgba(255, 107, 0, 0.08);
-  color: #FF6B00;
+  background-color: rgba(230, 81, 0, 0.1); /* Un naranja más profundo */
+  color: #E65100; /* Naranja intenso, no neón */
   padding: 8px 16px;
   border-radius: 20px;
   font-size: 0.8rem;
@@ -138,7 +138,7 @@ h1 {
 }
 
 .highlight {
-  color: #FF6B00;
+  color: #E65100;
   text-decoration: none;
   position: relative;
 }
@@ -150,7 +150,7 @@ h1 {
   left: 0;
   right: 0;
   height: 3px;
-  background-color: #FF6B00;
+  background-color: #E65100;
   border-radius: 2px;
 }
 
@@ -184,15 +184,14 @@ h1 {
 }
 
 .btn-primary {
-  background-color: #FF6B00;
-  color: white;
-  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+  background-color: #F57C00; /* Un naranja vibrante y elegante */
+  box-shadow: 0 4px 12px rgba(230, 81, 0, 0.3);
 }
 
 .btn-primary:hover {
-  background-color: #E05F00;
+  background-color: #E65100; /* Se oscurece al pasar el mouse */
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(255, 107, 0, 0.4);
+  box-shadow: 0 6px 16px rgba(230, 81, 0, 0.4);
 }
 
 .btn-primary:active {
@@ -200,15 +199,14 @@ h1 {
 }
 
 .btn-secondary {
-  background-color: #FDFDFD;
-  color: #FF6B00;
-  border: 1px solid #FF6B00;
+  background-color: #F57C00; /* Un naranja vibrante y elegante */
+  box-shadow: 0 4px 12px rgba(230, 81, 0, 0.3);
 }
 
 .btn-secondary:hover {
-  background-color: rgba(255, 107, 0, 0.04);
-  border-color: #E05F00;
-  color: #E05F00;
+  background-color: #E65100; /* Se oscurece al pasar el mouse */
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(230, 81, 0, 0.4);
 }
 
 .social-proof {
@@ -221,7 +219,7 @@ h1 {
   font-size: 1.8rem;
   display: inline-flex;
   align-items: center;
-  color: #FFC107;
+  color: #F57C00;
 }
 
 .social-text {
@@ -243,7 +241,7 @@ h1 {
   border-radius: 18px;
   overflow: hidden;
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.16);
-  border: 1px solid rgba(255, 107, 0, 0.14);
+  border: 1px solid rgba(230, 81, 0, 0.2);
 }
 
 .footer {
@@ -278,7 +276,7 @@ h1 {
 }
 
 .footer-links a:hover {
-  color: #FF6B00;
+  color: #E65100;
 }
 
 
