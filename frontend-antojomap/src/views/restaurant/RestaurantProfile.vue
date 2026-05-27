@@ -29,13 +29,14 @@
           </div>
         </div>
 
-        <div v-if="mensaje" :class="['alert', mensajeType]">{{ mensaje }}</div>
+        <!-- ELIMINADO el div de mensaje de éxito -->
 
+        <!-- Botón Guardar cambios -->
         <button
           class="btn-guardar"
           :class="{ 'btn-disabled': !hasChanges || guardando }"
           :disabled="!hasChanges || guardando"
-          @click="guardar"
+          @click="openSaveModal"
         >
           <span v-if="!guardando">💾 Guardar cambios</span>
           <span v-else>Guardando...</span>
@@ -181,6 +182,55 @@
 
       </div>
     </div>
+
+    <!-- ===== MODAL DE CONFIRMACIÓN ===== -->
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div v-if="showSaveProfileModal" class="modal-overlay" @click.self="closeSaveModal">
+          <div class="modal-card">
+            <div class="modal-icon">
+              <div class="icon-circle-save">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+              </div>
+            </div>
+            <h2 class="modal-title">¿Guardar los cambios del perfil?</h2>
+            <p class="modal-message">
+              La información de tu establecimiento se actualizará y los usuarios verán los nuevos datos en la aplicación.
+            </p>
+            <div class="modal-actions">
+              <button class="modal-btn cancel" @click="closeSaveModal">
+                No, cancelar
+              </button>
+              <button class="modal-btn confirm-save" @click="confirmSave">
+                Sí, guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- ===== TOAST FLOTANTE DE ÉXITO ===== -->
+    <Teleport to="body">
+      <Transition name="toast-slide">
+        <div v-if="showSuccessToast" class="success-toast">
+          <div class="toast-content">
+            <div class="toast-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div class="toast-message">
+              <strong>¡Cambios guardados exitosamente!</strong>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </DashboardLayout>
 </template>
 
@@ -197,9 +247,36 @@ import { restaurantesService } from '@/services/menu.service.js'
 const userEmail = ref(localStorage.getItem('user_email') || '')
 const restauranteId = ref(localStorage.getItem('restaurante_id') || '')
 const guardando = ref(false)
-const mensaje = ref('')
-const mensajeType = ref('')
 const hasChanges = ref(false)
+
+// ===== MODAL DE CONFIRMACIÓN =====
+const showSaveProfileModal = ref(false)
+
+// ===== TOAST DE ÉXITO =====
+const showSuccessToast = ref(false)
+let toastTimeout = null
+
+const showToast = () => {
+  showSuccessToast.value = true
+  if (toastTimeout) clearTimeout(toastTimeout)
+  toastTimeout = setTimeout(() => {
+    showSuccessToast.value = false
+  }, 3000)
+}
+
+const openSaveModal = () => {
+  if (!hasChanges.value) return
+  showSaveProfileModal.value = true
+}
+
+const closeSaveModal = () => {
+  showSaveProfileModal.value = false
+}
+
+const confirmSave = async () => {
+  showSaveProfileModal.value = false
+  await guardar()
+}
 
 // Categorías
 const categorias = ref([])
@@ -303,8 +380,6 @@ const guardarHorarios = async () => {
 
 onMounted(async () => {
   if (!restauranteId.value) {
-    mensaje.value = 'Error: No se pudo obtener el ID del restaurante.'
-    mensajeType.value = 'alert-error'
     return
   }
 
@@ -328,8 +403,7 @@ onMounted(async () => {
       categoriaActual.value = catActuales.map(rc => rc.categorias_restaurante.nombre).join(', ')
     }
   } catch (e) {
-    mensaje.value = 'Error al cargar datos: ' + e.message
-    mensajeType.value = 'alert-error'
+    console.error('Error al cargar datos:', e)
   }
 
   try {
@@ -373,20 +447,18 @@ onMounted(async () => {
   }
 })
 
+// Función de guardado SIN mensaje interno (solo Toast)
 const guardar = async () => {
   if (!hasChanges.value) return
   guardando.value = true
-  mensaje.value = ''
   try {
     await api.put(`/restaurantes/${restauranteId.value}`, form.value)
-    mensaje.value = '✅ Cambios guardados exitosamente'
-    mensajeType.value = 'alert-success'
     Object.assign(initialForm, form.value)
     hasChanges.value = false
-    setTimeout(() => { mensaje.value = '' }, 3000)
+    // Mostrar Toast flotante en lugar del mensaje interno
+    showToast()
   } catch (e) {
-    mensaje.value = '❌ Error al guardar: ' + e.message
-    mensajeType.value = 'alert-error'
+    console.error('Error al guardar:', e)
   } finally {
     guardando.value = false
   }
@@ -410,8 +482,6 @@ const guardar = async () => {
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-  /* position: sticky;  <-- Comenta o borra esta línea */
-  /* top: 24px;         <-- Comenta o borra esta línea */
 }
 
 .cover-preview {
@@ -435,10 +505,6 @@ const guardar = async () => {
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
 .preview-row { display: flex; align-items: center; gap: 6px; font-size: 0.83rem; color: #888; margin-top: 6px; }
-
-.alert { margin: 16px 20px 0; padding: 12px 16px; border-radius: 8px; font-size: 0.88rem; font-weight: 500; }
-.alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-.alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
 
 .btn-guardar {
   display: block; width: calc(100% - 40px);
@@ -527,10 +593,175 @@ const guardar = async () => {
 .coord-label { font-size: 0.82rem; font-weight: 600; color: #555; }
 .coord-value { font-family: monospace; color: var(--plum); font-weight: 600; font-size: 0.88rem; }
 
+/* ===== ESTILOS DEL MODAL DE CONFIRMACIÓN ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-card {
+  background: white;
+  border-radius: 1.5rem;
+  padding: 1.75rem;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  text-align: center;
+  position: relative;
+  z-index: 1001;
+}
+
+.modal-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.icon-circle-save {
+  background-color: #fff3e6;
+  border-radius: 9999px;
+  padding: 0.75rem;
+  color: #8B2E34;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.modal-message {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.modal-btn {
+  padding: 0.6rem 1.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.modal-btn.cancel {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.modal-btn.cancel:hover {
+  background-color: #e5e7eb;
+}
+
+.modal-btn.confirm-save {
+  background-color: #8B2E34;
+  color: white;
+}
+
+.modal-btn.confirm-save:hover {
+  background-color: #722328;
+}
+
+/* Transiciones del modal */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.modal-fade-enter-active .modal-card,
+.modal-fade-leave-active .modal-card {
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+.modal-fade-enter-from .modal-card,
+.modal-fade-leave-to .modal-card {
+  transform: scale(0.95);
+  opacity: 0;
+}
+
+/* ===== TOAST FLOTANTE ===== */
+.success-toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 1100;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 12px 20px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+  min-width: 260px;
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toast-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background-color: #dcfce7;
+  border-radius: 50%;
+  color: #16a34a;
+}
+
+.toast-message strong {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #166534;
+  display: block;
+}
+
+/* Animación del Toast */
+.toast-slide-enter-active,
+.toast-slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-slide-enter-from,
+.toast-slide-leave-to {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
 @media (max-width: 900px) {
   .profile-wrapper { grid-template-columns: 1fr; }
   .profile-left { position: static; }
   .form-row { grid-template-columns: 1fr; }
   .horario-row { flex-direction: column; align-items: flex-start; }
+  .success-toast { top: 16px; right: 16px; left: 16px; min-width: auto; }
 }
 </style>

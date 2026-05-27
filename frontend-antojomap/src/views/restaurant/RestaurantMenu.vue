@@ -75,7 +75,7 @@
               <button class="tab-btn" :class="{ active: formMenu.tipo === 'almuerzo_completo' }" @click="formMenu.tipo = 'almuerzo_completo'">Almuerzo Completo</button>
             </div>
 
-            <form @submit.prevent="handleFormSubmit">
+            <form @submit.prevent="saveMenuDirect">
               <div class="upload-area">
                 <img v-if="formMenu.foto_url" :src="formMenu.foto_url" class="upload-preview" />
                 <div v-else class="upload-placeholder">
@@ -147,31 +147,6 @@
       </Transition>
     </Teleport>
 
-    <!-- ===== MODAL DE CONFIRMACIÓN PARA GUARDAR ===== -->
-    <Teleport to="body">
-      <Transition name="modal-fade">
-        <div v-if="showSaveConfirmModal" class="modal-overlay confirm-save-overlay" @click.self="closeSaveConfirmModal">
-          <div class="modal-card confirm-save-card">
-            <div class="modal-icon">
-              <div class="icon-circle-save">
-                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                  <polyline points="7 3 7 8 15 8"></polyline>
-                </svg>
-              </div>
-            </div>
-            <h2 class="modal-title">¿Guardar los cambios en el menú?</h2>
-            <p class="modal-message">El menú se actualizará inmediatamente y los clientes verán los nuevos platos en la aplicación.</p>
-            <div class="modal-actions">
-              <button class="modal-btn cancel" @click="closeSaveConfirmModal">No</button>
-              <button class="modal-btn confirm-save" @click="confirmSave">Sí, guardar</button>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
-
     <!-- ===== MODAL DE CONFIRMACIÓN PARA ELIMINAR ===== -->
     <Teleport to="body">
       <Transition name="modal-fade">
@@ -196,6 +171,22 @@
         </div>
       </Transition>
     </Teleport>
+
+    <!-- ===== TOAST DE ÉXITO ===== -->
+    <Transition name="toast-slide">
+      <div v-if="showSuccessToast" class="success-toast">
+        <div class="toast-content">
+          <div class="toast-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <div class="toast-message">
+            <strong>¡Cambios guardados exitosamente!</strong>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </DashboardLayout>
 </template>
 
@@ -214,16 +205,24 @@ const showForm = ref(false)
 const editingId = ref(null)
 const restaurante_id = localStorage.getItem('restaurante_id')
 
-// Modal save confirm
-const showSaveConfirmModal = ref(false)
-let pendingSaveData = null
+// ===== TOAST DE ÉXITO =====
+const showSuccessToast = ref(false)
+let toastTimeout = null
 
-// Modal delete
+const showToast = () => {
+  showSuccessToast.value = true
+  if (toastTimeout) clearTimeout(toastTimeout)
+  toastTimeout = setTimeout(() => {
+    showSuccessToast.value = false
+  }, 3000)
+}
+
+// ===== MODAL DELETE =====
 const showDeleteModal = ref(false)
 const itemToDelete = ref(null)
 
-// ===== FUNCIONES PARA GUARDAR CON CONFIRMACIÓN =====
-const handleFormSubmit = () => {
+// ===== FUNCIÓN DE GUARDADO DIRECTO (SIN MODAL) =====
+const saveMenuDirect = async () => {
   // Validar campos
   if (!formMenu.value.nombre || !formMenu.value.precio || !formMenu.value.foto_url) {
     alert('Por favor completa los campos requeridos')
@@ -237,21 +236,6 @@ const handleFormSubmit = () => {
     }
   }
 
-  // Mostrar modal de confirmación
-  showSaveConfirmModal.value = true
-}
-
-const closeSaveConfirmModal = () => {
-  showSaveConfirmModal.value = false
-  pendingSaveData = null
-}
-
-const confirmSave = async () => {
-  showSaveConfirmModal.value = false
-  await executeSave()
-}
-
-const executeSave = async () => {
   guardando.value = true
   try {
     const payload = {
@@ -275,8 +259,13 @@ const executeSave = async () => {
       await almuerzosService.crearMenu(restaurante_id, payload)
     }
 
+    // Mostrar toast de éxito
+    showToast()
+    
+    // Cerrar formulario y recargar items
     resetForm()
     await cargarItems()
+    
   } catch (error) {
     console.error('Error guardando menú:', error)
     alert('Error al guardar el menú')
@@ -863,16 +852,6 @@ form {
   justify-content: center;
 }
 
-.icon-circle-save {
-  background-color: #fff3e6;
-  border-radius: 9999px;
-  padding: 0.75rem;
-  color: #f2a359;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .modal-title {
   font-size: 1.25rem;
   font-weight: 700;
@@ -920,16 +899,57 @@ form {
   background-color: #b91c1c;
 }
 
-.modal-btn.confirm-save {
-  background-color: #f2a359;
-  color: white;
+/* ===== TOAST DE ÉXITO ===== */
+.success-toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 1100;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 12px 20px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+  min-width: 260px;
 }
 
-.modal-btn.confirm-save:hover {
-  background-color: #e0933e;
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-/* Transiciones */
+.toast-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background-color: #dcfce7;
+  border-radius: 50%;
+  color: #16a34a;
+}
+
+.toast-message strong {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #166534;
+  display: block;
+}
+
+/* Animación del Toast */
+.toast-slide-enter-active,
+.toast-slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-slide-enter-from,
+.toast-slide-leave-to {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+/* Transiciones modales */
 .modal-fade-enter-active,
 .modal-fade-leave-active {
   transition: opacity 0.25s ease;
@@ -973,6 +993,12 @@ form {
   .form-card {
     border-radius: 20px;
     max-height: 95vh;
+  }
+  .success-toast {
+    top: 16px;
+    right: 16px;
+    left: 16px;
+    min-width: auto;
   }
 }
 </style>

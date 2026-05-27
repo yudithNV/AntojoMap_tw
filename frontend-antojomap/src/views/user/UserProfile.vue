@@ -9,7 +9,7 @@
       <!-- Avatar + nombre -->
       <div class="profile-left">
         <div class="avatar">
-          <img v-if="perfil.foto_perfil" :src="perfil.foto_perfil" alt="foto" class="avatar-img" />
+          <img v-if="perfil.foto_perfil" :src="perfil.foto_perfil" alt="foto de perfil" class="avatar-img" />
           <User v-else :size="48" stroke-width="1.5" />
         </div>
         <h2 class="profile-name">{{ perfil.nombre }}</h2>
@@ -46,29 +46,49 @@
     </div>
 
     <!-- Modal de edición -->
-    <div v-if="editando" class="modal-overlay" @click.self="editando = false">
-      <div class="modal">
-        <h2>Editar perfil</h2>
+    <Teleport to="body">
+      <div v-if="editando" class="modal-overlay" @click.self="closeModal">
+        <div class="modal">
+          <h2>Editar perfil</h2>
 
-        <label>Nombre</label>
-        <input v-model="form.nombre" type="text" class="input" />
+          <label>Nombre</label>
+          <input v-model="form.nombre" type="text" class="input" />
 
-        <label>URL de foto de perfil</label>
-        <input v-model="form.foto_perfil" type="text" class="input" placeholder="https://..." />
+          <label>URL de foto de perfil</label>
+          <input v-model="form.foto_perfil" type="text" class="input" placeholder="https://..." />
 
-        <label>Bio</label>
-        <textarea v-model="form.bio" class="input textarea" placeholder="Cuéntanos algo sobre ti..." />
+          <label>Bio</label>
+          <textarea v-model="form.bio" class="input textarea" placeholder="Cuéntanos algo sobre ti..." />
 
-        <div class="modal-actions">
-          <button class="btn-cancel" @click="editando = false">Cancelar</button>
-          <button class="btn-save" @click="guardarCambios" :disabled="guardando">
-            {{ guardando ? 'Guardando...' : 'Guardar' }}
-          </button>
+          <div class="modal-actions">
+            <button class="btn-cancel" @click="closeModal">Cancelar</button>
+            <button class="btn-save" @click="guardarCambios" :disabled="guardando">
+              {{ guardando ? 'Guardando...' : 'Guardar' }}
+            </button>
+          </div>
+
+          <p v-if="error" class="error-msg">{{ error }}</p>
         </div>
-
-        <p v-if="error" class="error-msg">{{ error }}</p>
       </div>
-    </div>
+    </Teleport>
+
+    <!-- ===== TOAST DE ÉXITO ===== -->
+    <Teleport to="body">
+      <Transition name="toast-slide">
+        <div v-if="showSuccessToast" class="success-toast">
+          <div class="toast-content">
+            <div class="toast-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div class="toast-message">
+              <strong>¡Perfil actualizado exitosamente!</strong>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </DashboardLayout>
 </template>
 
@@ -78,27 +98,45 @@ import DashboardLayout from '../../components/DashboardLayout.vue'
 import { User, Pen } from 'lucide-vue-next'
 import { usuariosService } from '../../services/usuarios.service.js'
 import { useAuthStore } from '../../stores/auth.store.js'
+
 const authStore = useAuthStore()
 
-const perfil = ref({ nombre: '', email: '', bio: '', foto_perfil: '', creado_en: '' })
+// ========== ESTADO ==========
+const perfil = ref({
+  nombre: '',
+  email: '',
+  bio: '',
+  foto_perfil: '',
+  creado_en: ''
+})
 const editando = ref(false)
 const guardando = ref(false)
 const error = ref('')
-const form = ref({ nombre: '', foto_perfil: '', bio: '' })
+const form = ref({
+  nombre: '',
+  foto_perfil: '',
+  bio: ''
+})
 
-// Precarga con datos del store al instante
-perfil.value = {
-  nombre: authStore.nombre,
-  email: authStore.email,
-  foto_perfil: authStore.foto,
-  bio: authStore.bio,
-  creado_en: ''
+// ========== TOAST ==========
+const showSuccessToast = ref(false)
+let toastTimeout = null
+
+const showToast = () => {
+  if (toastTimeout) clearTimeout(toastTimeout)
+  showSuccessToast.value = true
+  toastTimeout = setTimeout(() => {
+    showSuccessToast.value = false
+  }, 3000)
 }
 
+// ========== FUNCIONES ==========
 const cargarPerfil = async () => {
   try {
     const data = await usuariosService.getMiPerfil()
     perfil.value = data
+    // Actualizar store también
+    authStore.actualizarPerfil(data)
   } catch (e) {
     console.error('Error cargando perfil:', e)
   }
@@ -114,16 +152,36 @@ const abrirEditor = () => {
   editando.value = true
 }
 
+const closeModal = () => {
+  editando.value = false
+  error.value = ''
+}
+
 const guardarCambios = async () => {
+  if (!form.value.nombre.trim()) {
+    error.value = 'El nombre es obligatorio'
+    return
+  }
+
+  guardando.value = true
+  error.value = ''
+
   try {
-    guardando.value = true
-    error.value = ''
     const data = await usuariosService.editarPerfil(form.value)
+    
+    // Actualizar datos locales
     perfil.value = { ...perfil.value, ...data }
-    authStore.actualizarPerfil(data)  // ← esto actualiza sidebar al instante
-    editando.value = false
+    // Actualizar store para sidebar
+    authStore.actualizarPerfil(data)
+    
+    // Cerrar modal
+    closeModal()
+    
+    // Mostrar toast de éxito
+    showToast()
+    
   } catch (e) {
-    error.value = 'Error al guardar, intenta de nuevo.'
+    error.value = e.message || 'Error al guardar, intenta de nuevo.'
   } finally {
     guardando.value = false
   }
@@ -131,18 +189,44 @@ const guardarCambios = async () => {
 
 const formatFecha = (fecha) => {
   if (!fecha) return '—'
-  return new Date(fecha).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })
+  return new Date(fecha).toLocaleDateString('es-ES', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
 }
 
+// ========== LIFECYCLE ==========
 onMounted(async () => {
-  await cargarPerfil() // actualiza con datos frescos del back
+  // Precargar datos del store
+  perfil.value = {
+    nombre: authStore.nombre || '',
+    email: authStore.email || '',
+    foto_perfil: authStore.foto || '',
+    bio: authStore.bio || '',
+    creado_en: ''
+  }
+  // Cargar datos frescos del backend
+  await cargarPerfil()
 })
 </script>
 
 <style scoped>
-.page-header { margin-bottom: 30px; }
-.page-header h1 { color: var(--plum); font-size: 2rem; margin: 0 0 8px 0; }
-.subtitle { color: var(--dusty-coral); font-size: 0.95rem; margin: 0; }
+.page-header {
+  margin-bottom: 30px;
+}
+
+.page-header h1 {
+  color: var(--plum);
+  font-size: 2rem;
+  margin: 0 0 8px 0;
+}
+
+.subtitle {
+  color: var(--dusty-coral);
+  font-size: 0.95rem;
+  margin: 0;
+}
 
 .profile-wrapper {
   display: grid;
@@ -155,7 +239,7 @@ onMounted(async () => {
   background: white;
   border-radius: 15px;
   padding: 32px 24px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -175,10 +259,31 @@ onMounted(async () => {
   overflow: hidden;
 }
 
-.avatar-img { width: 100%; height: 100%; object-fit: cover; }
-.profile-name { font-size: 1.2rem; color: var(--plum); margin: 0; font-weight: 700; }
-.profile-email { font-size: 0.85rem; color: #888; margin: 0; }
-.profile-bio { font-size: 0.85rem; color: #666; margin: 0; font-style: italic; }
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-name {
+  font-size: 1.2rem;
+  color: var(--plum);
+  margin: 0;
+  font-weight: 700;
+}
+
+.profile-email {
+  font-size: 0.85rem;
+  color: #888;
+  margin: 0;
+}
+
+.profile-bio {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 0;
+  font-style: italic;
+}
 
 .btn-edit {
   margin-top: 8px;
@@ -192,33 +297,33 @@ onMounted(async () => {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
 }
+
 .btn-icon {
   display: inline-block;
 }
+
 .btn-edit:hover {
-  /* Cambiamos el fondo sólido vino por el degradado rosa/coral */
   background: linear-gradient(135deg, var(--blush), var(--dusty-coral));
-  
-  /* Cambiamos el texto a oscuro para que resalte sobre el rosa */
   color: var(--plum);
-  
-  /* Quitamos el borde o lo igualamos para que no se vea raro con el degradado */
   border-color: transparent;
 }
 
-.profile-right { display: flex; flex-direction: column; gap: 20px; }
+.profile-right {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
 
 .info-card {
   background: white;
   border-radius: 15px;
   padding: 24px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
 }
 
 .info-row {
@@ -228,25 +333,39 @@ onMounted(async () => {
   padding: 14px 0;
   border-bottom: 1px solid #f5f5f5;
 }
-.info-row:last-child { border-bottom: none; }
-.info-label { font-weight: 600; color: #666; font-size: 0.9rem; }
-.info-value { color: var(--plum); font-size: 0.95rem; }
 
-/* Modal */
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.info-value {
+  color: var(--plum);
+  font-size: 0.95rem;
+}
+
+/* ===== MODAL ===== */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  z-index: 1000;
+  padding: 1rem;
 }
 
 .modal {
   background: white;
-  border-radius: 15px;
-  padding: 32px;
+  border-radius: 1.5rem;
+  padding: 1.75rem;
   width: 100%;
   max-width: 460px;
   display: flex;
@@ -254,44 +373,150 @@ onMounted(async () => {
   gap: 12px;
 }
 
-.modal h2 { margin: 0 0 8px; color: var(--plum); }
+.modal h2 {
+  margin: 0 0 8px;
+  color: var(--plum);
+  font-size: 1.4rem;
+}
 
-label { font-size: 0.88rem; font-weight: 600; color: #666; }
+label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #666;
+}
 
 .input {
   width: 100%;
   padding: 10px 14px;
-  border: 1.5px solid #ddd;
-  border-radius: 8px;
+  border: 1.5px solid #e8e8e8;
+  border-radius: 10px;
   font-size: 0.95rem;
   font-family: inherit;
   outline: none;
   box-sizing: border-box;
-  transition: border 0.2s;
+  transition: border-color 0.2s;
 }
-.input:focus { border-color: var(--plum); }
-.textarea { resize: vertical; min-height: 90px; }
 
-.modal-actions { display: flex; gap: 12px; margin-top: 8px; }
+.input:focus {
+  border-color: var(--plum);
+  outline: none;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
 
 .btn-cancel {
-  flex: 1; padding: 10px; border: 1.5px solid #ddd;
-  background: transparent; border-radius: 8px;
-  font-weight: 600; cursor: pointer; color: #666;
+  flex: 1;
+  padding: 10px;
+  border: 1.5px solid #e8e8e8;
+  background: transparent;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+  background: #f5f5f5;
 }
 
 .btn-save {
-  flex: 1; padding: 10px; border: none;
-  background: var(--plum); color: white;
-  border-radius: 8px; font-weight: 600;
-  cursor: pointer; transition: background 0.2s;
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: var(--plum);
+  color: white;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
 }
-.btn-save:hover { background: #6b2540; }
-.btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
 
-.error-msg { color: #c0392b; font-size: 0.85rem; margin: 0; }
+.btn-save:hover:not(:disabled) {
+  background: #6b2540;
+}
 
+.btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error-msg {
+  color: #c0392b;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* ===== TOAST DE ÉXITO ===== */
+.success-toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 1100;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 12px 20px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+  min-width: 260px;
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toast-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background-color: #dcfce7;
+  border-radius: 50%;
+  color: #16a34a;
+}
+
+.toast-message strong {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #166534;
+  display: block;
+}
+
+/* Animación del Toast */
+.toast-slide-enter-active,
+.toast-slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-slide-enter-from,
+.toast-slide-leave-to {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+/* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
-  .profile-wrapper { grid-template-columns: 1fr; }
+  .profile-wrapper {
+    grid-template-columns: 1fr;
+  }
+
+  .success-toast {
+    top: 16px;
+    right: 16px;
+    left: 16px;
+    min-width: auto;
+  }
 }
 </style>

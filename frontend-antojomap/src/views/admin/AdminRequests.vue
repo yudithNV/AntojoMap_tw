@@ -1,4 +1,4 @@
-=<template>
+<template>
   <DashboardLayout>
     <div class="page-header">
       <h1>Solicitudes de Restaurantes</h1>
@@ -65,14 +65,16 @@
               </span>
             </td>
             <td class="acciones">
+              <!-- Botón APROBAR -->
               <button
                 v-if="solicitud.estado === 'PENDIENTE'"
                 class="btn btn-approve"
-                @click="aprobar(solicitud.id)"
+                @click="openApproveModal(solicitud.id)"
                 :disabled="processingId === solicitud.id"
               >
                 ✓
               </button>
+              <!-- Botón RECHAZAR -->
               <button
                 v-if="solicitud.estado === 'PENDIENTE'"
                 class="btn btn-reject"
@@ -87,44 +89,76 @@
       </table>
     </div>
 
-    <!-- Mensaje de feedback -->
-    <div v-if="feedback.message" class="feedback-message" :class="feedback.type">
-      {{ feedback.message }}
-    </div>
+    <!-- ===== MODAL DE CONFIRMACIÓN PARA APROBAR ===== -->
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div v-if="showApproveModal" class="modal-overlay" @click.self="closeApproveModal">
+          <div class="modal-card">
+            <div class="modal-icon">
+              <div class="icon-circle approve">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+            </div>
+            <h2 class="modal-title">¿Estás seguro de aceptar esta solicitud?</h2>
+            <p class="modal-message">Esta acción es irreversible y el restaurante quedará habilitado.</p>
+            <div class="modal-actions">
+              <button class="modal-btn cancel" @click="closeApproveModal">No, cancelar</button>
+              <button class="modal-btn confirm-approve" @click="confirmApprove">Sí, aceptar</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- ===== MODAL DE CONFIRMACIÓN PARA RECHAZAR ===== -->
-    <Transition name="modal-fade">
-      <div v-if="showRejectModal" class="modal-overlay" @click.self="closeRejectModal">
-        <div class="modal-card">
-          <!-- Icono de advertencia -->
-          <div class="modal-icon">
-            <div class="icon-circle danger">
-              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div v-if="showRejectModal" class="modal-overlay" @click.self="closeRejectModal">
+          <div class="modal-card">
+            <div class="modal-icon">
+              <div class="icon-circle reject">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+              </div>
+            </div>
+            <h2 class="modal-title">¿Estás seguro de rechazar esta solicitud?</h2>
+            <p class="modal-message">Esta acción es irreversible y el establecimiento tendrá que enviar sus datos nuevamente.</p>
+            <div class="modal-actions">
+              <button class="modal-btn cancel" @click="closeRejectModal">No, cancelar</button>
+              <button class="modal-btn confirm-reject" @click="confirmReject">Sí, rechazar</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- ===== TOAST FLOTANTE DINÁMICO ===== -->
+    <Teleport to="body">
+      <Transition name="toast-slide">
+        <div v-if="toast.visible" :class="['success-toast', toast.type === 'success' ? 'toast-success' : 'toast-error']">
+          <div class="toast-content">
+            <div class="toast-icon">
+              <svg v-if="toast.type === 'success'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="8" x2="12" y2="12"></line>
                 <line x1="12" y1="16" x2="12.01" y2="16"></line>
               </svg>
             </div>
-          </div>
-          
-          <!-- Título y mensaje -->
-          <h2 class="modal-title">¿Estás seguro de rechazar esta solicitud?</h2>
-          <p class="modal-message">
-            Esta acción no se puede deshacer y el establecimiento tendrá que enviar sus datos nuevamente.
-          </p>
-          
-          <!-- Botones de acción -->
-          <div class="modal-actions">
-            <button class="modal-btn cancel" @click="closeRejectModal">
-              No
-            </button>
-            <button class="modal-btn confirm" @click="confirmReject">
-              Sí, rechazar
-            </button>
+            <div class="toast-message">
+              <strong>{{ toast.message }}</strong>
+            </div>
           </div>
         </div>
-      </div>
-    </Transition>
+      </Transition>
+    </Teleport>
   </DashboardLayout>
 </template>
 
@@ -134,34 +168,110 @@ import DashboardLayout from '../../components/DashboardLayout.vue'
 import { adminService } from '../../services/admin.service.js'
 import { Search } from 'lucide-vue-next'
 
+// ========== ESTADO ==========
 const solicitudes = ref([])
 const isLoading = ref(false)
 const error = ref('')
 const processingId = ref(null)
-const feedback = ref({ message: '', type: '' })
 const searchQuery = ref('')
 
-// ===== MODAL DE RECHAZO =====
+// ========== MODALES ==========
+const showApproveModal = ref(false)
 const showRejectModal = ref(false)
-const solicitudARechazar = ref(null)
+const selectedSolicitudId = ref(null)
 
+// ========== TOAST DINÁMICO ==========
+const toast = ref({
+  visible: false,
+  message: '',
+  type: 'success'
+})
+
+let toastTimeout = null
+
+const showToast = (message, type = 'success') => {
+  // Limpiar timeout anterior si existe
+  if (toastTimeout) clearTimeout(toastTimeout)
+  
+  // Configurar nuevo toast
+  toast.value = {
+    visible: true,
+    message,
+    type
+  }
+  
+  // Ocultar después de 3 segundos
+  toastTimeout = setTimeout(() => {
+    toast.value.visible = false
+  }, 3000)
+}
+
+// ========== FUNCIONES DE MODAL - APROBAR ==========
+const openApproveModal = (id) => {
+  selectedSolicitudId.value = id
+  showApproveModal.value = true
+}
+
+const closeApproveModal = () => {
+  showApproveModal.value = false
+  selectedSolicitudId.value = null
+}
+
+const confirmApprove = async () => {
+  if (!selectedSolicitudId.value) return
+  
+  const id = selectedSolicitudId.value
+  closeApproveModal()
+  await processApproval(id)
+}
+
+// ========== FUNCIONES DE MODAL - RECHAZAR ==========
 const openRejectModal = (id) => {
-  solicitudARechazar.value = id
+  selectedSolicitudId.value = id
   showRejectModal.value = true
 }
 
 const closeRejectModal = () => {
   showRejectModal.value = false
-  solicitudARechazar.value = null
+  selectedSolicitudId.value = null
 }
 
 const confirmReject = async () => {
-  if (solicitudARechazar.value) {
-    await rechazar(solicitudARechazar.value)
-    closeRejectModal()
+  if (!selectedSolicitudId.value) return
+  
+  const id = selectedSolicitudId.value
+  closeRejectModal()
+  await processRejection(id)
+}
+
+// ========== ACCIONES DE NEGOCIO ==========
+const processApproval = async (id) => {
+  processingId.value = id
+  try {
+    await adminService.aprobarSolicitud(id)
+    showToast('✅ Solicitud aprobada exitosamente', 'success')
+    await cargarSolicitudes()
+  } catch (err) {
+    showToast(err.message || '❌ Error al aprobar la solicitud', 'error')
+  } finally {
+    processingId.value = null
   }
 }
 
+const processRejection = async (id) => {
+  processingId.value = id
+  try {
+    await adminService.rechazarSolicitud(id)
+    showToast('❌ Solicitud rechazada exitosamente', 'error')
+    await cargarSolicitudes()
+  } catch (err) {
+    showToast(err.message || '❌ Error al rechazar la solicitud', 'error')
+  } finally {
+    processingId.value = null
+  }
+}
+
+// ========== FILTRADO ==========
 const filteredSolicitudes = computed(() => {
   if (!searchQuery.value) return solicitudes.value
   return solicitudes.value.filter(s =>
@@ -169,6 +279,7 @@ const filteredSolicitudes = computed(() => {
   )
 })
 
+// ========== CARGA DE DATOS ==========
 const cargarSolicitudes = async () => {
   isLoading.value = true
   error.value = ''
@@ -182,38 +293,7 @@ const cargarSolicitudes = async () => {
   }
 }
 
-const aprobar = async (id) => {
-  processingId.value = id
-  try {
-    await adminService.aprobarSolicitud(id)
-    feedback.value.message = '✓ Solicitud aprobada exitosamente'
-    feedback.value.type = 'success'
-    await cargarSolicitudes()
-    setTimeout(() => { feedback.value.message = '' }, 3000)
-  } catch (err) {
-    feedback.value.message = err.message || 'Error al aprobar'
-    feedback.value.type = 'error'
-  } finally {
-    processingId.value = null
-  }
-}
-
-const rechazar = async (id) => {
-  processingId.value = id
-  try {
-    await adminService.rechazarSolicitud(id)
-    feedback.value.message = '✗ Solicitud rechazada'
-    feedback.value.type = 'success'
-    await cargarSolicitudes()
-    setTimeout(() => { feedback.value.message = '' }, 3000)
-  } catch (err) {
-    feedback.value.message = err.message || 'Error al rechazar'
-    feedback.value.type = 'error'
-  } finally {
-    processingId.value = null
-  }
-}
-
+// ========== LIFECYCLE ==========
 onMounted(() => {
   cargarSolicitudes()
 })
@@ -431,27 +511,7 @@ onMounted(() => {
   cursor: not-allowed;
 }
 
-.feedback-message {
-  margin-top: 20px;
-  padding: 15px;
-  border-radius: 8px;
-  text-align: center;
-  font-weight: 600;
-}
-
-.feedback-message.success {
-  background: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
-}
-
-.feedback-message.error {
-  background: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-}
-
-/* ===== ESTILOS DEL MODAL DE CONFIRMACIÓN ===== */
+/* ===== MODALES ===== */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -485,7 +545,17 @@ onMounted(() => {
   margin-bottom: 1rem;
 }
 
-.icon-circle {
+.icon-circle.approve {
+  background-color: #dcfce7;
+  border-radius: 9999px;
+  padding: 0.75rem;
+  color: #16a34a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-circle.reject {
   background-color: #fee2e2;
   border-radius: 9999px;
   padding: 0.75rem;
@@ -534,12 +604,21 @@ onMounted(() => {
   background-color: #e5e7eb;
 }
 
-.modal-btn.confirm {
+.modal-btn.confirm-approve {
+  background-color: #16a34a;
+  color: white;
+}
+
+.modal-btn.confirm-approve:hover {
+  background-color: #15803d;
+}
+
+.modal-btn.confirm-reject {
   background-color: #dc2626;
   color: white;
 }
 
-.modal-btn.confirm:hover {
+.modal-btn.confirm-reject:hover {
   background-color: #b91c1c;
 }
 
@@ -563,6 +642,78 @@ onMounted(() => {
 .modal-fade-leave-to .modal-card {
   transform: scale(0.95);
   opacity: 0;
+}
+
+/* ===== TOAST FLOTANTE ===== */
+.success-toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 1100;
+  border-radius: 12px;
+  padding: 12px 20px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+  min-width: 280px;
+}
+
+.toast-success {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.toast-error {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toast-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.toast-success .toast-icon {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.toast-error .toast-icon {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.toast-message strong {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.toast-success .toast-message strong {
+  color: #166534;
+}
+
+.toast-error .toast-message strong {
+  color: #991b1b;
+}
+
+/* Animación del Toast */
+.toast-slide-enter-active,
+.toast-slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-slide-enter-from,
+.toast-slide-leave-to {
+  opacity: 0;
+  transform: translateX(100%);
 }
 
 @media (max-width: 768px) {
@@ -604,6 +755,13 @@ onMounted(() => {
   
   .modal-btn {
     padding: 0.5rem 1.2rem;
+  }
+  
+  .success-toast {
+    top: 16px;
+    right: 16px;
+    left: 16px;
+    min-width: auto;
   }
 }
 </style>

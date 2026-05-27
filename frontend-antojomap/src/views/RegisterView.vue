@@ -13,7 +13,6 @@
 
       <!-- Right side - Form -->
       <div class="auth-right">
-        <!-- Logo FIJO arriba del todo -->
         <div class="auth-header-fixed">
           <div class="logo">
             <div class="logo-icon">
@@ -26,7 +25,6 @@
           </div>
         </div>
 
-        <!-- TABS debajo del logo -->
         <div class="tabs-navigation">
           <div class="tabs-container">
             <button
@@ -46,7 +44,6 @@
           </div>
         </div>
 
-        <!-- Contenido scrolleable -->
         <div class="form-scroll-content">
           <div class="auth-form-wrapper">
             <!-- Usuario Form -->
@@ -55,7 +52,6 @@
               <p class="subtitle">Únete a la comunidad foodie más grande</p>
 
               <form @submit.prevent="handleUserRegister" novalidate>
-                <!-- Campo: Nombre Completo -->
                 <div class="form-group">
                   <label for="user-name">Nombre Completo</label>
                   <input
@@ -65,6 +61,7 @@
                     placeholder="Tu nombre"
                     :class="{ 'input-error': formErrors.user.name }"
                     @blur="validateUserField('name')"
+                    @input="validateUserField('name')"
                   />
                   <div 
                     v-if="formErrors.user.name" 
@@ -81,7 +78,6 @@
                   </div>
                 </div>
 
-                <!-- Campo: Correo Electrónico -->
                 <div class="form-group">
                   <label for="user-email">Correo Electrónico</label>
                   <input
@@ -91,6 +87,7 @@
                     placeholder="tu@correo.com"
                     :class="{ 'input-error': formErrors.user.email }"
                     @blur="validateUserField('email')"
+                    @input="validateUserField('email')"
                   />
                   <div 
                     v-if="formErrors.user.email" 
@@ -107,7 +104,7 @@
                   </div>
                 </div>
 
-                <!-- Campo: Contraseña -->
+                <!-- Campo: Contraseña con validación SEGURA (FLEXIBLE) -->
                 <div class="form-group">
                   <label for="user-password">Contraseña</label>
                   <div class="password-input-wrapper">
@@ -118,12 +115,14 @@
                       placeholder="••••••••"
                       :class="{ 'input-error': formErrors.user.password }"
                       @blur="validateUserField('password')"
+                      @input="validateUserField('password')"
                     />
                     <button type="button" class="toggle-password" @click="showUserPassword = !showUserPassword">
                       <Eye v-if="showUserPassword" :size="20" stroke-width="2" />
                       <EyeOff v-else :size="20" stroke-width="2" />
                     </button>
                   </div>
+                  
                   <div 
                     v-if="formErrors.user.password" 
                     class="error-alert"
@@ -137,20 +136,18 @@
                       <span class="error-text">{{ formErrors.user.password }}</span>
                     </div>
                   </div>
+                  
+                  <div v-if="userForm.password && !formErrors.user.password" class="password-strength">
+                    <div class="strength-bar">
+                      <div class="strength-fill" :class="userPasswordStrength.class"></div>
+                    </div>
+                    <span class="strength-text">{{ userPasswordStrength.text }}</span>
+                  </div>
                 </div>
 
                 <button type="submit" class="btn-submit" :disabled="!isUserFormValid || isLoading">
                   {{ isLoading ? 'Registrando...' : 'Registrarse' }}
                 </button>
-                
-                <div v-if="registerFeedback.message && activeTab === 'usuario'" class="success-alert" role="status" aria-live="polite">
-                  <div class="success-alert-content">
-                    <div class="success-icon-wrapper">
-                      <CheckCircle :size="18" stroke-width="2" />
-                    </div>
-                    <span class="success-text">{{ registerFeedback.message }}</span>
-                  </div>
-                </div>
               </form>
             </template>
 
@@ -160,7 +157,6 @@
               <p class="subtitle">Únete como vendedor y crece con AntojoMap</p>
 
               <form @submit.prevent="handleRestaurantRegister" novalidate>
-                <!-- Campo: Nombre del Restaurante -->
                 <div class="form-group">
                   <label for="rest-name">Nombre del Restaurante</label>
                   <input
@@ -170,6 +166,7 @@
                     placeholder="Nombre de tu restaurante"
                     :class="{ 'input-error': formErrors.restaurant.name }"
                     @blur="validateRestaurantField('name')"
+                    @input="validateRestaurantField('name')"
                   />
                   <div 
                     v-if="formErrors.restaurant.name" 
@@ -186,7 +183,6 @@
                   </div>
                 </div>
 
-                <!-- Campo: Dirección -->
                 <div class="form-group">
                   <label for="rest-address">Dirección</label>
                   <input
@@ -196,6 +192,7 @@
                     placeholder="Dirección del restaurante"
                     :class="{ 'input-error': formErrors.restaurant.address }"
                     @blur="validateRestaurantField('address')"
+                    @input="validateRestaurantField('address')"
                   />
                   <div 
                     v-if="formErrors.restaurant.address" 
@@ -212,7 +209,6 @@
                   </div>
                 </div>
 
-                <!-- Campo: Teléfono -->
                 <div class="form-group">
                   <label for="rest-phone">Teléfono</label>
                   <input
@@ -222,6 +218,7 @@
                     placeholder="+591 XXXX XXXX"
                     :class="{ 'input-error': formErrors.restaurant.phone }"
                     @blur="validateRestaurantField('phone')"
+                    @input="validateRestaurantField('phone')"
                   />
                   <div 
                     v-if="formErrors.restaurant.phone" 
@@ -238,7 +235,6 @@
                   </div>
                 </div>
 
-                <!-- Campo: Categoría -->
                 <div class="form-group">
                   <label for="rest-category">Categoría</label>
                   <select
@@ -246,6 +242,7 @@
                     v-model="restaurantForm.category"
                     :class="{ 'input-error': formErrors.restaurant.category }"
                     @blur="validateRestaurantField('category')"
+                    @change="validateRestaurantField('category')"
                   >
                     <option value="">Selecciona una categoría</option>
                     <option v-for="cat in categorias" :key="cat.id" :value="cat.id">
@@ -267,7 +264,6 @@
                   </div>
                 </div>
 
-                <!-- Campo: Correo Administrador -->
                 <div class="form-group">
                   <label for="rest-email">Correo para el Administrador de Restaurante</label>
                   <input
@@ -277,6 +273,7 @@
                     placeholder="correo@negocio.com"
                     :class="{ 'input-error': formErrors.restaurant.email }"
                     @blur="validateRestaurantField('email')"
+                    @input="validateRestaurantField('email')"
                   />
                   <div 
                     v-if="formErrors.restaurant.email" 
@@ -293,17 +290,29 @@
                   </div>
                 </div>
 
-                <!-- Campo: Contraseña -->
+                <!-- Campo: Contraseña de Acceso con validación SEGURA (FLEXIBLE) -->
                 <div class="form-group">
                   <label for="rest-password">Contraseña de Acceso</label>
-                  <input
-                    id="rest-password"
-                    v-model="restaurantForm.password"
-                    type="password"
-                    placeholder="••••••••"
-                    :class="{ 'input-error': formErrors.restaurant.password }"
-                    @blur="validateRestaurantField('password')"
-                  />
+                  <div class="password-input-wrapper">
+                    <input
+                      id="rest-password"
+                      v-model="restaurantForm.password"
+                      :type="showRestaurantPassword ? 'text' : 'password'"
+                      placeholder="••••••••"
+                      :class="{ 'input-error': formErrors.restaurant.password }"
+                      @blur="validateRestaurantField('password')"
+                      @input="validateRestaurantField('password')"
+                    />
+                    <button 
+                      type="button" 
+                      class="toggle-password" 
+                      @click="showRestaurantPassword = !showRestaurantPassword"
+                    >
+                      <Eye v-if="showRestaurantPassword" :size="20" stroke-width="2" />
+                      <EyeOff v-else :size="20" stroke-width="2" />
+                    </button>
+                  </div>
+                  
                   <div 
                     v-if="formErrors.restaurant.password" 
                     class="error-alert"
@@ -317,9 +326,15 @@
                       <span class="error-text">{{ formErrors.restaurant.password }}</span>
                     </div>
                   </div>
+                  
+                  <div v-if="restaurantForm.password && !formErrors.restaurant.password" class="password-strength">
+                    <div class="strength-bar">
+                      <div class="strength-fill" :class="restaurantPasswordStrength.class"></div>
+                    </div>
+                    <span class="strength-text">{{ restaurantPasswordStrength.text }}</span>
+                  </div>
                 </div>
 
-                <!-- Campo: Foto del Establecimiento -->
                 <div class="form-group">
                   <label for="rest-photo">Foto del Establecimiento</label>
                   <input
@@ -329,6 +344,7 @@
                     placeholder="URL de la foto (ej: https://...)"
                     :class="{ 'input-error': formErrors.restaurant.foto_comprobante }"
                     @blur="validateRestaurantField('foto_comprobante')"
+                    @input="validateRestaurantField('foto_comprobante')"
                   />
                   <p class="field-hint">Por ahora ingresa la URL de una foto. Pronto podrás subir archivos directamente.</p>
                   <div 
@@ -349,15 +365,6 @@
                 <button type="submit" class="btn-submit" :disabled="!isRestaurantFormValid || isLoading">
                   {{ isLoading ? 'Enviando...' : 'Registrar Restaurante' }}
                 </button>
-                
-                <div v-if="registerFeedback.message && activeTab === 'restaurante'" class="success-alert" role="status" aria-live="polite">
-                  <div class="success-alert-content">
-                    <div class="success-icon-wrapper">
-                      <CheckCircle :size="18" stroke-width="2" />
-                    </div>
-                    <span class="success-text">{{ registerFeedback.message }}</span>
-                  </div>
-                </div>
               </form>
             </template>
 
@@ -369,11 +376,27 @@
       </div>
     </div>
 
-    <!-- ===== MODAL DE ÉXITO ANIMADO ===== -->
+    <!-- Toast de éxito para usuario -->
+    <Transition name="toast-slide">
+      <div v-if="showSuccessToast" class="success-toast">
+        <div class="toast-content">
+          <div class="toast-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <div class="toast-message">
+            <strong>¡Cuenta creada exitosamente!</strong>
+            <p>Redirigiendo...</p>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- Modal de éxito para restaurante -->
     <Transition name="modal-fade">
       <div v-if="showRequestSuccessModal" class="success-modal-overlay" @click.self="closeSuccessModal">
         <div class="success-modal-card">
-          <!-- Círculo animado con icono de verificación -->
           <div class="success-icon-animated">
             <div class="success-circle">
               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -381,19 +404,14 @@
               </svg>
             </div>
           </div>
-          
-          <!-- Título y mensaje -->
           <h2 class="success-modal-title">¡Solicitud Enviada Exitosamente!</h2>
           <p class="success-modal-message">
             Estamos procesando los datos de tu establecimiento.<br>
             Pronto podrás gestionar tu menú.
           </p>
-          
-          <!-- Barra de progreso animada -->
           <div class="progress-bar-container">
             <div class="progress-bar"></div>
           </div>
-          
           <p class="redirect-message">Redirigiendo al inicio de sesión...</p>
         </div>
       </div>
@@ -404,7 +422,7 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { UtensilsCrossed, Utensils, Eye, EyeOff, User, Store, AlertCircle, CheckCircle } from 'lucide-vue-next'
+import { UtensilsCrossed, Utensils, Eye, EyeOff, User, Store, AlertCircle } from 'lucide-vue-next'
 import { authService } from '../services/auth.service.js'
 import { api } from '../services/api.js'
 
@@ -412,16 +430,28 @@ const categorias = ref([])
 const router = useRouter()
 const activeTab = ref('usuario')
 const showUserPassword = ref(false)
+const showRestaurantPassword = ref(false)
 const isLoading = ref(false)
 
-// ===== MODAL DE ÉXITO =====
+// ===== TOAST =====
+const showSuccessToast = ref(false)
+let toastTimeout = null
+
+const showToast = () => {
+  showSuccessToast.value = true
+  if (toastTimeout) clearTimeout(toastTimeout)
+  toastTimeout = setTimeout(() => {
+    showSuccessToast.value = false
+    router.push('/login')
+  }, 3000)
+}
+
+// ===== MODAL PARA RESTAURANTE =====
 const showRequestSuccessModal = ref(false)
 let redirectTimeout = null
 
 const showSuccessModal = () => {
   showRequestSuccessModal.value = true
-  
-  // Configurar timeout para redirigir después de 3 segundos
   redirectTimeout = setTimeout(() => {
     closeSuccessModal()
     router.push('/login')
@@ -435,6 +465,10 @@ const closeSuccessModal = () => {
     redirectTimeout = null
   }
 }
+
+// ===== NUEVA EXPRESIÓN REGULAR FLEXIBLE =====
+// Verifica: Mayúscula + Minúscula + Carácter especial (en CUALQUIER orden)
+const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[a-z])(?=.*[\W_]).+$/
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
@@ -473,9 +507,39 @@ const formErrors = reactive({
   }
 })
 
-const registerFeedback = ref({ message: '', type: '' })
+// ========== INDICADORES DE SEGURIDAD ==========
+const userPasswordStrength = computed(() => {
+  const password = userForm.value.password
+  if (!password) return { class: '', text: '' }
+  
+  let score = 0
+  if (password.length >= 8) score++
+  if (/[A-Z]/.test(password)) score++
+  if (/[a-z]/.test(password)) score++
+  if (/[\W_]/.test(password)) score++
+  
+  if (score === 4) return { class: 'strong', text: '✓ Contraseña segura' }
+  if (score === 3) return { class: 'medium', text: '⚡ Contraseña media' }
+  return { class: 'weak', text: '⚠️ Contraseña débil' }
+})
+
+const restaurantPasswordStrength = computed(() => {
+  const password = restaurantForm.value.password
+  if (!password) return { class: '', text: '' }
+  
+  let score = 0
+  if (password.length >= 8) score++
+  if (/[A-Z]/.test(password)) score++
+  if (/[a-z]/.test(password)) score++
+  if (/[\W_]/.test(password)) score++
+  
+  if (score === 4) return { class: 'strong', text: '✓ Contraseña segura' }
+  if (score === 3) return { class: 'medium', text: '⚡ Contraseña media' }
+  return { class: 'weak', text: '⚠️ Contraseña débil' }
+})
 
 // ========== FUNCIONES DE VALIDACIÓN ==========
+// Usuario
 const validateUserField = (field) => {
   const value = userForm.value[field]
   
@@ -489,15 +553,22 @@ const validateUserField = (field) => {
     return false
   }
 
-  if (field === 'password' && value.length < 8) {
-    formErrors.user[field] = 'Debe tener al menos 8 caracteres'
-    return false
+  if (field === 'password') {
+    if (value.length < 8) {
+      formErrors.user[field] = 'La contraseña debe tener al menos 8 caracteres'
+      return false
+    }
+    if (!PASSWORD_REGEX.test(value)) {
+      formErrors.user[field] = 'La contraseña debe incluir al menos una mayúscula, una minúscula y un símbolo (!@#$%^&*, etc.)'
+      return false
+    }
   }
 
   formErrors.user[field] = ''
   return true
 }
 
+// Restaurante
 const validateRestaurantField = (field) => {
   const value = restaurantForm.value[field]
   
@@ -511,16 +582,22 @@ const validateRestaurantField = (field) => {
     return false
   }
 
-  if (field === 'password' && value && value.length < 8) {
-    formErrors.restaurant[field] = 'Debe tener al menos 8 caracteres'
-    return false
+  if (field === 'password') {
+    if (value && value.length < 8) {
+      formErrors.restaurant[field] = 'La contraseña debe tener al menos 8 caracteres'
+      return false
+    }
+    if (value && !PASSWORD_REGEX.test(value)) {
+      formErrors.restaurant[field] = 'La contraseña debe incluir al menos una mayúscula, una minúscula y un símbolo (!@#$%^&*, etc.)'
+      return false
+    }
   }
 
   formErrors.restaurant[field] = ''
   return true
 }
 
-// ========== WATCHERS PARA LIMPIEZA EN TIEMPO REAL ==========
+// ========== WATCHERS ==========
 watch(() => userForm.value.name, (newVal) => {
   if (newVal && newVal.trim()) formErrors.user.name = ''
 })
@@ -532,7 +609,9 @@ watch(() => userForm.value.email, (newVal) => {
 })
 
 watch(() => userForm.value.password, (newVal) => {
-  if (newVal && newVal.length >= 8) formErrors.user.password = ''
+  if (newVal && newVal.length >= 8 && PASSWORD_REGEX.test(newVal)) {
+    formErrors.user.password = ''
+  }
 })
 
 watch(() => restaurantForm.value.name, (newVal) => {
@@ -558,7 +637,9 @@ watch(() => restaurantForm.value.email, (newVal) => {
 })
 
 watch(() => restaurantForm.value.password, (newVal) => {
-  if (newVal && newVal.length >= 8) formErrors.restaurant.password = ''
+  if (newVal && newVal.length >= 8 && PASSWORD_REGEX.test(newVal)) {
+    formErrors.restaurant.password = ''
+  }
 })
 
 watch(() => restaurantForm.value.foto_comprobante, (newVal) => {
@@ -581,12 +662,13 @@ const validateAllRestaurantFields = () => {
   )
 }
 
-// ========== VALIDACIÓN EN TIEMPO REAL PARA BOTÓN ==========
+// ========== VALIDACIÓN BOTÓN ==========
 const isUserFormValid = computed(() => {
   return (
     userForm.value.name.trim() &&
     emailRegex.test(userForm.value.email) &&
     userForm.value.password.length >= 8 &&
+    PASSWORD_REGEX.test(userForm.value.password) &&
     !formErrors.user.name &&
     !formErrors.user.email &&
     !formErrors.user.password
@@ -601,6 +683,7 @@ const isRestaurantFormValid = computed(() => {
     restaurantForm.value.category.trim() &&
     emailRegex.test(restaurantForm.value.email) &&
     restaurantForm.value.password.length >= 8 &&
+    PASSWORD_REGEX.test(restaurantForm.value.password) &&
     !formErrors.restaurant.name &&
     !formErrors.restaurant.address &&
     !formErrors.restaurant.phone &&
@@ -610,14 +693,9 @@ const isRestaurantFormValid = computed(() => {
   )
 })
 
-// ========== HANDLERS DE REGISTRO ==========
+// ========== HANDLERS ==========
 const handleUserRegister = async () => {
   if (!validateAllUserFields()) {
-    registerFeedback.value.message = 'Corrige los campos marcados'
-    registerFeedback.value.type = 'error'
-    setTimeout(() => {
-      registerFeedback.value.message = ''
-    }, 3000)
     return
   }
 
@@ -629,19 +707,13 @@ const handleUserRegister = async () => {
     localStorage.setItem('user_id', response.usuario.id)
     localStorage.setItem('user_email', response.usuario.email)
     localStorage.setItem('user_name', response.usuario.nombre)
-    const normalizedRole = response.usuario.rol.toLowerCase()
-    localStorage.setItem('user_role', normalizedRole)
+    localStorage.setItem('user_role', response.usuario.rol.toLowerCase())
     
-    registerFeedback.value.message = '¡Bienvenido! Redirigiendo a tu dashboard...'
-    registerFeedback.value.type = 'success'
+    showToast()
     
-    setTimeout(() => router.push('/user/feed'), 1500)
   } catch (error) {
-    registerFeedback.value.message = error.message || 'Error en el registro'
-    registerFeedback.value.type = 'error'
-    setTimeout(() => {
-      registerFeedback.value.message = ''
-    }, 3000)
+    console.error('Error en registro:', error)
+    alert(error.message || 'Error en el registro. Intenta de nuevo.')
   } finally {
     isLoading.value = false
   }
@@ -649,11 +721,6 @@ const handleUserRegister = async () => {
 
 const handleRestaurantRegister = async () => {
   if (!validateAllRestaurantFields()) {
-    registerFeedback.value.message = 'Corrige los campos marcados'
-    registerFeedback.value.type = 'error'
-    setTimeout(() => {
-      registerFeedback.value.message = ''
-    }, 3000)
     return
   }
 
@@ -669,14 +736,10 @@ const handleRestaurantRegister = async () => {
       foto_comprobante: restaurantForm.value.foto_comprobante
     })
     
-    // Mostrar modal de éxito animado en lugar de mensaje de texto
     showSuccessModal()
   } catch (error) {
-    registerFeedback.value.message = error.message || 'Error en la solicitud'
-    registerFeedback.value.type = 'error'
-    setTimeout(() => {
-      registerFeedback.value.message = ''
-    }, 3000)
+    console.error('Error en solicitud:', error)
+    alert(error.message || 'Error en la solicitud. Intenta de nuevo.')
   } finally {
     isLoading.value = false
   }
@@ -694,7 +757,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* ===== ESTILOS EXISTENTES (se mantienen exactamente igual) ===== */
+/* ===== ESTILOS COMPLETOS ===== */
 .auth-page {
   min-height: 100vh;
   background: radial-gradient(circle at top, rgba(255, 251, 242, 0.95), #fffbf2 0%, #f7ede5 100%);
@@ -854,13 +917,17 @@ onMounted(async () => {
   transform: translateY(24px);
 }
 
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .auth-form-wrapper h2 {
   font-size: 2rem;
   color: #4a1f1f;
   margin: 0 0 14px;
   text-align: center;
   font-weight: 800;
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 .subtitle {
@@ -914,7 +981,6 @@ label {
   border: 1px solid #fecaca;
   border-radius: 12px;
   padding: 10px 14px;
-  transition: all 0.2s ease;
 }
 
 .error-icon-wrapper {
@@ -937,57 +1003,47 @@ label {
   flex: 1;
 }
 
-.success-alert {
-  margin-top: 16px;
-  animation: slideDown 0.25s ease-out;
+.password-strength {
+  margin-top: 8px;
 }
 
-.success-alert-content {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background-color: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: 12px;
-  padding: 10px 14px;
+.strength-bar {
+  height: 4px;
+  background-color: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 4px;
 }
 
-.success-icon-wrapper {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #16a34a;
+.strength-fill {
+  height: 100%;
+  width: 0%;
+  transition: width 0.3s ease, background-color 0.3s ease;
 }
 
-.success-text {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #166534;
-  line-height: 1.4;
-  flex: 1;
+.strength-fill.weak {
+  width: 33%;
+  background-color: #ef4444;
+}
+
+.strength-fill.medium {
+  width: 66%;
+  background-color: #f59e0b;
+}
+
+.strength-fill.strong {
+  width: 100%;
+  background-color: #10b981;
+}
+
+.strength-text {
+  font-size: 0.7rem;
+  color: #6b7280;
 }
 
 @keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 input[type="email"],
@@ -1008,11 +1064,7 @@ select {
   color: #422424;
 }
 
-input[type="email"]:focus,
-input[type="password"]:focus,
-input[type="text"]:focus,
-input[type="tel"]:focus,
-select:focus {
+input:focus, select:focus {
   outline: none;
   border-color: #A33333;
   box-shadow: 0 0 0 4px rgba(163, 51, 51, 0.12);
@@ -1074,7 +1126,6 @@ select {
   cursor: pointer;
   transition: transform 0.25s ease, filter 0.25s ease, box-shadow 0.25s ease;
   margin-bottom: 20px;
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   box-shadow: 0 12px 28px rgba(163, 51, 51, 0.15);
 }
 
@@ -1112,7 +1163,60 @@ select {
   color: #6b2121;
 }
 
-/* ===== MODAL DE ÉXITO ANIMADO ===== */
+.success-toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 1000;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 12px 20px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+  min-width: 280px;
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toast-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background-color: #dcfce7;
+  border-radius: 50%;
+  color: #16a34a;
+}
+
+.toast-message strong {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #166534;
+  display: block;
+}
+
+.toast-message p {
+  font-size: 0.75rem;
+  color: #15803d;
+  margin: 0;
+}
+
+.toast-slide-enter-active,
+.toast-slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-slide-enter-from,
+.toast-slide-leave-to {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
 .success-modal-overlay {
   position: fixed;
   top: 0;
@@ -1196,41 +1300,21 @@ select {
   color: #9ca3af;
 }
 
-/* Animaciones */
 @keyframes scaleUp {
-  from {
-    transform: scale(0.5);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
+  from { transform: scale(0.5); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 @keyframes checkDraw {
-  from {
-    stroke-dasharray: 50;
-    stroke-dashoffset: 50;
-    opacity: 0;
-  }
-  to {
-    stroke-dasharray: 50;
-    stroke-dashoffset: 0;
-    opacity: 1;
-  }
+  from { stroke-dasharray: 50; stroke-dashoffset: 50; opacity: 0; }
+  to { stroke-dasharray: 50; stroke-dashoffset: 0; opacity: 1; }
 }
 
 @keyframes progressShrink {
-  from {
-    width: 100%;
-  }
-  to {
-    width: 0%;
-  }
+  from { width: 100%; }
+  to { width: 0%; }
 }
 
-/* Transición del modal */
 .modal-fade-enter-active,
 .modal-fade-leave-active {
   transition: opacity 0.3s ease;
@@ -1253,68 +1337,23 @@ select {
 }
 
 @media (max-width: 900px) {
-  .auth-container {
-    grid-template-columns: 1fr;
-    min-height: auto;
-  }
-
-  .auth-left {
-    min-height: 240px;
-  }
+  .auth-container { grid-template-columns: 1fr; min-height: auto; }
+  .auth-left { min-height: 240px; }
 }
 
 @media (max-width: 768px) {
-  .auth-page {
-    padding-top: 90px;
-  }
-
-  .auth-container {
-    border-radius: 18px;
-    margin-top: 20px;
-  }
-
-  .auth-left {
-    display: none;
-  }
-
-  .auth-header-fixed {
-    padding: 28px 22px 12px;
-  }
-
-  .tabs-navigation {
-    padding: 0 22px;
-    margin-bottom: 18px;
-  }
-
-  .form-scroll-content {
-    overflow-y: visible;
-    padding: 0 20px 30px;
-  }
-
-  .auth-form-wrapper {
-    max-width: 100%;
-    padding-top: 8px;
-  }
-
-  .auth-form-wrapper h2 {
-    font-size: 1.75rem;
-  }
-
-  .error-alert-content {
-    padding: 8px 12px;
-  }
-
-  .error-text {
-    font-size: 0.8rem;
-  }
-  
-  .success-modal-card {
-    margin: 1rem;
-    padding: 1.5rem;
-  }
-  
-  .success-modal-title {
-    font-size: 1.25rem;
-  }
+  .auth-page { padding-top: 90px; }
+  .auth-container { border-radius: 18px; margin-top: 20px; }
+  .auth-left { display: none; }
+  .auth-header-fixed { padding: 28px 22px 12px; }
+  .tabs-navigation { padding: 0 22px; margin-bottom: 18px; }
+  .form-scroll-content { overflow-y: visible; padding: 0 20px 30px; }
+  .auth-form-wrapper { max-width: 100%; padding-top: 8px; }
+  .auth-form-wrapper h2 { font-size: 1.75rem; }
+  .error-alert-content { padding: 8px 12px; }
+  .error-text { font-size: 0.8rem; }
+  .success-toast { top: 16px; right: 16px; left: 16px; min-width: auto; }
+  .success-modal-card { margin: 1rem; padding: 1.5rem; }
+  .success-modal-title { font-size: 1.25rem; }
 }
 </style>
