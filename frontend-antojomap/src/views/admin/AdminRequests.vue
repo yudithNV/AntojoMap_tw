@@ -1,4 +1,4 @@
-<template>
+=<template>
   <DashboardLayout>
     <div class="page-header">
       <h1>Solicitudes de Restaurantes</h1>
@@ -76,7 +76,7 @@
               <button
                 v-if="solicitud.estado === 'PENDIENTE'"
                 class="btn btn-reject"
-                @click="rechazar(solicitud.id)"
+                @click="openRejectModal(solicitud.id)"
                 :disabled="processingId === solicitud.id"
               >
                 ✕
@@ -91,6 +91,40 @@
     <div v-if="feedback.message" class="feedback-message" :class="feedback.type">
       {{ feedback.message }}
     </div>
+
+    <!-- ===== MODAL DE CONFIRMACIÓN PARA RECHAZAR ===== -->
+    <Transition name="modal-fade">
+      <div v-if="showRejectModal" class="modal-overlay" @click.self="closeRejectModal">
+        <div class="modal-card">
+          <!-- Icono de advertencia -->
+          <div class="modal-icon">
+            <div class="icon-circle danger">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
+          </div>
+          
+          <!-- Título y mensaje -->
+          <h2 class="modal-title">¿Estás seguro de rechazar esta solicitud?</h2>
+          <p class="modal-message">
+            Esta acción no se puede deshacer y el establecimiento tendrá que enviar sus datos nuevamente.
+          </p>
+          
+          <!-- Botones de acción -->
+          <div class="modal-actions">
+            <button class="modal-btn cancel" @click="closeRejectModal">
+              No
+            </button>
+            <button class="modal-btn confirm" @click="confirmReject">
+              Sí, rechazar
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </DashboardLayout>
 </template>
 
@@ -98,7 +132,7 @@
 import { ref, onMounted, computed } from 'vue'
 import DashboardLayout from '../../components/DashboardLayout.vue'
 import { adminService } from '../../services/admin.service.js'
-import { Search } from 'lucide-vue-next';
+import { Search } from 'lucide-vue-next'
 
 const solicitudes = ref([])
 const isLoading = ref(false)
@@ -106,6 +140,27 @@ const error = ref('')
 const processingId = ref(null)
 const feedback = ref({ message: '', type: '' })
 const searchQuery = ref('')
+
+// ===== MODAL DE RECHAZO =====
+const showRejectModal = ref(false)
+const solicitudARechazar = ref(null)
+
+const openRejectModal = (id) => {
+  solicitudARechazar.value = id
+  showRejectModal.value = true
+}
+
+const closeRejectModal = () => {
+  showRejectModal.value = false
+  solicitudARechazar.value = null
+}
+
+const confirmReject = async () => {
+  if (solicitudARechazar.value) {
+    await rechazar(solicitudARechazar.value)
+    closeRejectModal()
+  }
+}
 
 const filteredSolicitudes = computed(() => {
   if (!searchQuery.value) return solicitudes.value
@@ -396,6 +451,120 @@ onMounted(() => {
   border: 1px solid #f5c6cb;
 }
 
+/* ===== ESTILOS DEL MODAL DE CONFIRMACIÓN ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-card {
+  background: white;
+  border-radius: 1.5rem;
+  padding: 1.75rem;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  text-align: center;
+  position: relative;
+  z-index: 1001;
+}
+
+.modal-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.icon-circle {
+  background-color: #fee2e2;
+  border-radius: 9999px;
+  padding: 0.75rem;
+  color: #dc2626;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.modal-message {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.modal-btn {
+  padding: 0.6rem 1.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.modal-btn.cancel {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.modal-btn.cancel:hover {
+  background-color: #e5e7eb;
+}
+
+.modal-btn.confirm {
+  background-color: #dc2626;
+  color: white;
+}
+
+.modal-btn.confirm:hover {
+  background-color: #b91c1c;
+}
+
+/* Transiciones del modal */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.modal-fade-enter-active .modal-card,
+.modal-fade-leave-active .modal-card {
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+.modal-fade-enter-from .modal-card,
+.modal-fade-leave-to .modal-card {
+  transform: scale(0.95);
+  opacity: 0;
+}
+
 @media (max-width: 768px) {
   .solicitudes-table {
     font-size: 0.85rem;
@@ -418,6 +587,23 @@ onMounted(() => {
     width: 32px;
     height: 32px;
     font-size: 0.9rem;
+  }
+  
+  .modal-card {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+  
+  .modal-title {
+    font-size: 1.1rem;
+  }
+  
+  .modal-message {
+    font-size: 0.8rem;
+  }
+  
+  .modal-btn {
+    padding: 0.5rem 1.2rem;
   }
 }
 </style>

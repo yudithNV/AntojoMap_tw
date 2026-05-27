@@ -43,7 +43,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Pizza, Hamburger, Fish, IceCream, Salad, Utensils, Drumstick, Soup, Leaf, Shell } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { api } from '@/services/api.js'
@@ -62,6 +62,16 @@ const selectedItem = ref(null)
 const showResult = ref(false)
 const items = ref([])
 
+// 🔥 DATOS PREDETERMINADOS - aseguran que la ruleta se vea ANTES de cargar la API
+const defaultItems = [
+  { name: 'Pizza', icon: Pizza },
+  { name: 'Hamburguesas', icon: Hamburger },
+  { name: 'Sushi', icon: Fish },
+  { name: 'Tacos', icon: Utensils },
+  { name: 'Pollo', icon: Drumstick },
+  { name: 'Postres', icon: IceCream }
+]
+
 // Mapeo nombre → icono
 const iconMap = {
   'Pizza': Pizza,
@@ -76,12 +86,23 @@ const iconMap = {
   'Mariscos': Shell,
 }
 
+// 🔥 CARGA DE DATOS OPTIMIZADA - no bloquea el renderizado
 onMounted(async () => {
-  const categorias = await api.get('/restaurantes/categorias')
-  items.value = categorias.map(c => ({
-    name: c.nombre,
-    icon: iconMap[c.nombre] || Utensils
-  }))
+  // Primero mostramos datos por defecto (instantáneo)
+  items.value = defaultItems
+  
+  // Luego cargamos datos reales de la API en segundo plano
+  try {
+    const categorias = await api.get('/restaurantes/categorias')
+    if (categorias && categorias.length > 0) {
+      items.value = categorias.map(c => ({
+        name: c.nombre,
+        icon: iconMap[c.nombre] || Utensils
+      }))
+    }
+  } catch (e) {
+    console.warn('Error cargando categorías, usando datos por defecto', e)
+  }
 })
 
 // Categorías a usar en la ruleta (filtradas o todas)
@@ -89,10 +110,33 @@ const itemsToUse = computed(() => {
   if (props.filteredCategories && props.filteredCategories.length > 0) {
     return props.filteredCategories
   }
-  return items.value
+  return items.value.length ? items.value : defaultItems
 })
 
-// Lógica para girar la ruleta
+// 🔥 GRADIENTE OPTIMIZADO - se calcula de forma reactiva pero eficiente
+const wheelColors = [
+  '#8A1A36', '#A33333', '#C64445', '#7B1C32', '#B63A36',
+  '#8F2038', '#C84A4A', '#6F1D2E', '#AA3434', '#D04A3F'
+]
+
+const wheelGradient = computed(() => {
+  const itemsLen = itemsToUse.value.length
+  if (!itemsLen) {
+    return 'conic-gradient(#8A1A36 0deg 360deg)'
+  }
+
+  const sectionAngle = 360 / itemsLen
+  const sections = itemsToUse.value.map((item, index) => {
+    const start = index * sectionAngle
+    const end = (index + 1) * sectionAngle
+    const color = wheelColors[index % wheelColors.length]
+    return `${color} ${start}deg ${end}deg`
+  })
+
+  return `conic-gradient(from 0deg, ${sections.join(', ')})`
+})
+
+// 🔥 LÓGICA DE GIRO OPTIMIZADA
 const spinWheel = () => {
   if (isSpinning.value || !itemsToUse.value.length) return
 
@@ -102,14 +146,8 @@ const spinWheel = () => {
   const targetIndex = Math.floor(Math.random() * itemsToUse.value.length)
 
   const currentRotation = ((rotation.value % 360) + 360) % 360
-  
-  // Centro del segmento ganador (en ángulo cónico desde 0°)
   const itemCenterAngle = targetIndex * sectionAngle + sectionAngle / 2
-  
-  // Alinear el segmento ganador con la flecha superior (0°)
-  // La flecha apunta a 0°, así que rotamos hasta que itemCenterAngle coincida con 0°
   const desiredRotation = (-itemCenterAngle + 360) % 360
-
   const extraTurns = 1440
   const deltaRotation = extraTurns + ((desiredRotation - currentRotation + 360) % 360)
 
@@ -122,36 +160,6 @@ const spinWheel = () => {
   }, 1900)
 }
 
-const wheelColors = [
-  '#8A1A36',
-  '#A33333',
-  '#C64445',
-  '#7B1C32',
-  '#B63A36',
-  '#8F2038',
-  '#C84A4A',
-  '#6F1D2E',
-  '#AA3434',
-  '#D04A3F'
-]
-
-const wheelGradient = computed(() => {
-  if (!itemsToUse.value.length) {
-    return 'conic-gradient(#8A1A36 0deg 360deg)'
-  }
-
-  const sectionAngle = 360 / itemsToUse.value.length
-
-  const sections = itemsToUse.value.map((item, index) => {
-    const start = index * sectionAngle
-    const end = (index + 1) * sectionAngle
-    const color = wheelColors[index % wheelColors.length]
-
-    return `${color} ${start}deg ${end}deg`
-  })
-
-  return `conic-gradient(from 0deg, ${sections.join(', ')})`
-})
 const closeResult = () => {
   showResult.value = false
 }
@@ -163,10 +171,8 @@ const goToRestaurants = () => {
   const categoryName = selectedItem.value.name
   
   if (hasToken) {
-    // Usuario ya está logueado
     router.push({ path: '/user/feed', query: { categoria: categoryName } })
   } else {
-    // Usuario no está logueado, guardar categoría y mandar al login
     localStorage.setItem('pending_category', categoryName)
     router.push('/login')
   }
@@ -177,10 +183,10 @@ const spinAgain = () => {
   closeResult()
   spinWheel()
 }
-
 </script>
 
 <style scoped>
+/* Todos tus estilos existentes se mantienen igual */
 .wheel-container {
   position: relative;
   display: flex;
@@ -219,9 +225,6 @@ const spinAgain = () => {
   width: 430px;
   height: 430px;
   border-radius: 50%;
-  background: conic-gradient(
-    
-  );
   border: 6px solid rgba(107, 33, 33, 0.92);
   display: flex;
   align-items: center;
@@ -289,7 +292,6 @@ const spinAgain = () => {
   text-transform: uppercase;
 }
 
-.go-button.spinning,
 .go-button.spinning {
   animation: buttonPulse 0.85s ease-in-out infinite;
   background-color: #bf3641;

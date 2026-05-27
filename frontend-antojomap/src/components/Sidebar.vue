@@ -40,11 +40,39 @@
           <p class="user-email">{{ userEmail }}</p>
         </div>
       </div>
-      <button class="logout-btn" @click="handleLogout" :title="props.collapsed ? 'Salir' : ''">
+      <!-- 🔥 BOTÓN SALIR MODIFICADO - ABRE MODAL 🔥 -->
+      <button class="logout-btn" @click="openLogoutModal" :title="props.collapsed ? 'Salir' : ''">
         <span v-if="!props.collapsed">Salir</span>
         <LogOut v-else :size="20" stroke-width="2.5" />
       </button>
     </div>
+
+    <!-- 🔥 MODAL DE CONFIRMACIÓN DE SALIDA 🔥 -->
+    <Transition name="modal-fade-scale">
+      <div v-if="showLogoutModal" class="modal-overlay" @click.self="closeLogoutModal">
+        <div class="modal-container">
+          <div class="modal-content">
+            <div class="modal-icon-wrapper">
+              <div class="modal-icon-circle">
+                <LogOut :size="32" stroke-width="1.5" class="modal-icon" />
+              </div>
+            </div>
+            <h3 class="modal-title">¿De verdad quieres salir?</h3>
+            <p class="modal-message">
+              Tendrás que volver a ingresar tus credenciales para ver los menús.
+            </p>
+            <div class="modal-actions">
+              <button class="modal-btn modal-btn-cancel" @click="closeLogoutModal">
+                Cancelar
+              </button>
+              <button class="modal-btn modal-btn-confirm" @click="confirmLogout" :disabled="isLoggingOut">
+                {{ isLoggingOut ? 'Saliendo...' : 'Sí, salir' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </aside>
 </template>
 
@@ -53,11 +81,12 @@ import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { 
   LayoutDashboard, ClipboardList, Users, Store, BarChart3,
-  Menu, Heart, Search, User, UtensilsCrossed, LogOut // 👈 Agrega este aquí
+  Menu, Heart, Search, User, UtensilsCrossed, LogOut
 } from 'lucide-vue-next'
 import { useAuthStore } from '../stores/auth.store.js'
 import { useFavoritosStore } from '../stores/favoritos.store.js'
 import { useRestaurantesStore } from '../stores/restaurantes.store.js'
+
 const authStore = useAuthStore()
 const favoritosStore = useFavoritosStore()
 const restaurantesStore = useRestaurantesStore()
@@ -70,10 +99,16 @@ const props = defineProps({
 })
 const emit = defineEmits(['close', 'toggle'])
 
+// ========== ESTADO DEL MODAL ==========
+const showLogoutModal = ref(false)
+const isLoggingOut = ref(false)
+
+// ========== USUARIO ==========
 const userRole = computed(() => authStore.rol || 'user')
 const userEmail = computed(() => authStore.email)
 const userName = computed(() => authStore.nombre)
 
+// ========== MENÚ ==========
 const menuItems = computed(() => {
   const menus = {
     admin: [
@@ -100,13 +135,31 @@ const menuItems = computed(() => {
 
 const isActive = (path) => route.path === path
 
-const handleLogout = () => {
-  authStore.logout()
-  favoritosStore.reset()
-  restaurantesStore.reset()
-  router.push('/')
+// ========== 🔥 FUNCIONES DEL MODAL 🔥 ==========
+const openLogoutModal = () => {
+  showLogoutModal.value = true
+}
+
+const closeLogoutModal = () => {
+  showLogoutModal.value = false
+}
+
+const confirmLogout = async () => {
+  isLoggingOut.value = true
+  try {
+    await authStore.logout()
+    favoritosStore.reset()
+    restaurantesStore.reset()
+    router.push('/')
+  } catch (error) {
+    console.error('Error al cerrar sesión:', error)
+  } finally {
+    isLoggingOut.value = false
+    showLogoutModal.value = false
+  }
 }
 </script>
+
 <style scoped>
 .sidebar {
   width: 240px;
@@ -147,7 +200,6 @@ const handleLogout = () => {
   text-decoration: none;
 }
 
-/* 🍷 Logo: Le subimos un toque el brillo usando un degradado con el tono más claro */
 .logo-icon {
   width: 40px;
   height: 40px;
@@ -196,13 +248,12 @@ const handleLogout = () => {
 }
 
 .nav-item:hover { 
-  background-color: rgba(107, 37, 60, 0.06); /* Hover sutil un poco más vivo */
+  background-color: rgba(107, 37, 60, 0.06);
   opacity: 1; 
 }
 
-/* 🌟 AQUÍ ESTÁ EL CAMBIO CLAVE: Item activo menos oscuro y con más luz */
 .nav-item.active {
-  background: linear-gradient(135deg, #7a2b45, #5c1f32); /* Un vino cereza con más vida */
+  background: linear-gradient(135deg, #7a2b45, #5c1f32);
   color: #FDFCFB;
   opacity: 1;
   box-shadow: 0 4px 14px rgba(122, 43, 69, 0.25);
@@ -292,6 +343,149 @@ const handleLogout = () => {
   color: white; 
 }
 
+/* ===== 🔥 MODAL DE CONFIRMACIÓN 🔥 ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-content {
+  background: linear-gradient(135deg, #fffbf5 0%, #fff5ea 100%);
+  border-radius: 28px;
+  padding: 36px 32px;
+  text-align: center;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 30px 50px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(163, 51, 51, 0.15);
+}
+
+.modal-icon-wrapper {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.modal-icon-circle {
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(135deg, #A33333, #6B2121);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulse 0.4s ease-out;
+}
+
+.modal-icon {
+  color: white;
+}
+
+.modal-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #4a1f1f;
+  margin-bottom: 12px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.modal-message {
+  font-size: 0.95rem;
+  color: #6b2121;
+  margin-bottom: 28px;
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.modal-btn {
+  padding: 12px 28px;
+  border-radius: 40px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.modal-btn-cancel {
+  background: transparent;
+  border: 2px solid #ddd;
+  color: #666;
+}
+
+.modal-btn-cancel:hover {
+  background: #f5f5f5;
+  border-color: #999;
+}
+
+.modal-btn-confirm {
+  background: linear-gradient(135deg, #A33333, #6B2121);
+  color: white;
+  box-shadow: 0 4px 12px rgba(163, 51, 51, 0.3);
+}
+
+.modal-btn-confirm:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(163, 51, 51, 0.4);
+}
+
+.modal-btn-confirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.modal-fade-scale-enter-active,
+.modal-fade-scale-leave-active {
+  transition: all 0.3s ease;
+}
+
+.modal-fade-scale-enter-from,
+.modal-fade-scale-leave-to {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.modal-fade-scale-enter-to,
+.modal-fade-scale-leave-from {
+  opacity: 1;
+  transform: scale(1);
+}
+
 @media (max-width: 768px) {
   .sidebar {
     transform: translateX(-100%);
@@ -299,5 +493,18 @@ const handleLogout = () => {
     width: 240px !important;
   }
   .sidebar.sidebar-open { transform: translateX(0); }
+  
+  .modal-content {
+    padding: 28px 24px;
+    margin: 16px;
+  }
+  
+  .modal-title {
+    font-size: 1.3rem;
+  }
+  
+  .modal-btn {
+    padding: 10px 20px;
+  }
 }
 </style>

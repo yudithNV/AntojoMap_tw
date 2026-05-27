@@ -54,7 +54,8 @@
               <h2>Crea tu cuenta</h2>
               <p class="subtitle">Únete a la comunidad foodie más grande</p>
 
-              <form @submit.prevent="handleUserRegister">
+              <form @submit.prevent="handleUserRegister" novalidate>
+                <!-- Campo: Nombre Completo -->
                 <div class="form-group">
                   <label for="user-name">Nombre Completo</label>
                   <input
@@ -62,12 +63,25 @@
                     v-model="userForm.name"
                     type="text"
                     placeholder="Tu nombre"
-                    required
-                    @blur="handleFieldBlur('user', 'name')"
+                    :class="{ 'input-error': formErrors.user.name }"
+                    @blur="validateUserField('name')"
                   />
-                  <p v-if="touched.user.name && formErrors.user.name" class="field-error">{{ formErrors.user.name }}</p>
+                  <div 
+                    v-if="formErrors.user.name" 
+                    class="error-alert"
+                    role="alert"
+                    aria-live="polite"
+                  >
+                    <div class="error-alert-content">
+                      <div class="error-icon-wrapper">
+                        <AlertCircle :size="18" class="error-icon" stroke-width="2" />
+                      </div>
+                      <span class="error-text">{{ formErrors.user.name }}</span>
+                    </div>
+                  </div>
                 </div>
 
+                <!-- Campo: Correo Electrónico -->
                 <div class="form-group">
                   <label for="user-email">Correo Electrónico</label>
                   <input
@@ -75,12 +89,25 @@
                     v-model="userForm.email"
                     type="email"
                     placeholder="tu@correo.com"
-                    required
-                    @blur="handleFieldBlur('user', 'email')"
+                    :class="{ 'input-error': formErrors.user.email }"
+                    @blur="validateUserField('email')"
                   />
-                  <p v-if="touched.user.email && formErrors.user.email" class="field-error">{{ formErrors.user.email }}</p>
+                  <div 
+                    v-if="formErrors.user.email" 
+                    class="error-alert"
+                    role="alert"
+                    aria-live="polite"
+                  >
+                    <div class="error-alert-content">
+                      <div class="error-icon-wrapper">
+                        <AlertCircle :size="18" class="error-icon" stroke-width="2" />
+                      </div>
+                      <span class="error-text">{{ formErrors.user.email }}</span>
+                    </div>
+                  </div>
                 </div>
 
+                <!-- Campo: Contraseña -->
                 <div class="form-group">
                   <label for="user-password">Contraseña</label>
                   <div class="password-input-wrapper">
@@ -89,20 +116,40 @@
                       v-model="userForm.password"
                       :type="showUserPassword ? 'text' : 'password'"
                       placeholder="••••••••"
-                      required
-                      @blur="handleFieldBlur('user', 'password')"
+                      :class="{ 'input-error': formErrors.user.password }"
+                      @blur="validateUserField('password')"
                     />
                     <button type="button" class="toggle-password" @click="showUserPassword = !showUserPassword">
                       <Eye v-if="showUserPassword" :size="20" stroke-width="2" />
                       <EyeOff v-else :size="20" stroke-width="2" />
                     </button>
                   </div>
-                  <p v-if="touched.user.password && formErrors.user.password" class="field-error">{{ formErrors.user.password }}</p>
+                  <div 
+                    v-if="formErrors.user.password" 
+                    class="error-alert"
+                    role="alert"
+                    aria-live="polite"
+                  >
+                    <div class="error-alert-content">
+                      <div class="error-icon-wrapper">
+                        <AlertCircle :size="18" class="error-icon" stroke-width="2" />
+                      </div>
+                      <span class="error-text">{{ formErrors.user.password }}</span>
+                    </div>
+                  </div>
                 </div>
 
-                <button type="submit" class="btn-submit" :disabled="!isUserFormValid || isLoading">{{ isLoading ? 'Registrando...' : 'Registrarse' }}</button>
-                <div v-if="registerFeedback.message && activeTab === 'usuario'" class="form-feedback" :class="registerFeedback.type" aria-live="polite">
-                  {{ registerFeedback.message }}
+                <button type="submit" class="btn-submit" :disabled="!isUserFormValid || isLoading">
+                  {{ isLoading ? 'Registrando...' : 'Registrarse' }}
+                </button>
+                
+                <div v-if="registerFeedback.message && activeTab === 'usuario'" class="success-alert" role="status" aria-live="polite">
+                  <div class="success-alert-content">
+                    <div class="success-icon-wrapper">
+                      <CheckCircle :size="18" stroke-width="2" />
+                    </div>
+                    <span class="success-text">{{ registerFeedback.message }}</span>
+                  </div>
                 </div>
               </form>
             </template>
@@ -112,7 +159,8 @@
               <h2>Registra tu Restaurante</h2>
               <p class="subtitle">Únete como vendedor y crece con AntojoMap</p>
 
-              <form @submit.prevent="handleRestaurantRegister">
+              <form @submit.prevent="handleRestaurantRegister" novalidate>
+                <!-- Campo: Nombre del Restaurante -->
                 <div class="form-group">
                   <label for="rest-name">Nombre del Restaurante</label>
                   <input
@@ -120,12 +168,25 @@
                     v-model="restaurantForm.name"
                     type="text"
                     placeholder="Nombre de tu restaurante"
-                    required
-                    @blur="handleFieldBlur('restaurant', 'name')"
+                    :class="{ 'input-error': formErrors.restaurant.name }"
+                    @blur="validateRestaurantField('name')"
                   />
-                  <p v-if="touched.restaurant.name && formErrors.restaurant.name" class="field-error">{{ formErrors.restaurant.name }}</p>
+                  <div 
+                    v-if="formErrors.restaurant.name" 
+                    class="error-alert"
+                    role="alert"
+                    aria-live="polite"
+                  >
+                    <div class="error-alert-content">
+                      <div class="error-icon-wrapper">
+                        <AlertCircle :size="18" class="error-icon" stroke-width="2" />
+                      </div>
+                      <span class="error-text">{{ formErrors.restaurant.name }}</span>
+                    </div>
+                  </div>
                 </div>
 
+                <!-- Campo: Dirección -->
                 <div class="form-group">
                   <label for="rest-address">Dirección</label>
                   <input
@@ -133,12 +194,25 @@
                     v-model="restaurantForm.address"
                     type="text"
                     placeholder="Dirección del restaurante"
-                    required
-                    @blur="handleFieldBlur('restaurant', 'address')"
+                    :class="{ 'input-error': formErrors.restaurant.address }"
+                    @blur="validateRestaurantField('address')"
                   />
-                  <p v-if="touched.restaurant.address && formErrors.restaurant.address" class="field-error">{{ formErrors.restaurant.address }}</p>
+                  <div 
+                    v-if="formErrors.restaurant.address" 
+                    class="error-alert"
+                    role="alert"
+                    aria-live="polite"
+                  >
+                    <div class="error-alert-content">
+                      <div class="error-icon-wrapper">
+                        <AlertCircle :size="18" class="error-icon" stroke-width="2" />
+                      </div>
+                      <span class="error-text">{{ formErrors.restaurant.address }}</span>
+                    </div>
+                  </div>
                 </div>
 
+                <!-- Campo: Teléfono -->
                 <div class="form-group">
                   <label for="rest-phone">Teléfono</label>
                   <input
@@ -146,27 +220,54 @@
                     v-model="restaurantForm.phone"
                     type="tel"
                     placeholder="+591 XXXX XXXX"
-                    required
-                    @blur="handleFieldBlur('restaurant', 'phone')"
+                    :class="{ 'input-error': formErrors.restaurant.phone }"
+                    @blur="validateRestaurantField('phone')"
                   />
-                  <p v-if="touched.restaurant.phone && formErrors.restaurant.phone" class="field-error">{{ formErrors.restaurant.phone }}</p>
+                  <div 
+                    v-if="formErrors.restaurant.phone" 
+                    class="error-alert"
+                    role="alert"
+                    aria-live="polite"
+                  >
+                    <div class="error-alert-content">
+                      <div class="error-icon-wrapper">
+                        <AlertCircle :size="18" class="error-icon" stroke-width="2" />
+                      </div>
+                      <span class="error-text">{{ formErrors.restaurant.phone }}</span>
+                    </div>
+                  </div>
                 </div>
 
+                <!-- Campo: Categoría -->
                 <div class="form-group">
                   <label for="rest-category">Categoría</label>
                   <select
                     id="rest-category"
                     v-model="restaurantForm.category"
-                    required
-                    @blur="handleFieldBlur('restaurant', 'category')"
+                    :class="{ 'input-error': formErrors.restaurant.category }"
+                    @blur="validateRestaurantField('category')"
                   >
                     <option value="">Selecciona una categoría</option>
                     <option v-for="cat in categorias" :key="cat.id" :value="cat.id">
                       {{ cat.nombre }}
                     </option>
                   </select>
+                  <div 
+                    v-if="formErrors.restaurant.category" 
+                    class="error-alert"
+                    role="alert"
+                    aria-live="polite"
+                  >
+                    <div class="error-alert-content">
+                      <div class="error-icon-wrapper">
+                        <AlertCircle :size="18" class="error-icon" stroke-width="2" />
+                      </div>
+                      <span class="error-text">{{ formErrors.restaurant.category }}</span>
+                    </div>
+                  </div>
                 </div>
 
+                <!-- Campo: Correo Administrador -->
                 <div class="form-group">
                   <label for="rest-email">Correo para el Administrador de Restaurante</label>
                   <input
@@ -174,12 +275,25 @@
                     v-model="restaurantForm.email"
                     type="email"
                     placeholder="correo@negocio.com"
-                    required
-                    @blur="handleFieldBlur('restaurant', 'email')"
+                    :class="{ 'input-error': formErrors.restaurant.email }"
+                    @blur="validateRestaurantField('email')"
                   />
-                  <p v-if="touched.restaurant.email && formErrors.restaurant.email" class="field-error">{{ formErrors.restaurant.email }}</p>
+                  <div 
+                    v-if="formErrors.restaurant.email" 
+                    class="error-alert"
+                    role="alert"
+                    aria-live="polite"
+                  >
+                    <div class="error-alert-content">
+                      <div class="error-icon-wrapper">
+                        <AlertCircle :size="18" class="error-icon" stroke-width="2" />
+                      </div>
+                      <span class="error-text">{{ formErrors.restaurant.email }}</span>
+                    </div>
+                  </div>
                 </div>
 
+                <!-- Campo: Contraseña -->
                 <div class="form-group">
                   <label for="rest-password">Contraseña de Acceso</label>
                   <input
@@ -187,12 +301,25 @@
                     v-model="restaurantForm.password"
                     type="password"
                     placeholder="••••••••"
-                    required
-                    @blur="handleFieldBlur('restaurant', 'password')"
+                    :class="{ 'input-error': formErrors.restaurant.password }"
+                    @blur="validateRestaurantField('password')"
                   />
-                  <p v-if="touched.restaurant.password && formErrors.restaurant.password" class="field-error">{{ formErrors.restaurant.password }}</p>
+                  <div 
+                    v-if="formErrors.restaurant.password" 
+                    class="error-alert"
+                    role="alert"
+                    aria-live="polite"
+                  >
+                    <div class="error-alert-content">
+                      <div class="error-icon-wrapper">
+                        <AlertCircle :size="18" class="error-icon" stroke-width="2" />
+                      </div>
+                      <span class="error-text">{{ formErrors.restaurant.password }}</span>
+                    </div>
+                  </div>
                 </div>
 
+                <!-- Campo: Foto del Establecimiento -->
                 <div class="form-group">
                   <label for="rest-photo">Foto del Establecimiento</label>
                   <input
@@ -200,15 +327,36 @@
                     v-model="restaurantForm.foto_comprobante"
                     type="text"
                     placeholder="URL de la foto (ej: https://...)"
-                    @blur="handleFieldBlur('restaurant', 'foto_comprobante')"
+                    :class="{ 'input-error': formErrors.restaurant.foto_comprobante }"
+                    @blur="validateRestaurantField('foto_comprobante')"
                   />
                   <p class="field-hint">Por ahora ingresa la URL de una foto. Pronto podrás subir archivos directamente.</p>
-                  <p v-if="touched.restaurant.foto_comprobante && formErrors.restaurant.foto_comprobante" class="field-error">{{ formErrors.restaurant.foto_comprobante }}</p>
+                  <div 
+                    v-if="formErrors.restaurant.foto_comprobante" 
+                    class="error-alert"
+                    role="alert"
+                    aria-live="polite"
+                  >
+                    <div class="error-alert-content">
+                      <div class="error-icon-wrapper">
+                        <AlertCircle :size="18" class="error-icon" stroke-width="2" />
+                      </div>
+                      <span class="error-text">{{ formErrors.restaurant.foto_comprobante }}</span>
+                    </div>
+                  </div>
                 </div>
 
-                <button type="submit" class="btn-submit" :disabled="!isRestaurantFormValid || isLoading">{{ isLoading ? 'Enviando...' : 'Registrar Restaurante' }}</button>
-                <div v-if="registerFeedback.message && activeTab === 'restaurante'" class="form-feedback" :class="registerFeedback.type" aria-live="polite">
-                  {{ registerFeedback.message }}
+                <button type="submit" class="btn-submit" :disabled="!isRestaurantFormValid || isLoading">
+                  {{ isLoading ? 'Enviando...' : 'Registrar Restaurante' }}
+                </button>
+                
+                <div v-if="registerFeedback.message && activeTab === 'restaurante'" class="success-alert" role="status" aria-live="polite">
+                  <div class="success-alert-content">
+                    <div class="success-icon-wrapper">
+                      <CheckCircle :size="18" stroke-width="2" />
+                    </div>
+                    <span class="success-text">{{ registerFeedback.message }}</span>
+                  </div>
                 </div>
               </form>
             </template>
@@ -220,13 +368,43 @@
         </div>
       </div>
     </div>
+
+    <!-- ===== MODAL DE ÉXITO ANIMADO ===== -->
+    <Transition name="modal-fade">
+      <div v-if="showRequestSuccessModal" class="success-modal-overlay" @click.self="closeSuccessModal">
+        <div class="success-modal-card">
+          <!-- Círculo animado con icono de verificación -->
+          <div class="success-icon-animated">
+            <div class="success-circle">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+          </div>
+          
+          <!-- Título y mensaje -->
+          <h2 class="success-modal-title">¡Solicitud Enviada Exitosamente!</h2>
+          <p class="success-modal-message">
+            Estamos procesando los datos de tu establecimiento.<br>
+            Pronto podrás gestionar tu menú.
+          </p>
+          
+          <!-- Barra de progreso animada -->
+          <div class="progress-bar-container">
+            <div class="progress-bar"></div>
+          </div>
+          
+          <p class="redirect-message">Redirigiendo al inicio de sesión...</p>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { UtensilsCrossed, Utensils, Eye, EyeOff, User, Store } from 'lucide-vue-next'
+import { UtensilsCrossed, Utensils, Eye, EyeOff, User, Store, AlertCircle, CheckCircle } from 'lucide-vue-next'
 import { authService } from '../services/auth.service.js'
 import { api } from '../services/api.js'
 
@@ -236,8 +414,31 @@ const activeTab = ref('usuario')
 const showUserPassword = ref(false)
 const isLoading = ref(false)
 
+// ===== MODAL DE ÉXITO =====
+const showRequestSuccessModal = ref(false)
+let redirectTimeout = null
+
+const showSuccessModal = () => {
+  showRequestSuccessModal.value = true
+  
+  // Configurar timeout para redirigir después de 3 segundos
+  redirectTimeout = setTimeout(() => {
+    closeSuccessModal()
+    router.push('/login')
+  }, 3000)
+}
+
+const closeSuccessModal = () => {
+  showRequestSuccessModal.value = false
+  if (redirectTimeout) {
+    clearTimeout(redirectTimeout)
+    redirectTimeout = null
+  }
+}
+
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
+// ========== FORMULARIOS ==========
 const userForm = ref({
   name: '',
   email: '',
@@ -254,6 +455,7 @@ const restaurantForm = ref({
   foto_comprobante: ''
 })
 
+// ========== ERRORES ==========
 const formErrors = reactive({
   user: {
     name: '',
@@ -271,70 +473,123 @@ const formErrors = reactive({
   }
 })
 
-const touched = reactive({
-  user: {
-    name: false,
-    email: false,
-    password: false
-  },
-  restaurant: {
-    name: false,
-    address: false,
-    phone: false,
-    category: false,
-    email: false,
-    password: false,
-    foto_comprobante: false
-  }
-})
-
 const registerFeedback = ref({ message: '', type: '' })
 
-const validateField = (type, field, value) => {
+// ========== FUNCIONES DE VALIDACIÓN ==========
+const validateUserField = (field) => {
+  const value = userForm.value[field]
+  
   if (!value || !String(value).trim()) {
-    return 'Este campo es obligatorio'
+    formErrors.user[field] = 'Este campo es obligatorio'
+    return false
   }
 
   if (field === 'email' && !emailRegex.test(value)) {
-    return 'Ingresa un correo válido'
+    formErrors.user[field] = 'Ingresa un correo válido'
+    return false
   }
 
   if (field === 'password' && value.length < 8) {
-    return 'Debe tener al menos 8 caracteres'
+    formErrors.user[field] = 'Debe tener al menos 8 caracteres'
+    return false
   }
 
-  return ''
+  formErrors.user[field] = ''
+  return true
 }
 
-const validateForm = (type) => {
-  const source = type === 'user' ? userForm.value : restaurantForm.value
-  const fields = Object.keys(formErrors[type])
+const validateRestaurantField = (field) => {
+  const value = restaurantForm.value[field]
+  
+  if (field !== 'foto_comprobante' && (!value || !String(value).trim())) {
+    formErrors.restaurant[field] = 'Este campo es obligatorio'
+    return false
+  }
 
-  fields.forEach((field) => {
-    formErrors[type][field] = validateField(type, field, source[field])
-  })
+  if (field === 'email' && value && !emailRegex.test(value)) {
+    formErrors.restaurant[field] = 'Ingresa un correo válido'
+    return false
+  }
 
-  return !fields.some((field) => Boolean(formErrors[type][field]))
+  if (field === 'password' && value && value.length < 8) {
+    formErrors.restaurant[field] = 'Debe tener al menos 8 caracteres'
+    return false
+  }
+
+  formErrors.restaurant[field] = ''
+  return true
 }
 
-const touchFormFields = (type) => {
-  Object.keys(touched[type]).forEach((field) => {
-    touched[type][field] = true
-  })
+// ========== WATCHERS PARA LIMPIEZA EN TIEMPO REAL ==========
+watch(() => userForm.value.name, (newVal) => {
+  if (newVal && newVal.trim()) formErrors.user.name = ''
+})
+
+watch(() => userForm.value.email, (newVal) => {
+  if (newVal && newVal.trim() && emailRegex.test(newVal)) {
+    formErrors.user.email = ''
+  }
+})
+
+watch(() => userForm.value.password, (newVal) => {
+  if (newVal && newVal.length >= 8) formErrors.user.password = ''
+})
+
+watch(() => restaurantForm.value.name, (newVal) => {
+  if (newVal && newVal.trim()) formErrors.restaurant.name = ''
+})
+
+watch(() => restaurantForm.value.address, (newVal) => {
+  if (newVal && newVal.trim()) formErrors.restaurant.address = ''
+})
+
+watch(() => restaurantForm.value.phone, (newVal) => {
+  if (newVal && newVal.trim()) formErrors.restaurant.phone = ''
+})
+
+watch(() => restaurantForm.value.category, (newVal) => {
+  if (newVal && newVal.trim()) formErrors.restaurant.category = ''
+})
+
+watch(() => restaurantForm.value.email, (newVal) => {
+  if (newVal && newVal.trim() && emailRegex.test(newVal)) {
+    formErrors.restaurant.email = ''
+  }
+})
+
+watch(() => restaurantForm.value.password, (newVal) => {
+  if (newVal && newVal.length >= 8) formErrors.restaurant.password = ''
+})
+
+watch(() => restaurantForm.value.foto_comprobante, (newVal) => {
+  if (newVal && newVal.trim()) formErrors.restaurant.foto_comprobante = ''
+})
+
+// ========== VALIDACIÓN COMPLETA ==========
+const validateAllUserFields = () => {
+  return validateUserField('name') && validateUserField('email') && validateUserField('password')
 }
 
-const handleFieldBlur = (type, field) => {
-  touched[type][field] = true
-  const source = type === 'user' ? userForm.value : restaurantForm.value
-  formErrors[type][field] = validateField(type, field, source[field])
+const validateAllRestaurantFields = () => {
+  return (
+    validateRestaurantField('name') &&
+    validateRestaurantField('address') &&
+    validateRestaurantField('phone') &&
+    validateRestaurantField('category') &&
+    validateRestaurantField('email') &&
+    validateRestaurantField('password')
+  )
 }
 
+// ========== VALIDACIÓN EN TIEMPO REAL PARA BOTÓN ==========
 const isUserFormValid = computed(() => {
   return (
     userForm.value.name.trim() &&
     emailRegex.test(userForm.value.email) &&
     userForm.value.password.length >= 8 &&
-    !Object.values(formErrors.user).some(Boolean)
+    !formErrors.user.name &&
+    !formErrors.user.email &&
+    !formErrors.user.password
   )
 })
 
@@ -346,16 +601,23 @@ const isRestaurantFormValid = computed(() => {
     restaurantForm.value.category.trim() &&
     emailRegex.test(restaurantForm.value.email) &&
     restaurantForm.value.password.length >= 8 &&
-    !Object.values(formErrors.restaurant).some(Boolean)
+    !formErrors.restaurant.name &&
+    !formErrors.restaurant.address &&
+    !formErrors.restaurant.phone &&
+    !formErrors.restaurant.category &&
+    !formErrors.restaurant.email &&
+    !formErrors.restaurant.password
   )
 })
 
+// ========== HANDLERS DE REGISTRO ==========
 const handleUserRegister = async () => {
-  touchFormFields('user')
-
-  if (!validateForm('user')) {
+  if (!validateAllUserFields()) {
     registerFeedback.value.message = 'Corrige los campos marcados'
     registerFeedback.value.type = 'error'
+    setTimeout(() => {
+      registerFeedback.value.message = ''
+    }, 3000)
     return
   }
 
@@ -377,17 +639,21 @@ const handleUserRegister = async () => {
   } catch (error) {
     registerFeedback.value.message = error.message || 'Error en el registro'
     registerFeedback.value.type = 'error'
+    setTimeout(() => {
+      registerFeedback.value.message = ''
+    }, 3000)
   } finally {
     isLoading.value = false
   }
 }
 
 const handleRestaurantRegister = async () => {
-  touchFormFields('restaurant')
-
-  if (!validateForm('restaurant')) {
+  if (!validateAllRestaurantFields()) {
     registerFeedback.value.message = 'Corrige los campos marcados'
     registerFeedback.value.type = 'error'
+    setTimeout(() => {
+      registerFeedback.value.message = ''
+    }, 3000)
     return
   }
 
@@ -402,17 +668,21 @@ const handleRestaurantRegister = async () => {
       password: restaurantForm.value.password,
       foto_comprobante: restaurantForm.value.foto_comprobante
     })
-    registerFeedback.value.message = '✅ ¡Solicitud enviada! El administrador revisará tu registro pronto. Redirigiendo a login...'
-    registerFeedback.value.type = 'success'
-    setTimeout(() => router.push('/login'), 3000)
+    
+    // Mostrar modal de éxito animado en lugar de mensaje de texto
+    showSuccessModal()
   } catch (error) {
     registerFeedback.value.message = error.message || 'Error en la solicitud'
     registerFeedback.value.type = 'error'
+    setTimeout(() => {
+      registerFeedback.value.message = ''
+    }, 3000)
   } finally {
     isLoading.value = false
   }
 }
 
+// ========== CARGAR CATEGORÍAS ==========
 onMounted(async () => {
   try {
     const data = await api.get('/restaurantes/categorias')
@@ -424,6 +694,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* ===== ESTILOS EXISTENTES (se mantienen exactamente igual) ===== */
 .auth-page {
   min-height: 100vh;
   background: radial-gradient(circle at top, rgba(255, 251, 242, 0.95), #fffbf2 0%, #f7ede5 100%);
@@ -432,7 +703,6 @@ onMounted(async () => {
   justify-content: center;
   padding: 24px;
   color: #4a2c2c;
-  /* 🔥 PADDING TOP PARA QUE NO SE SUPERPONGA CON EL NAVBAR 🔥 */
   padding-top: 120px;
 }
 
@@ -614,13 +884,6 @@ label {
   margin-bottom: 10px;
 }
 
-.field-error {
-  color: #A33333;
-  font-size: 0.85rem;
-  margin-top: 8px;
-  line-height: 1.4;
-}
-
 .field-hint {
   color: #6b2121;
   font-size: 0.8rem;
@@ -628,23 +891,103 @@ label {
   opacity: 0.7;
 }
 
-.form-feedback {
-  margin-top: 18px;
-  font-size: 0.95rem;
+.input-error {
+  border-color: #dc2626 !important;
+  background-color: #fef2f2 !important;
+}
+
+.input-error:focus {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1) !important;
+}
+
+.error-alert {
+  margin-top: 8px;
+  animation: slideDown 0.2s ease-out;
+}
+
+.error-alert-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  padding: 10px 14px;
+  transition: all 0.2s ease;
+}
+
+.error-icon-wrapper {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.error-icon {
+  color: #dc2626;
+  stroke-width: 2;
+}
+
+.error-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #991b1b;
   line-height: 1.4;
+  flex: 1;
 }
 
-.form-feedback.error {
-  color: #A33333;
+.success-alert {
+  margin-top: 16px;
+  animation: slideDown 0.25s ease-out;
 }
 
-.form-feedback.success {
-  color: #1B6A3A;
+.success-alert-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 10px 14px;
 }
 
-.btn-submit:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.success-icon-wrapper {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #16a34a;
+}
+
+.success-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #166534;
+  line-height: 1.4;
+  flex: 1;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 input[type="email"],
@@ -706,12 +1049,17 @@ select {
   align-items: center;
   justify-content: center;
   opacity: 0.7;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
   color: #6b2121;
 }
 
 .toggle-password:hover {
   opacity: 1;
+  transform: translateY(-1px);
+  background-color: rgba(163, 51, 51, 0.08);
 }
 
 .btn-submit {
@@ -730,14 +1078,20 @@ select {
   box-shadow: 0 12px 28px rgba(163, 51, 51, 0.15);
 }
 
-.btn-submit:hover {
-  transform: scale(1.03);
-  filter: brightness(1.06);
-  box-shadow: 0 18px 32px rgba(163, 51, 51, 0.2);
+.btn-submit:hover:not(:disabled) {
+  transform: translateY(-1px) scale(1.01);
+  background-color: #d34b2f;
+  box-shadow: 0 16px 28px rgba(163, 51, 51, 0.22);
 }
 
-.btn-submit:active {
-  transform: scale(0.99);
+.btn-submit:active:not(:disabled) {
+  transform: translateY(0) scale(0.99);
+  box-shadow: 0 12px 20px rgba(163, 51, 51, 0.18);
+}
+
+.btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .auth-footer {
@@ -758,64 +1112,144 @@ select {
   color: #6b2121;
 }
 
-input[type="email"],
-input[type="password"],
-input[type="text"],
-input[type="tel"],
-select,
-.password-input-wrapper input {
-  transition: border-color 0.24s ease, box-shadow 0.24s ease, background-color 0.24s ease, transform 0.24s ease;
+/* ===== MODAL DE ÉXITO ANIMADO ===== */
+.success-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
 }
 
-input[type="email"]:focus,
-input[type="password"]:focus,
-input[type="text"]:focus,
-input[type="tel"]:focus,
-select:focus,
-.password-input-wrapper input:focus {
-  outline: none;
-  border-color: #C64445;
-  background-color: #fff7f1;
-  box-shadow: 0 0 0 4px rgba(163, 51, 51, 0.12);
-  transform: translateY(-1px);
+.success-modal-card {
+  background: white;
+  border-radius: 2rem;
+  padding: 2rem;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
-.btn-submit {
-  transition: transform 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease, color 0.22s ease;
+.success-icon-animated {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
 }
 
-.btn-submit:hover {
-  transform: translateY(-1px) scale(1.01);
-  box-shadow: 0 16px 28px rgba(163, 51, 51, 0.22);
+.success-circle {
+  background-color: #dcfce7;
+  border-radius: 9999px;
+  padding: 1rem;
+  color: #16a34a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: scaleUp 0.4s ease-out;
 }
 
-.btn-submit:active {
-  transform: translateY(0) scale(0.99);
-  box-shadow: 0 12px 20px rgba(163, 51, 51, 0.18);
+.success-circle svg {
+  animation: checkDraw 0.5s ease-out 0.2s both;
+  stroke-width: 2.5;
 }
 
-.toggle-password:hover {
-  transform: translateY(-1px);
-  background-color: rgba(163, 51, 51, 0.08);
+.success-modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #166534;
+  margin-bottom: 0.75rem;
 }
 
-.toggle-password:active {
-  transform: scale(0.98);
+.success-modal-message {
+  font-size: 0.9rem;
+  color: #4b5563;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
 }
 
-.tab-button:hover {
-  transform: translateY(-1px);
+.progress-bar-container {
+  width: 100%;
+  height: 4px;
+  background-color: #e5e7eb;
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-bottom: 1rem;
 }
 
-@keyframes fadeInUp {
+.progress-bar {
+  height: 100%;
+  width: 100%;
+  background-color: #16a34a;
+  border-radius: 9999px;
+  animation: progressShrink 3s linear forwards;
+}
+
+.redirect-message {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+/* Animaciones */
+@keyframes scaleUp {
   from {
+    transform: scale(0.5);
     opacity: 0;
-    transform: translateY(24px);
   }
   to {
+    transform: scale(1);
     opacity: 1;
-    transform: translateY(0);
   }
+}
+
+@keyframes checkDraw {
+  from {
+    stroke-dasharray: 50;
+    stroke-dashoffset: 50;
+    opacity: 0;
+  }
+  to {
+    stroke-dasharray: 50;
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+@keyframes progressShrink {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+/* Transición del modal */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-fade-enter-active .success-modal-card,
+.modal-fade-leave-active .success-modal-card {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+.modal-fade-enter-from .success-modal-card,
+.modal-fade-leave-to .success-modal-card {
+  transform: scale(0.9);
+  opacity: 0;
 }
 
 @media (max-width: 900px) {
@@ -864,6 +1298,23 @@ select:focus,
 
   .auth-form-wrapper h2 {
     font-size: 1.75rem;
+  }
+
+  .error-alert-content {
+    padding: 8px 12px;
+  }
+
+  .error-text {
+    font-size: 0.8rem;
+  }
+  
+  .success-modal-card {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+  
+  .success-modal-title {
+    font-size: 1.25rem;
   }
 }
 </style>

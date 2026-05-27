@@ -1,23 +1,23 @@
 <template>
   <div class="landing">
-    
+    <Navbar />
     
     <header class="hero">
       <div class="hero-wrapper">
         <div class="hero-content">
           <span class="hero-badge">
-        <Zap :size="16" stroke-width="2" />
-        ¡TU RULETA GASTRONÓMICA LOCAL!
-      </span>
+            <Zap :size="16" stroke-width="2" />
+            ¡TU RULETA GASTRONÓMICA LOCAL!
+          </span>
           <h1>¿Qué <span class="highlight">comerás</span> <br> hoy?</h1>
           <p class="hero-description">Descubre restaurantes cerca de ti o deja que la Ruleta del Antojo decida por ti.</p>
           
           <div class="hero-actions">
-            <button class="btn-primary" @click="irAuleta">
+            <button class="btn-primary" @click="irARuleta">
               <Zap :size="18" stroke-width="2" />
               Probar la Ruleta
             </button>
-            <button class="btn-secondary" @click="mostrarMapa = !mostrarMapa">
+            <button class="btn-secondary" @click="toggleMapa">
               <MapPin :size="18" stroke-width="2" />
               {{ mostrarMapa ? 'Ocultar Mapa' : 'Ver Mapa' }}
             </button>
@@ -32,18 +32,16 @@
         </div>
 
         <div class="hero-visual">
-          <WheelSpinner v-if="!mostrarMapa" />
-
-          <div v-else class="hero-map">
-            <MapaRestaurantes />
-          </div>
+          <!-- 🔥 v-show en lugar de v-if - el componente ya está en DOM al montarse 🔥 -->
+          <WheelSpinner v-show="!mostrarMapa" />
+          <AsyncMapaRestaurantes v-if="mostrarMapa" />
         </div>
       </div>
     </header>
 
-
-    <CategoriesSection />
-    <RecommendedSection />
+    <!-- 🔥 Componentes cargados de forma diferida (lazy loading) 🔥 -->
+    <AsyncCategoriesSection />
+    <AsyncRecommendedSection />
 
     <footer class="footer">
       <div class="footer-content">
@@ -59,28 +57,44 @@
 </template>
 
 <script setup>
-import Navbar from '../components/Navbar.vue'
-import WheelSpinner from '../components/WheelSpinner.vue'
-import CategoriesSection from '../components/CategoriesSection.vue'
-import RecommendedSection from '../components/RecommendedSection.vue'
-import { Zap, MapPin, Users } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { ref, defineAsyncComponent, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import MapaRestaurantes from '@/components/MapaRestaurantes.vue'
+import { Zap, MapPin, Users } from 'lucide-vue-next'
+import Navbar from '../components/Navbar.vue'
+
+// 🔥 COMPONENTES PESADOS CARGADOS DE FORMA DIFERIDA (LAZY LOADING) 🔥
+// Esto evita que bloqueen el renderizado inicial de la página
+const WheelSpinner = defineAsyncComponent(() => import('../components/WheelSpinner.vue'))
+const AsyncMapaRestaurantes = defineAsyncComponent(() => import('@/components/MapaRestaurantes.vue'))
+const AsyncCategoriesSection = defineAsyncComponent(() => import('../components/CategoriesSection.vue'))
+const AsyncRecommendedSection = defineAsyncComponent(() => import('../components/RecommendedSection.vue'))
 
 const router = useRouter()
 const mostrarMapa = ref(false)
 
-const irAuleta = () => {
+const irARuleta = () => {
   router.push('/no-se-que-comer')
 }
+
+const toggleMapa = () => {
+  mostrarMapa.value = !mostrarMapa.value
+}
+
+// 🔥 PREFETCH DE COMPONENTES PESADOS - los carga en segundo plano después del renderizado inicial
+onMounted(() => {
+  // Esto asegura que los componentes ya estén en caché cuando el usuario los necesite
+  requestIdleCallback(() => {
+    // Precargar componentes que podrían necesitarse después
+    import('../components/WheelSpinner.vue')
+    import('@/components/MapaRestaurantes.vue')
+  })
+})
 </script>
 
 <style scoped>
 .landing {
   min-height: 100vh;
   background: linear-gradient(135deg, #8B2A4E 0%, #6B1B3C 50%, #5a1532 100%);
-  /* 🔥 PADDING TOP AÚN MÁS GRANDE - RECTÁNGULO SUPERIOR GRANDE 🔥 */
   padding-top: 120px;
 }
 
