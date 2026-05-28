@@ -75,7 +75,14 @@
           <div v-if="cargando" class="loading">Cargando menú...</div>
           <div v-else-if="menuRegular.length === 0" class="empty">No hay platos disponibles aún.</div>
           <div v-else class="menu-grid">
-            <div v-for="item in menuRegular" :key="item.id" class="menu-card">
+            <!-- Tarjeta con tooltip al hover -->
+            <div 
+              v-for="item in menuRegular" 
+              :key="item.id" 
+              class="menu-card"
+              @mouseenter="showTooltip(item.id)"
+              @mouseleave="hideTooltip(item.id)"
+            >
               <div class="menu-card-img">
                 <img v-if="item.foto_url" :src="item.foto_url" :alt="item.nombre" />
                 <div v-else class="img-placeholder">🍽️</div>
@@ -99,6 +106,50 @@
                 
                 <p v-else-if="item.descripcion" class="menu-desc">{{ item.descripcion }}</p>
               </div>
+
+              <!-- Tooltip flotante -->
+              <Transition name="tooltip-fade">
+                <div 
+                  v-if="activeTooltip === item.id" 
+                  class="menu-tooltip"
+                  @mouseenter="keepTooltip(item.id)"
+                  @mouseleave="hideTooltip(item.id)"
+                >
+                  <div class="tooltip-header">
+                    <h4>{{ item.nombre }}</h4>
+                    <span class="tooltip-price">Bs {{ item.precio }}</span>
+                  </div>
+                  
+                  <div class="tooltip-divider"></div>
+                  
+                  <div class="tooltip-description">
+                    <span class="tooltip-label">📝 Descripción</span>
+                    <p>{{ item.descripcion || 'Sin descripción detallada' }}</p>
+                  </div>
+                  
+                  <!-- Ingredientes o alérgenos -->
+                  <div class="tooltip-ingredients">
+                    <span class="tooltip-label">⚠️ Ingredientes / Alérgenos</span>
+                    <div class="ingredients-content">
+                      <p v-if="item.ingredientes">{{ item.ingredientes }}</p>
+                      <p v-else class="no-ingredients">Consulta con el restaurante sobre ingredientes específicos o posibles alérgenos.</p>
+                    </div>
+                  </div>
+
+                  <!-- Información adicional para almuerzos -->
+                  <div v-if="item.tipo === 'almuerzo_completo'" class="tooltip-almuerzo">
+                    <div class="tooltip-divider"></div>
+                    <div class="tooltip-meal">
+                      <span class="tooltip-label">🍴 Incluye:</span>
+                      <div class="meal-items">
+                        <span v-if="item.entrada_nombre" class="meal-tag">Entrada: {{ item.entrada_nombre }}</span>
+                        <span v-if="item.principal_nombre" class="meal-tag">Principal: {{ item.principal_nombre }}</span>
+                        <span v-if="item.postre_nombre" class="meal-tag">Postre: {{ item.postre_nombre }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Transition>
             </div>
           </div>
         </section>
@@ -233,6 +284,29 @@ const enviandoReview = ref(false)
 const reviewError = ref('')
 const newReview = ref({ puntuacion: 5, comentario: '' })
 
+// ===== ESTADOS PARA TOOLTIP =====
+const activeTooltip = ref(null)
+let tooltipTimeout = null
+
+// ===== FUNCIONES DEL TOOLTIP =====
+const showTooltip = (itemId) => {
+  if (tooltipTimeout) clearTimeout(tooltipTimeout)
+  activeTooltip.value = itemId
+}
+
+const hideTooltip = (itemId) => {
+  tooltipTimeout = setTimeout(() => {
+    if (activeTooltip.value === itemId) {
+      activeTooltip.value = null
+    }
+  }, 100)
+}
+
+const keepTooltip = (itemId) => {
+  if (tooltipTimeout) clearTimeout(tooltipTimeout)
+  activeTooltip.value = itemId
+}
+
 // Computed properties para separar menú en dos secciones
 const menuDelDia = computed(() => {
   return menu.value.filter(item => item.es_menu_del_dia === true && item.disponible !== false)
@@ -288,6 +362,7 @@ const enviarReview = async () => {
     enviandoReview.value = false
   }
 }
+
 const avatarColors = ['#e57373','#f06292','#ba68c8','#7986cb','#4fc3f7','#4db6ac','#aed581','#ffb74d']
 const avatarColor = (nombre) => {
   if (!nombre) return '#ccc'
@@ -325,6 +400,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* Estilos existentes (se mantienen igual) */
 .menu-page {
   min-height: 100vh;
   background: #f5f5f0;
@@ -427,7 +503,7 @@ onMounted(async () => {
   font-size: 1rem;
 }
 
-/* Menú grid */
+/* Menú grid - Posición relativa para el tooltip */
 .menu-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -435,10 +511,12 @@ onMounted(async () => {
 }
 
 .menu-card {
+  position: relative;
   border-radius: 12px;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid #f0ede7;
   transition: transform 0.2s, box-shadow 0.2s;
+  background: white;
 }
 .menu-card:hover {
   transform: translateY(-4px);
@@ -532,6 +610,192 @@ onMounted(async () => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* ===== TOOLTIP FLOTANTE ===== */
+.menu-tooltip {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 280px;
+  background: white;
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  z-index: 50;
+  backdrop-filter: blur(0px);
+  transition: all 0.2s ease;
+}
+
+/* Flecha del tooltip */
+.menu-tooltip::before {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 16px;
+  height: 16px;
+  background: white;
+  box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-right: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Para cards en el borde izquierdo */
+.menu-card:first-child .menu-tooltip {
+  left: 0;
+  transform: translateX(0);
+}
+.menu-card:first-child .menu-tooltip::before {
+  left: 20px;
+  transform: rotate(45deg);
+}
+
+/* Para cards en el borde derecho */
+.menu-card:last-child .menu-tooltip {
+  left: auto;
+  right: 0;
+  transform: translateX(0);
+}
+.menu-card:last-child .menu-tooltip::before {
+  left: auto;
+  right: 20px;
+  transform: rotate(45deg);
+}
+
+/* Animación del tooltip */
+.tooltip-fade-enter-active,
+.tooltip-fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.tooltip-fade-enter-from,
+.tooltip-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(8px);
+}
+
+.menu-card:first-child .tooltip-fade-enter-from,
+.menu-card:first-child .tooltip-fade-leave-to {
+  transform: translateX(0) translateY(8px);
+}
+
+.menu-card:last-child .tooltip-fade-enter-from,
+.menu-card:last-child .tooltip-fade-leave-to {
+  transform: translateX(0) translateY(8px);
+}
+
+/* Contenido del tooltip */
+.tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.tooltip-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--plum, #481827);
+}
+
+.tooltip-price {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #C0392B;
+}
+
+.tooltip-divider {
+  height: 1px;
+  background: linear-gradient(90deg, #FF6B00, #E8D5B5, #FF6B00);
+  margin: 10px 0;
+  opacity: 0.4;
+}
+
+.tooltip-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #FF6B00;
+  margin-bottom: 6px;
+}
+
+.tooltip-description p {
+  margin: 0 0 10px 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #555;
+}
+
+.tooltip-ingredients {
+  margin-top: 4px;
+}
+
+.ingredients-content p {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #777;
+  background: #FFF8F0;
+  padding: 8px;
+  border-radius: 12px;
+}
+
+.no-ingredients {
+  font-style: italic;
+  color: #999;
+}
+
+.tooltip-almuerzo {
+  margin-top: 4px;
+}
+
+.tooltip-meal {
+  margin-top: 6px;
+}
+
+.meal-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.meal-tag {
+  font-size: 0.75rem;
+  color: #666;
+  background: #F5F5F0;
+  padding: 4px 10px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+/* Responsive para tooltip en móviles */
+@media (max-width: 640px) {
+  .menu-tooltip {
+    width: 240px;
+    padding: 12px;
+    bottom: calc(100% + 8px);
+  }
+  
+  .tooltip-header h4 {
+    font-size: 0.9rem;
+  }
+  
+  .tooltip-price {
+    font-size: 1rem;
+  }
+  
+  .tooltip-description p,
+  .ingredients-content p {
+    font-size: 0.75rem;
+  }
 }
 
 /* Reseñas */

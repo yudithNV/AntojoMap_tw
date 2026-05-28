@@ -9,16 +9,18 @@
       
       <div class="categories-grid">
         <button 
-          v-for="(category, index) in categories" 
+          v-for="(category, index) in categoriasPopulares" 
           :key="category.id" 
           class="category-card"
           :style="{ animationDelay: `${index * 0.05}s` }"
-          @click="handleCategoryClick(category.name)"
+          @click="handleCategoryClick(category.nombre)"
         >
           <div class="category-icon-wrapper">
-            <component :is="category.icon" :size="28" stroke-width="1.8" class="category-icon" />
+            <span class="category-emoji">{{ category.icono }}</span>
           </div>
-          <span class="category-name">{{ category.name }}</span>
+          <span class="category-name">{{ category.nombre }}</span>
+          <!-- 👇 ELIMINA ESTA LÍNEA -->
+          <!-- <span class="category-count">{{ category.total_restaurantes }} restaurantes</span> -->
           <div class="category-glow"></div>
         </button>
       </div>
@@ -27,26 +29,83 @@
 </template>
 
 <script setup>
-import { Pizza, Ham, Fish, IceCream, Salad, Leaf } from 'lucide-vue-next'
+import { ref, onMounted } from 'vue'
+import { api } from '@/services/api.js'
 
-const categories = [
-  { id: 1, name: 'Tacos', icon: Ham },
-  { id: 2, name: 'Burgers', icon: Ham },
-  { id: 3, name: 'Sushi', icon: Fish },
-  { id: 4, name: 'Pizza', icon: Pizza },
-  { id: 5, name: 'Veggie', icon: Leaf },
-  { id: 6, name: 'Postres', icon: IceCream },
-]
+// Estado para las categorías (solo 3)
+const categoriasPopulares = ref([])
+
+// Mapa de iconos por nombre de categoría
+const iconoMap = {
+  'hamburguesas': '🍔',
+  'pizza': '🍕',
+  'sushi': '🍣',
+  'tacos': '🌮',
+  'postres': '🍰',
+  'veggie': '🥗',
+  'mariscos': '🦞',
+  'pollos': '🍗',
+  'cafetería': '☕',
+  'asiática': '🥢',
+  'pastas': '🍝',
+  'ensaladas': '🥗',
+  'parrilla': '🥩',
+  'picante': '🌶️'
+}
+
+// Obtener emoji según el nombre de la categoría
+const obtenerIcono = (nombre) => {
+  return iconoMap[nombre?.toLowerCase()] || '🍽️'
+}
+
+// Obtener categorías (sin contar restaurantes)
+const obtenerTopCategorias = async () => {
+  try {
+    console.log('📡 Obteniendo categorías...')
+    
+    // Obtener categorías desde el backend
+    const data = await api.get('/restaurantes/categorias')
+    
+    // Solo tomar las primeras 3 categorías (o las que vengan)
+    const categoriasConIconos = data.slice(0, 3).map((cat, index) => ({
+      id: cat.id || index,
+      nombre: cat.nombre,
+      icono: obtenerIcono(cat.nombre)
+    }))
+    
+    console.log('🏆 Categorías:', categoriasConIconos)
+    categoriasPopulares.value = categoriasConIconos
+    
+  } catch (error) {
+    console.error('❌ Error cargando categorías:', error)
+    // Datos de respaldo
+    categoriasPopulares.value = [
+      { id: 1, nombre: 'Hamburguesas', icono: '🍔' },
+      { id: 2, nombre: 'Pizza', icono: '🍕' },
+      { id: 3, nombre: 'Sushi', icono: '🍣' }
+    ]
+  }
+}
 
 const handleCategoryClick = (categoryName) => {
   console.log(`Categoría seleccionada: ${categoryName}`)
+  
   if (navigator.vibrate) {
     navigator.vibrate(50)
   }
+  
+  if (categoryName) {
+    window.location.href = `/user/feed?categoria=${encodeURIComponent(categoryName)}`
+  }
 }
+
+onMounted(() => {
+  obtenerTopCategorias()
+})
 </script>
 
 <style scoped>
+/* Todo el CSS igual, pero puedes eliminar .category-count si quieres */
 .categories-section {
   padding: 60px 20px;
   display: flex;
@@ -158,7 +217,7 @@ const handleCategoryClick = (categoryName) => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   padding: 24px 28px;
   background: rgba(255, 255, 255, 0.95);
   border: none;
@@ -219,8 +278,8 @@ const handleCategoryClick = (categoryName) => {
   z-index: 1;
 }
 
-.category-icon {
-  color: #75162D;
+.category-emoji {
+  font-size: 2rem;
   transition: all 0.35s ease;
 }
 
@@ -231,6 +290,12 @@ const handleCategoryClick = (categoryName) => {
   transition: all 0.3s ease;
   position: relative;
   z-index: 1;
+  margin-top: 4px;
+}
+
+/* 👇 Opcional: puedes eliminar este estilo si ya no existe la clase */
+.category-count {
+  display: none;
 }
 
 .category-card:hover {
@@ -242,11 +307,6 @@ const handleCategoryClick = (categoryName) => {
 .category-card:hover .category-icon-wrapper {
   background: linear-gradient(135deg, #75162D, #560B18);
   transform: scale(1.05);
-}
-
-.category-card:hover .category-icon {
-  color: white;
-  transform: scale(1.02);
 }
 
 .category-card:hover .category-name {
@@ -269,6 +329,7 @@ const handleCategoryClick = (categoryName) => {
   .section-header h2 { font-size: 1.8rem; }
   .category-card { padding: 18px 20px; min-width: 100px; }
   .category-icon-wrapper { width: 55px; height: 55px; }
+  .category-emoji { font-size: 1.5rem; }
   .category-name { font-size: 0.85rem; }
 }
 
@@ -276,6 +337,7 @@ const handleCategoryClick = (categoryName) => {
   .categories-wrapper { padding: 24px 16px; border-radius: 24px; }
   .category-card { padding: 14px 16px; min-width: 85px; }
   .category-icon-wrapper { width: 45px; height: 45px; }
+  .category-emoji { font-size: 1.2rem; }
   .category-name { font-size: 0.75rem; }
 }
 </style>

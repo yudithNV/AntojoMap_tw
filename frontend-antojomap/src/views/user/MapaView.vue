@@ -1,12 +1,48 @@
 <template>
   <DashboardLayout>
     <div class="mapa-container">
-      <div class="panel-izquierdo">
+      <!-- Pestañas flotantes para móvil -->
+      <div class="mobile-tabs" :class="{ 'tabs-visible': showTabs }">
+        <button 
+          class="mobile-tab" 
+          :class="{ active: activeTab === 'list' }"
+          @click="activeTab = 'list'"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="8" y1="6" x2="21" y2="6"></line>
+            <line x1="8" y1="12" x2="21" y2="12"></line>
+            <line x1="8" y1="18" x2="21" y2="18"></line>
+            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+          </svg>
+          <span>Lista</span>
+        </button>
+        <button 
+          class="mobile-tab" 
+          :class="{ active: activeTab === 'map' }"
+          @click="activeTab = 'map'"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+            <line x1="8" y1="2" x2="8" y2="18"></line>
+            <line x1="16" y1="6" x2="16" y2="22"></line>
+          </svg>
+          <span>Mapa</span>
+        </button>
+      </div>
+
+      <!-- Panel izquierdo - Lista de restaurantes -->
+      <div 
+        class="panel-izquierdo" 
+        :class="{ 'mobile-hidden': activeTab === 'map' }"
+      >
         <div class="panel-header">
           <h2>Resultados cerca de ti</h2>
           <router-link to="/user/feed" class="ver-todos">VER TODOS</router-link>
         </div>
 
+        <!-- Carrusel de categorías con scroll horizontal -->
         <div class="categorias-filter">
           <button 
             class="categoria-chip" 
@@ -26,6 +62,7 @@
           </button>
         </div>
 
+        <!-- Lista de restaurantes -->
         <div class="restaurantes-list">
           <div 
             v-for="restaurante in restaurantesFiltrados" 
@@ -52,17 +89,19 @@
             </div>
 
             <div class="card-info">
-              <div>
+              <div class="card-info-top">
                 <h3>{{ restaurante.nombre }}</h3>
-                <p class="distancia">📍 {{ restaurante.distancia.toFixed(1) }} km</p>
                 <div class="rating">
                   <span class="star">⭐</span>
                   <span class="rating-text">{{ restaurante.rating || 'N/A' }}</span>
                 </div>
               </div>
-              <button class="btn-detalle" @click.stop="irAlMenu(restaurante.id)">
-                Ver Detalle →
-              </button>
+              <div class="card-info-bottom">
+                <p class="distancia">📍 {{ restaurante.distancia.toFixed(1) }} km</p>
+                <button class="btn-detalle" @click.stop="irAlMenu(restaurante.id)">
+                  Ver Detalle →
+                </button>
+              </div>
             </div>
           </div>
 
@@ -72,7 +111,11 @@
         </div>
       </div>
 
-      <div class="panel-derecho">
+      <!-- Panel derecho - Mapa -->
+      <div 
+        class="panel-derecho" 
+        :class="{ 'mobile-hidden': activeTab === 'list' }"
+      >
         <div ref="mapContainer" class="mapa"></div>
       </div>
     </div>
@@ -112,6 +155,15 @@ const markers = ref({})
 const userMarker = ref(null)
 const mapaInicializado = ref(false)
 let watchPositionId = null
+
+// Estado para pestañas móvil
+const activeTab = ref('list') // 'list' o 'map'
+const showTabs = ref(false)
+
+// Detectar si es móvil para mostrar pestañas
+const checkMobile = () => {
+  showTabs.value = window.innerWidth < 1024
+}
 
 // Coordenadas por defecto (La Paz, Bolivia)
 const DEFAULT_LAT = -16.5000
@@ -212,18 +264,16 @@ const crearIconoUsuario = () => {
   })
 }
 
-// 🚀 OPTIMIZACIÓN: Cargar mapa INMEDIATAMENTE sin esperar geolocalización
+// Inicializar mapa
 const inicializarMapa = async () => {
   if (mapaInicializado.value) return
   
   await nextTick()
   if (!mapContainer.value) return
 
-  // Usar coordenadas por defecto primero, luego se actualizará
   const centerLat = DEFAULT_LAT
   const centerLng = DEFAULT_LNG
 
-  // ✅ OPTIMIZACIÓN: MarkRaw para evitar reactividad
   const leafletMap = L.map(mapContainer.value, {
     preferCanvas: true,
     zoomControl: true,
@@ -234,7 +284,6 @@ const inicializarMapa = async () => {
   
   map.value = markRaw(leafletMap)
 
-  // ✅ OPTIMIZACIÓN: Tile layer con mejor rendimiento
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> & CartoDB',
     maxZoom: 19,
@@ -246,10 +295,10 @@ const inicializarMapa = async () => {
   }).addTo(map.value)
 
   mapaInicializado.value = true
-  console.log('🗺️ Mapa inicializado en', Date.now())
+  console.log('🗺️ Mapa inicializado')
 }
 
-// Agregar marcadores SIN bloquear el mapa
+// Agregar marcadores
 const agregarMarcador = (restaurante) => {
   if (!map.value) return
   
@@ -287,14 +336,13 @@ const agregarMarcador = (restaurante) => {
   markers.value[restaurante.id] = markRaw(marker)
 }
 
-// Actualizar pins - Solo agregar nuevos, no recrear todos
+// Actualizar pins
 const actualizarPinsRestaurantes = () => {
   if (!map.value) return
 
   const currentIds = new Set(Object.keys(markers.value))
   const newIds = new Set(restaurantesFiltrados.value.map(r => r.id))
 
-  // Eliminar marcadores que ya no están en el filtro
   for (const id of currentIds) {
     if (!newIds.has(parseInt(id))) {
       markers.value[id]?.remove()
@@ -302,7 +350,6 @@ const actualizarPinsRestaurantes = () => {
     }
   }
 
-  // Agregar solo los nuevos marcadores
   for (const restaurante of restaurantesFiltrados.value) {
     if (!markers.value[restaurante.id]) {
       agregarMarcador(restaurante)
@@ -310,7 +357,7 @@ const actualizarPinsRestaurantes = () => {
   }
 }
 
-// Actualizar ubicación del usuario en el mapa
+// Actualizar ubicación del usuario
 const actualizarUbicacionUsuario = () => {
   if (!map.value || !userLocation.value) return
 
@@ -325,7 +372,6 @@ const actualizarUbicacionUsuario = () => {
     userMarker.value = markRaw(marker)
   }
   
-  // Centrar mapa en ubicación del usuario SOLO si no hay restaurante seleccionado
   if (!restauranteSeleccionado.value) {
     map.value.setView([userLocation.value.lat, userLocation.value.lng], 15)
   }
@@ -354,7 +400,6 @@ const irAlMenu = (restauranteId) => {
   router.push(`/user/menu/${restauranteId}`)
 }
 
-// 🚀 OPTIMIZACIÓN: Geolocalización en paralelo, no bloqueante
 const solicitarGeolocalizacion = () => {
   if (!navigator.geolocation) return
 
@@ -365,7 +410,7 @@ const solicitarGeolocalizacion = () => {
         lng: position.coords.longitude
       }
       actualizarUbicacionUsuario()
-      console.log('📍 Ubicación obtenida en', Date.now())
+      console.log('📍 Ubicación obtenida')
     },
     (error) => {
       console.warn('⚠️ Error de geolocalización:', error.message)
@@ -375,43 +420,33 @@ const solicitarGeolocalizacion = () => {
   )
 }
 
-// 🚀 OPTIMIZACIÓN: Cargar TODO en paralelo, no en serie
+// Escuchar cambios de tamaño de ventana
+window.addEventListener('resize', checkMobile)
+
 onMounted(async () => {
-  const startTime = Date.now()
-  console.log('🚀 Iniciando carga...', startTime)
+  checkMobile()
   
-  // Cargar restaurantes en segundo plano
   restaurantesStore.cargarRestaurantes()
-  
-  // Inicializar mapa INMEDIATAMENTE (no espera nada)
   await inicializarMapa()
   
-  console.log('✅ Mapa cargado en', Date.now() - startTime, 'ms')
-  
-  // Una vez que los restaurantes estén listos, agregar marcadores
   const checkRestaurantes = setInterval(() => {
     if (restaurantesStore.restaurantes.length > 0 && map.value) {
       clearInterval(checkRestaurantes)
-      // Agregar marcadores de forma diferida
       setTimeout(() => {
         actualizarPinsRestaurantes()
-        console.log('📍 Marcadores agregados en', Date.now() - startTime, 'ms')
       }, 100)
     }
   }, 100)
   
-  // Geolocalización en paralelo (no bloquea)
   setTimeout(() => {
     solicitarGeolocalizacion()
   }, 500)
 })
 
-// Watch para actualizar marcadores cuando cambia el filtro
 watch(restaurantesFiltrados, () => {
   actualizarPinsRestaurantes()
 }, { deep: true })
 
-// Limpiar al desmontar
 onUnmounted(() => {
   if (watchPositionId) {
     navigator.geolocation?.clearWatch(watchPositionId)
@@ -419,11 +454,11 @@ onUnmounted(() => {
   if (map.value) {
     map.value.remove()
   }
+  window.removeEventListener('resize', checkMobile)
 })
 </script>
 
 <style scoped>
-/* Tus estilos existentes (sin cambios) */
 :deep(.leaflet-pane),
 :deep(.leaflet-tile),
 :deep(.leaflet-marker-icon),
@@ -447,17 +482,61 @@ onUnmounted(() => {
   height: calc(100vh - 80px);
   background: #faf8f6;
   padding: 0 24px;
+  position: relative;
 }
 
+/* ===== PESTAÑAS FLOTANTES PARA MÓVIL ===== */
+.mobile-tabs {
+  display: none;
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border-radius: 48px;
+  padding: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  gap: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.mobile-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border: none;
+  background: transparent;
+  border-radius: 40px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mobile-tab.active {
+  background: linear-gradient(135deg, #481827 0%, #6b253c 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(72, 24, 39, 0.3);
+}
+
+.mobile-tab svg {
+  stroke-width: 2;
+}
+
+/* ===== PANEL IZQUIERDO ===== */
 .panel-izquierdo {
   flex: 1;
-  min-width: 320px;
+  min-width: 360px;
   background: white;
   display: flex;
   flex-direction: column;
   border-radius: 28px;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
 }
 
 .panel-header {
@@ -466,6 +545,8 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .panel-header h2 {
@@ -488,14 +569,32 @@ onUnmounted(() => {
   color: #c17a8b;
 }
 
+/* Carrusel de categorías - scroll horizontal */
 .categorias-filter {
   display: flex;
   gap: 10px;
   padding: 16px 24px;
   overflow-x: auto;
+  overflow-y: hidden;
   border-bottom: 1px solid #ede8e2;
   align-items: center;
   background: white;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.categorias-filter::-webkit-scrollbar {
+  height: 4px;
+}
+
+.categorias-filter::-webkit-scrollbar-track {
+  background: #f0ede7;
+  border-radius: 4px;
+}
+
+.categorias-filter::-webkit-scrollbar-thumb {
+  background: #D893A1;
+  border-radius: 4px;
 }
 
 .categoria-chip {
@@ -524,6 +623,7 @@ onUnmounted(() => {
   box-shadow: 0 2px 8px rgba(72, 24, 39, 0.2);
 }
 
+/* Lista de restaurantes */
 .restaurantes-list {
   flex: 1;
   overflow-y: auto;
@@ -545,6 +645,7 @@ onUnmounted(() => {
   border: 2px solid transparent;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
   transition: all 0.25s ease;
+  width: 100%;
 }
 
 .restaurante-card:hover {
@@ -590,19 +691,36 @@ onUnmounted(() => {
   flex-direction: column;
   justify-content: center;
   min-width: 0;
-  gap: 10px;
+  gap: 12px;
 }
 
-.card-info h3 {
-  margin: 0 0 4px 0;
+.card-info-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.card-info-top h3 {
+  margin: 0;
   font-size: 1.15rem;
   color: var(--plum, #481827);
   font-weight: 800;
   line-height: 1.3;
+  word-break: break-word;
+}
+
+.card-info-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .distancia {
-  margin: 0 0 4px 0;
+  margin: 0;
   font-size: 0.85rem;
   color: #6b6b6b;
   display: flex;
@@ -614,6 +732,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
 }
 
 .star {
@@ -638,7 +757,7 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  width: fit-content;
+  flex-shrink: 0;
 }
 
 .btn-detalle:hover {
@@ -655,6 +774,7 @@ onUnmounted(() => {
   border-radius: 20px;
 }
 
+/* ===== PANEL DERECHO - MAPA ===== */
 .panel-derecho {
   flex: 1.2;
   min-width: 400px;
@@ -670,67 +790,163 @@ onUnmounted(() => {
   height: 100%;
 }
 
+/* ===== RESPONSIVE ===== */
+
+/* Tablet */
 @media (max-width: 1024px) {
   .mapa-container {
     padding: 0 16px;
     gap: 16px;
   }
   .panel-derecho {
-    min-width: 300px;
+    min-width: 350px;
+  }
+  .mobile-tabs {
+    display: flex;
+  }
+  .panel-izquierdo {
+    min-width: 320px;
   }
 }
 
+/* Móvil grande */
 @media (max-width: 768px) {
   .mapa-container {
     flex-direction: column;
     height: auto;
-    padding: 0 16px;
-    gap: 16px;
+    padding: 0 12px;
+    gap: 0;
   }
+  
   .panel-izquierdo {
     min-width: auto;
-    max-height: 50vh;
+    max-height: calc(100vh - 120px);
+    border-radius: 20px;
+    margin-bottom: 0;
   }
+  
+  .panel-izquierdo.mobile-hidden {
+    display: none;
+  }
+  
   .panel-derecho {
     min-width: auto;
-    height: 350px;
+    height: calc(100vh - 100px);
+    border-radius: 20px;
   }
+  
+  .panel-derecho.mobile-hidden {
+    display: none;
+  }
+  
   .restaurante-card {
     padding: 16px;
     gap: 14px;
   }
+  
   .card-foto {
     width: 70px;
     height: 70px;
   }
-  .card-info h3 {
+  
+  .card-info-top h3 {
     font-size: 1rem;
   }
+  
   .panel-header {
     padding: 16px 20px;
   }
+  
   .categorias-filter {
     padding: 12px 20px;
   }
+  
   .restaurantes-list {
     padding: 16px;
     gap: 12px;
   }
+  
+  .mobile-tabs {
+    bottom: 20px;
+    padding: 4px;
+  }
+  
+  .mobile-tab {
+    padding: 8px 20px;
+    font-size: 0.85rem;
+  }
 }
 
+/* Móvil pequeño */
 @media (max-width: 480px) {
-  .card-foto {
-    width: 60px;
-    height: 60px;
+  .mapa-container {
+    padding: 0 8px;
   }
-  .card-info h3 {
+  
+  .card-foto {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+  }
+  
+  .card-info-top h3 {
     font-size: 0.9rem;
   }
+  
   .distancia {
     font-size: 0.7rem;
   }
+  
   .btn-detalle {
     font-size: 0.7rem;
+  }
+  
+  .rating-text {
+    font-size: 0.7rem;
+  }
+  
+  .star {
+    font-size: 0.8rem;
+  }
+  
+  .panel-header h2 {
+    font-size: 1.2rem;
+  }
+  
+  .categoria-chip {
+    padding: 6px 14px;
+    font-size: 0.75rem;
+  }
+  
+  .mobile-tab {
+    padding: 6px 16px;
+    font-size: 0.8rem;
+  }
+  
+  .mobile-tab svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .restaurante-card {
+    padding: 12px;
+    gap: 12px;
+  }
+  
+  .card-info {
+    gap: 8px;
+  }
+}
+
+/* Desktop (muestra ambos paneles siempre) */
+@media (min-width: 1024px) {
+  .mobile-tabs {
+    display: none;
+  }
+  
+  .panel-izquierdo.mobile-hidden,
+  .panel-derecho.mobile-hidden {
+    display: flex !important;
   }
 }
 </style>

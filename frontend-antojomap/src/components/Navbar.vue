@@ -1,10 +1,16 @@
 <template>
   <header ref="navbar" class="navbar">
     <div class="navbar__container">
-      <!-- Logo con distorsión elegante al hover -->
+      <!-- Logo con distorsión elegante al hover - AHORA CON LOGO SVG MÁS GRANDE -->
       <router-link to="/" class="brand" @mouseenter="animateBrandIn" @mouseleave="animateBrandOut">
         <div class="brand__icon">
-          <UtensilsCrossed :size="28" stroke-width="1.5" />
+          <img 
+            src="@/assets/logo2.svg" 
+            alt="AntojoMap Logo" 
+            class="brand__logo"
+            :width="48"
+            :height="48"
+          />
           <div class="brand__icon-glow"></div>
         </div>
         <span class="brand__text">Antojo<span class="brand__text-accent">Map</span></span>
@@ -60,7 +66,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { UtensilsCrossed } from 'lucide-vue-next'
+// 👇 ELIMINADO: import { UtensilsCrossed } from 'lucide-vue-next'
 
 const route = useRoute()
 const navbar = ref(null)
@@ -99,29 +105,38 @@ const animateAction = (event, isEntering) => {
 
 const animateBrandIn = (event) => {
   const brand = event.currentTarget
-  const icon = brand.querySelector('.brand__icon')
+  const logo = brand.querySelector('.brand__logo')
   const glow = brand.querySelector('.brand__icon-glow')
+  
   brand.style.transform = 'scale(1.02)'
+  
   if (glow) {
     glow.style.opacity = '0.6'
-    glow.style.transform = 'scale(1.2)'
+    glow.style.transform = 'scale(1.3)'
   }
-  if (icon) {
-    icon.style.filter = 'drop-shadow(0 0 8px rgba(107, 27, 60, 0.6))'
+  
+  // Animación para el logo SVG
+  if (logo) {
+    logo.style.filter = 'drop-shadow(0 0 12px rgba(232, 213, 181, 0.7))'
+    logo.style.transform = 'scale(1.08)'
   }
 }
 
 const animateBrandOut = (event) => {
   const brand = event.currentTarget
-  const icon = brand.querySelector('.brand__icon')
+  const logo = brand.querySelector('.brand__logo')
   const glow = brand.querySelector('.brand__icon-glow')
+  
   brand.style.transform = 'scale(1)'
+  
   if (glow) {
     glow.style.opacity = '0'
     glow.style.transform = 'scale(1)'
   }
-  if (icon) {
-    icon.style.filter = 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))'
+  
+  if (logo) {
+    logo.style.filter = 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))'
+    logo.style.transform = 'scale(1)'
   }
 }
 
@@ -232,7 +247,7 @@ onMounted(() => {
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   text-decoration: none;
   cursor: pointer;
   transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -244,14 +259,23 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--gold-accent);
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
   transition: filter 0.3s ease;
 }
 
+/* 👇 ESTILO PARA EL LOGO SVG - MÁS GRANDE */
+.brand__logo {
+  display: block;
+  object-fit: contain;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+}
+
 .brand__icon-glow {
   position: absolute;
-  inset: -4px;
+  inset: -8px;
   background: radial-gradient(circle, var(--wine-bright), transparent);
   border-radius: 50%;
   opacity: 0;
@@ -262,7 +286,7 @@ onMounted(() => {
 
 .brand__text {
   font-family: 'Playfair Display', serif;
-  font-size: 1.65rem;
+  font-size: 1.8rem;
   font-weight: 700;
   letter-spacing: -0.02em;
   background: linear-gradient(135deg, var(--cream-white) 0%, var(--gold-accent) 100%);
@@ -294,7 +318,7 @@ onMounted(() => {
   position: relative;
   font-family: 'Inter', sans-serif;
   font-weight: 500;
-  font-size: 0.95rem;
+  font-size: 1rem;
   text-decoration: none;
   color: var(--cream-white);
   padding: 10px 24px;
@@ -359,7 +383,7 @@ onMounted(() => {
 .action {
   font-family: 'Inter', sans-serif;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   text-decoration: none;
   padding: 10px 24px;
   border-radius: 40px;
@@ -445,17 +469,22 @@ onMounted(() => {
   }
   
   .nav__link {
-    padding: 8px 16px;
-    font-size: 0.85rem;
+    padding: 8px 18px;
+    font-size: 0.9rem;
   }
   
   .action {
     padding: 8px 18px;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
   }
   
   .brand__text {
-    font-size: 1.3rem;
+    font-size: 1.5rem;
+  }
+  
+  .brand__logo {
+    width: 42px;
+    height: 42px;
   }
 }
 
@@ -477,8 +506,8 @@ onMounted(() => {
   }
   
   .nav__link {
-    padding: 6px 12px;
-    font-size: 0.8rem;
+    padding: 6px 14px;
+    font-size: 0.85rem;
   }
   
   .nav__link-indicator {
@@ -488,7 +517,20 @@ onMounted(() => {
   
   .action {
     padding: 6px 14px;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
+  }
+  
+  .brand__text {
+    font-size: 1.3rem;
+  }
+  
+  .brand__logo {
+    width: 38px;
+    height: 38px;
+  }
+  
+  .brand {
+    gap: 10px;
   }
 }
 
@@ -507,19 +549,23 @@ onMounted(() => {
     font-size: 1.1rem;
   }
   
-  .brand__icon svg {
-    width: 22px;
-    height: 22px;
+  .brand__logo {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .brand {
+    gap: 8px;
   }
   
   .nav__link {
     padding: 5px 10px;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
   }
   
   .action {
     padding: 5px 12px;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
   }
   
   .action__sparkle {

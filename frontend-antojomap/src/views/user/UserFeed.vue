@@ -99,27 +99,27 @@
           :class="{ active: selectedTipoPlato === '' }" 
           @click="selectedTipoPlato = ''"
         >
-          🍽️ Todos
+           Todos
         </button>
         <button 
           class="tipo-chip" 
           :class="{ active: selectedTipoPlato === 'plato_suelto' }" 
           @click="selectedTipoPlato = 'plato_suelto'"
         >
-          🥘 Platos
+           Platos
         </button>
         <button 
           class="tipo-chip" 
           :class="{ active: selectedTipoPlato === 'almuerzo_completo' }" 
           @click="selectedTipoPlato = 'almuerzo_completo'"
         >
-          🥗 Almuerzos Completos
+           Almuerzos Completos
         </button>
         <button 
           class="tipo-chip btn-sorprendeme" 
           @click="mostrarRuleta = true"
         >
-          🎲 Sorpréndeme
+           Sorpréndeme
         </button>
       </div>
 
@@ -132,7 +132,10 @@
         <p>¿Qué se te antoja?</p>
         <span>Busca un plato o filtra por tipo</span>
       </div>
-      <div v-else-if="platosResultados.length === 0" class="no-results"></div>
+      <div v-else-if="platosResultados.length === 0" class="no-results">
+        <p>No encontramos platos con esos filtros.</p>
+        <button class="btn-clear" @click="clearPlatosFilters">Limpiar filtros</button>
+      </div>
       <div v-else class="platos-grid">
         <div v-for="plato in platosResultados" :key="plato.id" class="plato-card" @click="router.push(`/user/menu/${plato.restaurante_id}`)">
           <div class="plato-img">
@@ -183,6 +186,7 @@ import { Search, UtensilsCrossed, Store } from 'lucide-vue-next'
 import DashboardLayout from '../../components/DashboardLayout.vue'
 import RestaurantCard from '../../components/RestaurantCard.vue'
 import RuletaPlatos from '../../components/RuletaPlatos.vue'
+import WheelSpinner from '../../components/WheelSpinner.vue'
 import { useRestaurantesStore } from '../../stores/restaurantes.store.js'
 import { useFavoritosStore } from '../../stores/favoritos.store.js'
 import { almuerzosService } from '../../services/menu.service.js'
@@ -245,27 +249,45 @@ const clearRestaurantesFilters = () => {
   selectedCategories.value = []
 }
 
-// Búsqueda de PLATOS
+// 🔥 BÚSQUEDA DE PLATOS - USANDO EL NUEVO MÉTODO DEL SERVICIO 🔥
 const buscarPlatos = async () => {
-  if (!searchPlatos.value && selectedTipoPlato.value === '') {
+  // Si no hay búsqueda ni filtro, mostrar vacío
+  if (!searchPlatos.value && !selectedTipoPlato.value) {
     platosResultados.value = []
     return
   }
 
+  buscandoPlatos.value = true
+
   try {
-    buscandoPlatos.value = true
+    console.log('🔍 Buscando platos con:', {
+      search: searchPlatos.value,
+      tipo: selectedTipoPlato.value
+    })
+
     const data = await almuerzosService.buscarPlatos(searchPlatos.value, selectedTipoPlato.value)
+    
+    console.log('📊 [PLATOS] Datos obtenidos:', data)
+    console.log('📊 [PLATOS] Cantidad de resultados:', data?.length || 0)
+
     platosResultados.value = data || []
-  } catch (e) {
-    console.error(e)
+    
+  } catch (err) {
+    console.error('❌ [PLATOS] Error en búsqueda:', err)
+    platosResultados.value = []
   } finally {
     buscandoPlatos.value = false
   }
 }
 
-// Watchers para búsqueda de PLATOS
+// Watchers para búsqueda de PLATOS (con debounce)
+let debounceTimer = null
+
 watch([searchPlatos, selectedTipoPlato], () => {
-  buscarPlatos()
+  if (debounceTimer) clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => {
+    buscarPlatos()
+  }, 300)
 })
 
 const clearPlatosFilters = () => {
@@ -275,6 +297,7 @@ const clearPlatosFilters = () => {
 }
 
 onMounted(() => {
+  console.log('🚀 UserFeed montado')
   restaurantesStore.cargarRestaurantes()
   restaurantesStore.cargarCategorias()
   favoritosStore.cargarFavoritos()
@@ -340,8 +363,8 @@ onMounted(() => {
   border-radius: 24px;
   padding: 32px;
   width: 100%;
-  max-width: 600px;  /* 👈 más grande */
-  min-height: 600px; /* 👈 altura mínima */
+  max-width: 600px;
+  min-height: 600px;
   position: relative;
   max-height: 95vh;
   overflow-y: auto;
@@ -361,22 +384,20 @@ onMounted(() => {
   margin: 0;
   padding: 0;
 }
-
 .ruleta-modal :deep(.wheel) {
   width: 300px;
   height: 300px;
 }
-
 .ruleta-modal :deep(.wheel-center) {
   width: 90px;
   height: 90px;
 }
-
 .ruleta-modal :deep(.go-button) {
   width: 80px;
   height: 80px;
   font-size: 1.2rem;
 }
+
 /* TABS */
 .tabs-container {
   margin-bottom: 32px;
@@ -577,6 +598,7 @@ onMounted(() => {
   font-size: 0.95rem;
   color: #999;
 }
+
 .restaurante-strip {
   display: flex;
   align-items: center;
@@ -689,25 +711,10 @@ onMounted(() => {
   color: #666;
 }
 
-.plato-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 4px;
-  padding-top: 8px;
-  border-top: 1px solid #f0f0f0;
-}
-
 .plato-precio {
   font-size: 1rem;
   font-weight: 800;
   color: #C0392B;
-}
-
-.plato-restaurante {
-  font-size: 0.8rem;
-  color: #999;
-  text-align: right;
 }
 
 /* NO RESULTS */

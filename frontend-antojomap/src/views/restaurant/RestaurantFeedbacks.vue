@@ -27,14 +27,60 @@
         </div>
       </div>
 
+      <!-- ===== NUEVA SECCIÓN: BUSCADOR Y FILTROS ===== -->
+      <div class="filters-section">
+        <div class="search-wrapper">
+          <div class="search-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </div>
+          <input 
+            v-model="searchQuery"
+            type="text" 
+            class="search-input" 
+            placeholder="Buscar por cliente o comentario..."
+          />
+          <button v-if="searchQuery" class="search-clear" @click="searchQuery = ''">×</button>
+        </div>
+
+        <div class="rating-filter">
+          <span class="filter-label">Calificación:</span>
+          <div class="rating-buttons">
+            <button 
+              class="rating-btn"
+              :class="{ active: selectedRating === null }"
+              @click="selectedRating = null"
+            >
+              Todas
+            </button>
+            <button 
+              v-for="stars in [5,4,3,2,1]" 
+              :key="stars"
+              class="rating-btn"
+              :class="{ active: selectedRating === stars }"
+              @click="selectedRating = stars"
+            >
+              {{ stars }} ⭐
+            </button>
+          </div>
+        </div>
+
+        <!-- Indicador de resultados encontrados -->
+        <div v-if="filteredFeedbacks.length !== feedbacks.length" class="results-info">
+          Mostrando {{ filteredFeedbacks.length }} de {{ feedbacks.length }} comentarios
+          <button class="clear-filters-btn" @click="clearFilters">Limpiar filtros</button>
+        </div>
+      </div>
+
       <div class="feedbacks-list">
-        <div v-for="feedback in feedbacks" :key="feedback.id" class="feedback-card">
+        <div v-for="feedback in filteredFeedbacks" :key="feedback.id" class="feedback-card">
           <div class="feedback-header">
             <div class="user-info">
               <div class="avatar">{{ feedback.usuario?.nombre?.charAt(0) || 'U' }}</div>
               <div>
                 <p class="user-name">{{ feedback.usuario?.nombre || 'Usuario anónimo' }}</p>
-                <!-- ✅ CORREGIDO: creado_en → fecha -->
                 <p class="feedback-date">{{ formatDate(feedback.fecha) }}</p>
               </div>
             </div>
@@ -61,13 +107,50 @@ const feedbacks = ref([])
 const cargando = ref(true)
 const restaurante_id = localStorage.getItem('restaurante_id')
 
+// ===== NUEVOS ESTADOS PARA FILTROS =====
+const searchQuery = ref('')
+const selectedRating = ref(null) // null = todas, 5,4,3,2,1
+
+// ===== PROPIEDAD COMPUTADA PARA FILTRAR =====
+const filteredFeedbacks = computed(() => {
+  let result = [...feedbacks.value]
+  
+  // 1. Filtrar por calificación (si hay una seleccionada)
+  if (selectedRating.value !== null) {
+    result = result.filter(feedback => feedback.puntuacion === selectedRating.value)
+  }
+  
+  // 2. Filtrar por texto de búsqueda (cliente o comentario)
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim()
+    result = result.filter(feedback => {
+      // Buscar en nombre del usuario
+      const userName = feedback.usuario?.nombre?.toLowerCase() || ''
+      if (userName.includes(query)) return true
+      
+      // Buscar en el comentario
+      const comment = feedback.comentario?.toLowerCase() || ''
+      if (comment.includes(query)) return true
+      
+      return false
+    })
+  }
+  
+  return result
+})
+
+// ===== FUNCIONES DE FILTROS =====
+const clearFilters = () => {
+  searchQuery.value = ''
+  selectedRating.value = null
+}
+
 const promedio = computed(() => {
   if (feedbacks.value.length === 0) return 0
   const sum = feedbacks.value.reduce((acc, f) => acc + f.puntuacion, 0)
   return (sum / feedbacks.value.length).toFixed(1)
 })
 
-// ✅ CORREGIDO: formato de fecha (ya usaba 'fecha')
 const formatDate = (fecha) => {
   if (!fecha) return ''
   return new Date(fecha).toLocaleDateString('es-ES', {
@@ -163,6 +246,145 @@ onMounted(async () => {
   font-weight: 700;
 }
 
+/* ===== NUEVOS ESTILOS PARA FILTROS ===== */
+.filters-section {
+  background: white;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.search-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 14px 16px 14px 44px;
+  border: 1.5px solid #E8E5DF;
+  border-radius: 48px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  background: #FEFEFE;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: #FF6B00;
+  box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.1);
+}
+
+.search-clear {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #999;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.search-clear:hover {
+  color: #666;
+  background: #F0EDE7;
+}
+
+.rating-filter {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rating-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.rating-btn {
+  padding: 8px 18px;
+  border: 1.5px solid #E8E5DF;
+  background: white;
+  border-radius: 40px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.rating-btn:hover {
+  border-color: #FF6B00;
+  background: #FFF5F0;
+}
+
+.rating-btn.active {
+  background: linear-gradient(135deg, #FF6B00 0%, #E05A00 100%);
+  border-color: #FF6B00;
+  color: white;
+}
+
+.results-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #F0EDE7;
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.clear-filters-btn {
+  background: none;
+  border: none;
+  color: #FF6B00;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 20px;
+  transition: all 0.2s;
+}
+
+.clear-filters-btn:hover {
+  background: #FFF5F0;
+}
+
+/* ===== ESTILOS EXISTENTES DE FEEDBACKS ===== */
 .feedbacks-list {
   display: flex;
   flex-direction: column;
@@ -250,6 +472,7 @@ onMounted(async () => {
   font-style: italic;
 }
 
+/* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
   .feedback-header {
     flex-direction: column;
@@ -257,6 +480,31 @@ onMounted(async () => {
 
   .rating-badge {
     align-self: flex-start;
+  }
+  
+  .filters-section {
+    padding: 16px;
+  }
+  
+  .rating-filter {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .rating-buttons {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .rating-btn {
+    padding: 6px 14px;
+    font-size: 0.8rem;
+  }
+  
+  .results-info {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 </style>
