@@ -23,6 +23,7 @@ export const aprobarSolicitud = async (req, res) => {
         propietario_id: solicitud.usuario_id,
         nombre: solicitud.nombre_restaurante,
         direccion: solicitud.direccion,
+        telefono: solicitud.telefono,
         estado: 'activo'
       })
       .select()
@@ -136,6 +137,132 @@ export const getUsuarios = async (req, res) => {
     if (error) throw error
 
     res.json(data)
+
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+}
+
+export const toggleActivo = async (req, res) => {
+  try {
+    const { id } = req.params
+
+    // Obtener el valor actual de activo
+    const { data: usuario, error: errorObtener } = await supabase
+      .from('usuarios')
+      .select('activo')
+      .eq('id', id)
+      .single()
+
+    if (errorObtener || !usuario) {
+      return res.status(404).json({ error: 'Usuario no encontrado' })
+    }
+
+    // Actualizar al booleano opuesto
+    const nuevoEstado = !usuario.activo
+
+    const { data: usuarioActualizado, error: errorActualizar } = await supabase
+      .from('usuarios')
+      .update({ activo: nuevoEstado })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (errorActualizar) throw errorActualizar
+
+    res.json({ 
+      mensaje: `Usuario ${nuevoEstado ? 'activado' : 'desactivado'} exitosamente`,
+      usuario: usuarioActualizado
+    })
+
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+}
+
+export const getRestaurantesAdmin = async (req, res) => {
+  try {
+    const { data: restaurantes, error: restaurantesError } = await supabase
+      .from('restaurantes')
+      .select('*')
+      .order('creado_en', { ascending: false })
+
+    if (restaurantesError) throw restaurantesError
+
+    const propietarioIds = [...new Set(restaurantes.map(r => r.propietario_id).filter(Boolean))]
+
+    const { data: usuarios, error: usuariosError } = await supabase
+      .from('usuarios')
+      .select('id, email, nombre')
+      .in('id', propietarioIds)
+
+    if (usuariosError) throw usuariosError
+
+    const usuariosMap = {}
+    usuarios.forEach(u => { usuariosMap[u.id] = u })
+
+    const restaurantesConPropietario = restaurantes.map(restaurante => ({
+      ...restaurante,
+      propietario: usuariosMap[restaurante.propietario_id] || null
+    }))
+
+    res.json(restaurantesConPropietario)
+
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+}
+
+export const getRestauranteAdmin = async (req, res) => {
+  try {
+    const { id } = req.params
+
+    // 1. Obtener datos del restaurante
+    const { data: restaurante, error: errorRestaurante } = await supabase
+      .from('restaurantes')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (!restaurante || errorRestaurante) {
+      return res.status(404).json({ error: 'Restaurante no encontrado' })
+    }
+
+    // 2. Obtener datos del propietario
+    const { data: propietario, error: errorPropietario } = await supabase
+      .from('usuarios')
+      .select('id, email, nombre')
+      .eq('id', restaurante.propietario_id)
+      .single()
+
+    if (errorPropietario) throw errorPropietario
+
+    // 3. Obtener categorías
+    const { data: restauranteCategorias, error: errorCategorias } = await supabase
+      .from('restaurante_categorias')
+      .select('categoria_id, categorias_restaurante(id, nombre)')
+      .eq('restaurante_id', id)
+
+    if (errorCategorias) throw errorCategorias
+
+    const categorias = restauranteCategorias?.map(rc => rc.categorias_restaurante) || []
+
+    // 4. Obtener horarios
+    const { data: horarios, error: errorHorarios } = await supabase
+      .from('horarios')
+      .select('*')
+      .eq('restaurante_id', id)
+
+    if (errorHorarios) throw errorHorarios
+
+    res.json({
+      restaurante: {
+        ...restaurante,
+        propietario,
+        categorias,
+        horarios
+      }
+    })
 
   } catch (error) {
     res.status(500).json({ error: error.message })

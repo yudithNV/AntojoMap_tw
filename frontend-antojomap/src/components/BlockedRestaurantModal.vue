@@ -27,10 +27,7 @@
             <div class="timeline-dot"></div>
             <p>Solicitud Enviada</p>
           </div>
-          <div class="timeline-item" :class="{ active: status === 'APROBADO' }">
-            <div class="timeline-dot"></div>
-            <p>En Revisión</p>
-          </div>
+          
           <div class="timeline-item" :class="{ active: status === 'APROBADO' }">
             <div class="timeline-dot"></div>
             <p>Aprobado</p>

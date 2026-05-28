@@ -10,6 +10,7 @@ import AdminDashboard from '../views/admin/AdminDashboard.vue'
 import AdminRequests from '../views/admin/AdminRequests.vue'
 import AdminUsers from '../views/admin/AdminUsers.vue'
 import AdminRestaurants from '../views/admin/AdminRestaurants.vue'
+import AdminRestauranteDetalle from '../views/admin/AdminRestauranteDetalle.vue'
 import AdminReports from '../views/admin/AdminReports.vue'
 
 // Restaurant Views
@@ -18,13 +19,15 @@ import RestaurantMenu from '../views/restaurant/RestaurantMenu.vue'
 import RestaurantMenuEdit from '../views/restaurant/RestaurantMenuEdit.vue'
 import RestaurantProfile from '../views/restaurant/RestaurantProfile.vue'
 import RestaurantFeedbacks from '../views/restaurant/RestaurantFeedbacks.vue'
-import MenuView from '../views/restaurant/MenuView.vue'
+//import MenuView from '../views/restaurant/MenuView.vue'
 
 // User Views
 import UserFeed from '../views/user/UserFeed.vue'
 import UserFavorites from '../views/user/UserFavorites.vue'
 import UserProfile from '../views/user/UserProfile.vue'
 import UserMenuView from '../views/user/UserMenuView.vue'
+import UserRuleta from '../views/user/UserRuletaView.vue'
+import MapaView from '../views/user/MapaView.vue'
 import UserFeedbacks from '../views/user/UserFeedbacks.vue'  // ✅ AGREGADO
 
 const router = createRouter({
@@ -78,6 +81,13 @@ const router = createRouter({
       path: '/admin/restaurants',
       name: 'admin-restaurants',
       component: AdminRestaurants,
+      meta: { requiresAuth: true, role: 'admin' }
+    },
+    {
+      path: '/admin/restaurantes/:id',
+      name: 'admin-restaurante-detalle',
+      component: AdminRestauranteDetalle,
+      props: true,
       meta: { requiresAuth: true, role: 'admin' }
     },
     {
@@ -141,6 +151,18 @@ const router = createRouter({
       path: '/user/favorites',
       name: 'user-favorites',
       component: UserFavorites,
+      meta: { requiresAuth: true, role: 'user' }
+    },
+    {
+      path: '/user/ruleta',
+      name: 'user-ruleta',
+      component: UserRuleta,
+      meta: { requiresAuth: true, role: 'user' }
+    },
+    {
+      path: '/user/mapa',
+      name: 'user-mapa',
+      component: MapaView,
       meta: { requiresAuth: true, role: 'user' }
     },
     {

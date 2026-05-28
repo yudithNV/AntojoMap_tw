@@ -1,5 +1,5 @@
 import express from 'express'
-import { obtenerEstadisticas, topRestaurantes, actividadUsuarios, distribucionPorCategoria, solicitudesPorEstado } from '../controllers/reportes.controller.js'
+import { obtenerEstadisticas, topRestaurantes, actividadUsuarios, distribucionPorCategoria, solicitudesPorEstado, dashboardAdmin, dashboardRestaurante } from '../controllers/reportes.controller.js'
 import { verificarToken, soloAdmin } from '../middlewares/auth.middleware.js'
 
 const router = express.Router()
@@ -18,5 +18,11 @@ router.get('/distribucion-categorias', verificarToken, soloAdmin, distribucionPo
 
 // GET solicitudes por estado (solo admin)
 router.get('/solicitudes-estado', verificarToken, soloAdmin, solicitudesPorEstado)
+
+// GET Dashboard Admin - Todas las métricas en una consulta (solo admin)
+router.get('/dashboard-admin', verificarToken, soloAdmin, dashboardAdmin)
+
+// GET Dashboard Restaurante - Métricas específicas del restaurante
+router.get('/dashboard-restaurante/:id', dashboardRestaurante)
 
 export default router

@@ -37,6 +37,7 @@ export const crearReview = async (req, res) => {
         restaurante_id,
         comentario: comentario || null,
         puntuacion: parseInt(puntuacion),
+        
         fecha: new Date()
       })
       .select()
@@ -70,7 +71,8 @@ export const getReviewsRestaurante = async (req, res) => {
         puntuacion,
         comentario,
         fecha,
-        usuario:usuarios(id, nombre, email)
+        
+        usuario:usuarios(id, nombre, email, foto_perfil)
       `)
       .eq('restaurante_id', restaurante_id)
       .order('fecha', { ascending: false })

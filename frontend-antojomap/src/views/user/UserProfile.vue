@@ -54,8 +54,8 @@
           <label>Nombre</label>
           <input v-model="form.nombre" type="text" class="input" />
 
-          <label>URL de foto de perfil</label>
-          <input v-model="form.foto_perfil" type="text" class="input" placeholder="https://..." />
+          <label>Foto de perfil</label>
+          <ImageUploader v-model="form.foto_perfil" />
 
           <label>Bio</label>
           <textarea v-model="form.bio" class="input textarea" placeholder="Cuéntanos algo sobre ti..." />
@@ -120,6 +120,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import DashboardLayout from '../../components/DashboardLayout.vue'
+import ImageUploader from '../../components/ImageUploader.vue'
 import { User, Pen } from 'lucide-vue-next'
 import { usuariosService } from '../../services/usuarios.service.js'
 import { useAuthStore } from '../../stores/auth.store.js'

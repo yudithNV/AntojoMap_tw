@@ -77,13 +77,7 @@
 
             <form @submit.prevent="saveMenuDirect">
               <div class="upload-area">
-                <img v-if="formMenu.foto_url" :src="formMenu.foto_url" class="upload-preview" />
-                <div v-else class="upload-placeholder">
-                  <ImagePlus :size="32" stroke-width="1.5" />
-                  <p>Subir foto {{ formMenu.tipo === 'plato_suelto' ? 'del plato' : 'del menú completo' }}</p>
-                  <span>PNG, JPG hasta 5MB</span>
-                </div>
-                <input v-model="formMenu.foto_url" type="url" placeholder="O pega una URL de imagen" class="url-input" />
+                <ImageUploader v-model="formMenu.foto_url" />
               </div>
 
               <template v-if="formMenu.tipo === 'plato_suelto'">
@@ -130,6 +124,10 @@
                   <label>Nombre del almuerzo</label>
                   <input v-model="formMenu.nombre" placeholder="Ej. Almuerzo Ejecutivo" required />
                 </div>
+                <label class="checkbox-label">
+                  <input v-model="formMenu.es_menu_del_dia" type="checkbox" />
+                  <span>🌟 Menú del Día</span>
+                </label>
               </template>
 
               <label class="checkbox-label">
@@ -193,6 +191,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import DashboardLayout from '../../components/DashboardLayout.vue'
+import ImageUploader from '../../components/ImageUploader.vue'
 import { Plus, Pencil, Trash2, ImagePlus } from 'lucide-vue-next'
 import { ref, onMounted } from 'vue'
 import { almuerzosService } from '../../services/menu.service.js'
@@ -251,6 +250,7 @@ const saveMenuDirect = async () => {
       payload.entrada = { nombre: formMenu.value.entrada.nombre }
       payload.principal = { nombre: formMenu.value.principal.nombre }
       payload.postre = { nombre: formMenu.value.postre.nombre }
+      payload.es_menu_del_dia = formMenu.value.es_menu_del_dia
     }
 
     if (editingId.value) {
@@ -282,6 +282,7 @@ const formMenu = ref({
   foto_url: '',
   descripcion: '',
   disponible: true,
+  es_menu_del_dia: false,
   entrada: { nombre: '' },
   principal: { nombre: '' },
   postre: { nombre: '' }
@@ -296,6 +297,7 @@ const resetForm = () => {
     foto_url: '',
     descripcion: '',
     disponible: true,
+    es_menu_del_dia: false,
     entrada: { nombre: '' },
     principal: { nombre: '' },
     postre: { nombre: '' }
@@ -334,6 +336,7 @@ const editItem = (item) => {
     foto_url: item.foto_url,
     descripcion: item.descripcion || '',
     disponible: item.disponible !== false,
+    es_menu_del_dia: item.es_menu_del_dia || false,
     entrada: { nombre: item.entrada_nombre || '' },
     principal: { nombre: item.principal_nombre || '' },
     postre: { nombre: item.postre_nombre || '' }
@@ -498,7 +501,9 @@ onMounted(async () => {
   font-weight: 700;
   z-index: 10;
 }
-
+.item-badge.unavailable {
+  background: rgba(220, 38, 38, 0.9);
+}
 .item-card.plato_suelto .item-badge {
   background: rgba(242, 163, 89, 0.9);
 }

@@ -50,6 +50,214 @@ export const obtenerEstadisticas = async (req, res) => {
   }
 }
 
+// GET Dashboard Admin - Todas las métricas en una sola consulta
+export const dashboardAdmin = async (req, res) => {
+  try {
+    // 1. Usuarios totales
+    const { count: usuariosTotales } = await supabase
+      .from('usuarios')
+      .select('id', { count: 'exact' })
+
+    // 2. Usuarios activos
+    const { count: usuariosActivos } = await supabase
+      .from('usuarios')
+      .select('id', { count: 'exact' })
+      .eq('activo', true)
+
+    // 3. Restaurantes registrados
+    const { count: restaurantesRegistrados } = await supabase
+      .from('restaurantes')
+      .select('id', { count: 'exact' })
+
+    // 4. Solicitudes pendientes
+    const { count: solicitudesPendientes } = await supabase
+      .from('solicitudes_restaurante')
+      .select('id', { count: 'exact' })
+      .eq('estado', 'PENDIENTE')
+
+    // 5. Reviews totales
+    const { count: reviewsTotales } = await supabase
+      .from('reviews')
+      .select('id', { count: 'exact' })
+
+    // 6. Top 5 restaurantes por calificación
+    const { data: restaurantesData } = await supabase
+      .from('restaurantes')
+      .select('id, nombre')
+
+    let top5Restaurantes = []
+    if (restaurantesData && restaurantesData.length > 0) {
+      const { data: reviewsData } = await supabase
+        .from('reviews')
+        .select('restaurante_id, puntuacion')
+
+      const reviewsMap = {}
+      reviewsData?.forEach(r => {
+        if (!reviewsMap[r.restaurante_id]) {
+          reviewsMap[r.restaurante_id] = []
+        }
+        reviewsMap[r.restaurante_id].push(r.puntuacion)
+      })
+
+      top5Restaurantes = restaurantesData
+        .map(r => ({
+          id: r.id,
+          nombre: r.nombre,
+          promedio: reviewsMap[r.id]
+            ? (reviewsMap[r.id].reduce((a, b) => a + b, 0) / reviewsMap[r.id].length).toFixed(2)
+            : '0.00'
+        }))
+        .sort((a, b) => parseFloat(b.promedio) - parseFloat(a.promedio))
+        .slice(0, 5)
+    }
+
+    // 7. Últimas 5 solicitudes
+    const { data: solicitudesRecientes } = await supabase
+      .from('solicitudes_restaurante')
+      .select('id, nombre_restaurante, estado, creado_en')
+      .order('creado_en', { ascending: false })
+      .limit(5)
+
+    // 8. Distribución por categoría
+    const { data: catData } = await supabase
+      .from('restaurante_categorias')
+      .select('categorias_restaurante(nombre)')
+
+    const distribucionCategorias = {}
+    catData?.forEach(r => {
+      const cat = r.categorias_restaurante?.nombre || 'Sin categoría'
+      distribucionCategorias[cat] = (distribucionCategorias[cat] || 0) + 1
+    })
+
+    const distribucion = Object.entries(distribucionCategorias).map(([nombre_categoria, total]) => ({
+      nombre_categoria,
+      total
+    }))
+
+    res.json({
+      usuarios_totales: usuariosTotales || 0,
+      usuarios_activos: usuariosActivos || 0,
+      restaurantes_registrados: restaurantesRegistrados || 0,
+      solicitudes_pendientes: solicitudesPendientes || 0,
+      reviews_totales: reviewsTotales || 0,
+      top_5_restaurantes: top5Restaurantes,
+      solicitudes_recientes: solicitudesRecientes || [],
+      distribucion_categorias: distribucion
+    })
+
+  } catch (error) {
+    console.error('Error en dashboardAdmin:', error)
+    res.status(200).json({
+      usuarios_totales: 0,
+      usuarios_activos: 0,
+      restaurantes_registrados: 0,
+      solicitudes_pendientes: 0,
+      reviews_totales: 0,
+      top_5_restaurantes: [],
+      solicitudes_recientes: [],
+      distribucion_categorias: [],
+      error: 'No se pudieron cargar todas las métricas'
+    })
+  }
+}
+
+// GET Dashboard Restaurante - Métricas específicas del restaurante
+export const dashboardRestaurante = async (req, res) => {
+  try {
+    const { id } = req.params
+
+    // 1. Calificación promedio
+    const { data: reviews } = await supabase
+      .from('reviews')
+      .select('puntuacion')
+      .eq('restaurante_id', id)
+
+    const puntuaciones = reviews?.map(r => r.puntuacion) || []
+    const calificacionPromedio = puntuaciones.length > 0
+      ? (puntuaciones.reduce((a, b) => a + b, 0) / puntuaciones.length).toFixed(2)
+      : '0.00'
+
+    // 2. Total reseñas
+    const totalReseñas = puntuaciones.length
+
+    // 3. Total platos
+    const { count: totalPlatos } = await supabase
+      .from('menu')  // ← CORRECTO
+      .select('id', { count: 'exact' })
+      .eq('restaurante_id', id)
+
+    // 4. Total favoritos (si existe tabla)
+    let totalFavoritos = 0
+    try {
+      const { count: favoritos } = await supabase
+        .from('favoritos')
+        .select('id', { count: 'exact' })
+        .eq('restaurante_id', id)
+      totalFavoritos = favoritos || 0
+    } catch (e) {
+      // Tabla no existe, omitir
+    }
+
+    // 5. Perfil completo
+    const { data: restaurante } = await supabase
+      .from('restaurantes')
+      .select('foto_portada, direccion, descripcion')
+      .eq('id', id)
+      .single()
+
+    const { data: catData } = await supabase
+      .from('restaurante_categorias')
+      .select('categoria_id')
+      .eq('restaurante_id', id)
+      .limit(1)
+
+    let horarios = null
+    try {
+      const { data: horariosData } = await supabase
+        .from('horarios')
+        .select('id')
+        .eq('restaurante_id', id)
+        .limit(1)
+      horarios = horariosData && horariosData.length > 0 ? true : false
+    } catch (e) {
+      // Tabla no existe
+    }
+
+    const perfilCompleto = {
+      tiene_foto: !!(restaurante?.foto_portada),
+      tiene_direccion: !!(restaurante?.direccion),
+      tiene_horarios: horarios || false,
+      tiene_categoria: !!(catData && catData.length > 0),
+      tiene_descripcion: !!(restaurante?.descripcion)
+    }
+
+    res.json({
+      calificacion_promedio: parseFloat(calificacionPromedio),
+      total_reseñas: totalReseñas,
+      total_platos: totalPlatos || 0,
+      total_favoritos: totalFavoritos,
+      perfil_completo: perfilCompleto
+    })
+
+  } catch (error) {
+    console.error('Error en dashboardRestaurante:', error)
+    res.status(200).json({
+      calificacion_promedio: 0,
+      total_reseñas: 0,
+      total_platos: 0,
+      total_favoritos: 0,
+      perfil_completo: {
+        tiene_foto: false,
+        tiene_direccion: false,
+        tiene_horarios: false,
+        tiene_categoria: false,
+        tiene_descripcion: false
+      },
+      error: 'No se pudieron cargar las métricas del restaurante'
+    })
+  }
+}
+
 // GET top restaurantes por calificación
 export const topRestaurantes = async (req, res) => {
   try {

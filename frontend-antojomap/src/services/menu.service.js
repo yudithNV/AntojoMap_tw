@@ -28,6 +28,7 @@ export const menuService = {
 export const almuerzosService = {
   getAlmuerzos: (restaurante_id) => api.get(`/almuerzos/${restaurante_id}`),
   getAlmuerzo: (id) => api.get(`/almuerzos/detalle/${id}`),
+  buscarPlatos: (q, tipo = '') => api.get(`/almuerzos/buscar?q=${q}&tipo=${tipo}`), // 👈 esto
   crearMenu: (restaurante_id, datos) => api.post(`/almuerzos/${restaurante_id}`, datos),
   editarMenu: (id, datos) => api.put(`/almuerzos/${id}`, datos),
   eliminarMenu: (id) => api.delete(`/almuerzos/${id}`)

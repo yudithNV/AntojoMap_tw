@@ -38,12 +38,14 @@
           :disabled="!hasChanges || guardando"
           @click="openSaveModal"
         >
-          <span v-if="!guardando">💾 Guardar cambios</span>
+          <span v-if="!guardando" style="display:flex; align-items:center; gap:6px; justify-content:center;">
+            <Save :size="16" /> Guardar cambios
+          </span>
           <span v-else>Guardando...</span>
         </button>
       </div>
 
-      <!-- Columna derecha: formulario -->
+      <!-- Columna derecha: formulario aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-->
       <div class="profile-right">
 
         <!-- Información básica -->
@@ -70,17 +72,40 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Dirección</label>
-              <input v-model="form.direccion" type="text" class="form-input" placeholder="Calle Principal 123" @input="checkChanges" />
+              <div class="input-search-container">
+                <input 
+                  v-model="form.direccion" 
+                  type="text" 
+                  class="form-input" 
+                  placeholder="Calle Principal 123" 
+                  @input="checkChanges" 
+                />
+                <button class="btn-buscar-mapa" @click="buscarEnMapa" :disabled="!form.direccion || buscandoDireccion">
+                  <span style="display:flex; align-items:center; gap:6px;">
+                    <Search :size="14" /> {{ buscandoDireccion ? 'Buscando...' : 'Buscar en mapa' }}
+                  </span>
+                </button>
+              </div>
+              <p v-if="errorDireccion" class="error-message">{{ errorDireccion }}</p>
             </div>
             <div class="form-group">
               <label class="form-label">Teléfono</label>
               <input v-model="form.telefono" type="tel" class="form-input" placeholder="+591 12345678" @input="checkChanges" />
             </div>
           </div>
-
+          <!-- Mapa -->
+        <div class="form-card">
+          <h3 class="card-title">Ubicación en el mapa</h3>
+          <p class="section-hint">Hacé clic en el mapa para marcar tu ubicación o arrastra el pin</p>
+          <div id="mapa-edicion" class="map-container"></div>
+          <div v-if="form.latitud && form.longitud" class="coordinates">
+            <span class="coord-label">Lat: {{ form.latitud.toFixed(4) }} | Lng: {{ form.longitud.toFixed(4) }}</span>
+          </div>
+        </div>
+          
           <div class="form-group">
-            <label class="form-label">Foto de portada (URL)</label>
-            <input v-model="form.foto_portada" type="url" class="form-input" placeholder="https://..." @input="checkChanges" />
+            <label class="form-label">Foto de portada</label>
+            <ImageUploader v-model="form.foto_portada" @update:modelValue="checkChanges" />
           </div>
         </div>
 
@@ -112,13 +137,10 @@
             {{ mensajeCategoria }}
           </div>
 
-          <button
-            v-if="JSON.stringify(selectedCategoriasIds) !== JSON.stringify(originalCategoriasIds)"
-            class="btn-save-cat"
-            @click="guardarCategoria"
-            :disabled="guardandoCategoria"
-          >
-            {{ guardandoCategoria ? 'Guardando...' : '✓ Guardar categorías' }}
+          <button class="btn-save-cat" @click="guardarCategoria" :disabled="guardandoCategoria">
+            <span style="display:flex; align-items:center; gap:6px;">
+              <Check :size="14" /> {{ guardandoCategoria ? 'Guardando...' : 'Guardar categorías' }}
+            </span>
           </button>
         </div>
 
@@ -167,17 +189,6 @@
           >
             {{ guardandoHorarios ? 'Guardando...' : '✓ Guardar horarios' }}
           </button>
-        </div>
-
-        <!-- Mapa -->
-        <div class="form-card">
-          <h3 class="card-title">Ubicación en el mapa</h3>
-          <p class="section-hint">Hacé clic en el mapa para marcar tu ubicación</p>
-          <div id="mapa-edicion" class="map-container"></div>
-          <div v-if="form.latitud" class="coordinates">
-            <span class="coord-label">Coordenadas:</span>
-            <span class="coord-value">{{ form.latitud.toFixed(4) }}, {{ form.longitud.toFixed(4) }}</span>
-          </div>
         </div>
 
       </div>
@@ -239,7 +250,8 @@ import { ref, onMounted } from 'vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import DashboardLayout from '../../components/DashboardLayout.vue'
-import { UtensilsCrossed, MapPin, Phone, Tag } from 'lucide-vue-next'
+import ImageUploader from '../../components/ImageUploader.vue'
+import { UtensilsCrossed, MapPin, Phone, Tag, Save, Search, Check } from 'lucide-vue-next'
 import { api } from '@/services/api.js'
 import { horariosService } from '@/services/restaurante.service.js'
 import { restaurantesService } from '@/services/menu.service.js'
@@ -319,10 +331,98 @@ const initialForm = {
 }
 const form = ref({ ...initialForm })
 let marker = null
+let mapa = null
+
+// Estados para búsqueda de dirección
+const buscandoDireccion = ref(false)
+const errorDireccion = ref('')
+let debounceTimer = null
 
 const checkChanges = () => {
   hasChanges.value = JSON.stringify(form.value) !== JSON.stringify(initialForm)
 }
+
+// Función para buscar dirección con Nominatim
+const buscarEnMapa = async () => {
+  if (!form.value.direccion || !form.value.direccion.trim()) return
+
+  buscandoDireccion.value = true
+  errorDireccion.value = ''
+
+  try {
+    const query = form.value.direccion + ', La Paz, Bolivia'
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`
+    
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'AntojoMap/1.0' }
+    })
+    const results = await response.json()
+
+    if (results && results.length > 0) {
+      const { lat, lon } = results[0]
+      form.value.latitud = parseFloat(lat)
+      form.value.longitud = parseFloat(lon)
+      hasChanges.value = true
+
+      // Actualizar el mapa
+      if (mapa) {
+        mapa.setView([form.value.latitud, form.value.longitud], 15)
+        if (marker) {
+          marker.setLatLng([form.value.latitud, form.value.longitud])
+        } else {
+          crearMarker(form.value.latitud, form.value.longitud)
+        }
+      }
+    } else {
+      errorDireccion.value = 'No se encontró la dirección, intenta ser más específico'
+    }
+  } catch (e) {
+    console.error('Error al buscar dirección:', e)
+    errorDireccion.value = 'Error al buscar la dirección. Intenta de nuevo.'
+  } finally {
+    buscandoDireccion.value = false
+  }
+}
+
+// Función para crear marker personalizado
+const crearMarker = (lat, lng) => {
+  const iconoRestaurante = L.divIcon({
+    className: '',
+    html: `
+      <div style="
+        background: #481827;
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        border: 2px solid white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      ">
+        🍴
+      </div>
+    `,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    popupAnchor: [0, -16]
+  })
+
+  marker = L.marker([lat, lng], { 
+    icon: iconoRestaurante,
+    draggable: true 
+  }).addTo(mapa)
+
+  marker.on('dragend', () => {
+    const latlng = marker.getLatLng()
+    form.value.latitud = latlng.lat
+    form.value.longitud = latlng.lng
+    hasChanges.value = true
+  })
+}
+
 
 const selectCategoria = (cat) => {
   const idx = selectedCategoriasIds.value.indexOf(cat.id)
@@ -426,21 +526,24 @@ onMounted(async () => {
 
   try {
     const centro = form.value.latitud ? [form.value.latitud, form.value.longitud] : [-16.5, -68.15]
-    const mapa = L.map('mapa-edicion').setView(centro, 15)
+    mapa = L.map('mapa-edicion').setView(centro, 15)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
       attribution: '© OpenStreetMap' 
     }).addTo(mapa)
     
-    if (form.value.latitud) {
-      marker = L.marker([form.value.latitud, form.value.longitud]).addTo(mapa)
+    if (form.value.latitud && form.value.longitud) {
+      crearMarker(form.value.latitud, form.value.longitud)
     }
     
     mapa.on('click', (e) => {
       form.value.latitud = e.latlng.lat
       form.value.longitud = e.latlng.lng
       hasChanges.value = true
-      if (marker) marker.setLatLng(e.latlng)
-      else marker = L.marker(e.latlng).addTo(mapa)
+      if (marker) {
+        marker.setLatLng(e.latlng)
+      } else {
+        crearMarker(form.value.latitud, form.value.longitud)
+      }
     })
   } catch (errorMapa) {
     console.error("Error al inicializar el mapa de Leaflet:", errorMapa)
@@ -589,9 +692,52 @@ const guardar = async () => {
 .time-sep { color: #aaa; font-weight: 600; }
 
 .map-container { width: 100%; height: 280px; border-radius: 10px; overflow: hidden; margin-bottom: 14px; }
-.coordinates { display: flex; gap: 10px; align-items: center; background: #f5f5f5; padding: 10px 14px; border-radius: 8px; }
-.coord-label { font-size: 0.82rem; font-weight: 600; color: #555; }
-.coord-value { font-family: monospace; color: var(--plum); font-weight: 600; font-size: 0.88rem; }
+.coordinates { font-size: 0.8rem; color: #999; padding: 10px 0; font-family: monospace; }
+.coord-label { font-weight: 500; }
+
+/* Contenedor de búsqueda con botón */
+.input-search-container {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.input-search-container .form-input {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.btn-buscar-mapa {
+  padding: 11px 16px;
+  background: var(--plum, #481827);
+  color: white;
+  border: 1.5px solid var(--plum, #481827);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.btn-buscar-mapa:hover:not(:disabled) {
+  background: #6b2540;
+  border-color: #6b2540;
+  transform: translateY(-1px);
+}
+
+.btn-buscar-mapa:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: #e74c3c;
+  font-size: 0.8rem;
+  margin-top: 6px;
+  margin-bottom: 0;
+}
 
 /* ===== ESTILOS DEL MODAL DE CONFIRMACIÓN ===== */
 .modal-overlay {
