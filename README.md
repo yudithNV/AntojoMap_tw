@@ -28,6 +28,7 @@ El backend estará en `http://localhost:3000`
 cd frontend-antojomap
 npm install
 npm install leaflet lucide-vue-next vue-router
+npm install @supabase/supabase-js
 npm run dev
 ```
 
