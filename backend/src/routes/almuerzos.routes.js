@@ -1,8 +1,11 @@
 import express from 'express'
-import { getMenusRestaurante, getMenu, crearMenu, editarMenu, eliminarMenu } from '../controllers/almuerzos.controller.js'
+import { getMenusRestaurante, getMenu, crearMenu, editarMenu, eliminarMenu, buscarPorPlato } from '../controllers/almuerzos.controller.js'
 import { verificarToken, soloRestaurante } from '../middlewares/auth.middleware.js'
 
 const router = express.Router()
+
+// GET almuerzos por búsqueda (nombre de plato)
+router.get('/buscar', buscarPorPlato) 
 
 // GET todos los almuerzos de un restaurante
 router.get('/:restaurante_id', getMenusRestaurante)

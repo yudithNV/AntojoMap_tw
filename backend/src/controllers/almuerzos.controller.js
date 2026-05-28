@@ -9,7 +9,6 @@ export const getMenusRestaurante = async (req, res) => {
       .from('menu')
       .select('*')
       .eq('restaurante_id', restaurante_id)
-      .eq('disponible', true)
       .order('creado_en', { ascending: false })
 
     if (error) throw error
@@ -44,7 +43,7 @@ export const getMenu = async (req, res) => {
 export const crearMenu = async (req, res) => {
   try {
     const { restaurante_id } = req.params
-    const { tipo = 'plato_suelto', nombre, precio, descripcion, foto_url, entrada, principal, postre } = req.body
+    const { tipo = 'plato_suelto', nombre, precio, descripcion, foto_url, entrada, principal, postre, es_menu_del_dia } = req.body
 
     // Validation
     if (!nombre || precio === undefined || !foto_url) {
@@ -70,7 +69,8 @@ export const crearMenu = async (req, res) => {
       precio: parseFloat(precio),
       descripcion: descripcion || null,
       foto_url,
-      disponible: true
+      disponible: true,
+      es_menu_del_dia: es_menu_del_dia || false
     }
 
     // Si es almuerzo_completo, agregar referencias (solo nombres, sin plato_id)
@@ -98,7 +98,7 @@ export const crearMenu = async (req, res) => {
 export const editarMenu = async (req, res) => {
   try {
     const { id } = req.params
-    const { tipo = 'plato_suelto', nombre, precio, descripcion, foto_url, disponible, entrada, principal, postre } = req.body
+    const { tipo = 'plato_suelto', nombre, precio, descripcion, foto_url, disponible, entrada, principal, postre, es_menu_del_dia } = req.body
 
     // Verify menu exists
     const { data: menu } = await supabase
@@ -126,6 +126,7 @@ export const editarMenu = async (req, res) => {
     if (descripcion !== undefined) updateData.descripcion = descripcion
     if (foto_url) updateData.foto_url = foto_url
     if (disponible !== undefined) updateData.disponible = disponible
+    if (es_menu_del_dia !== undefined) updateData.es_menu_del_dia = es_menu_del_dia
 
     // Si es almuerzo_completo, actualizar referencias (solo nombres, sin plato_id)
     if (tipo === 'almuerzo_completo') {
@@ -180,6 +181,28 @@ export const eliminarMenu = async (req, res) => {
     if (error) throw error
 
     res.json({ mensaje: 'Menú eliminado exitosamente' })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+}
+// buscar almuerzos por nombre de plato
+export const buscarPorPlato = async (req, res) => {
+  try {
+    const { q = '', tipo = '' } = req.query
+
+    let query = supabase
+      .from('menu')
+      .select('id, nombre, descripcion, precio, foto_url, tipo, entrada_nombre, principal_nombre, postre_nombre, restaurante_id, restaurantes(id, nombre, foto_portada, direccion), es_menu_del_dia')
+      .eq('disponible', true)
+
+    if (q) query = query.or(`nombre.ilike.%${q}%,entrada_nombre.ilike.%${q}%,principal_nombre.ilike.%${q}%,postre_nombre.ilike.%${q}%`)
+    if (tipo) query = query.eq('tipo', tipo)
+
+    const { data, error } = await query
+
+    if (error) throw error
+
+    res.json(data)
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
