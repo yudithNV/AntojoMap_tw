@@ -1,3 +1,4 @@
+//borrar este archivo, no se va a usar
 <template>
   <div class="menu-container">
     <button @click="goBack" class="back-btn">← Volver</button>

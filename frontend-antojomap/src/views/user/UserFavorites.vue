@@ -31,7 +31,7 @@ import DashboardLayout from '../../components/DashboardLayout.vue'
 import RestaurantCard from '../../components/RestaurantCard.vue'
 import { Heart } from 'lucide-vue-next'
 import { useFavoritosStore } from '../../stores/favoritos.store.js'
-import { restaurantesService } from '../../services/menu.service.js'
+import { restaurantesService, feedbackService } from '../../services/menu.service.js'
 import { ref } from 'vue'
 
 const router = useRouter()
@@ -53,6 +53,14 @@ onMounted(async () => {
     address: r.direccion,
     rating: '—'
   }))
+
+  // Cargar promedios
+  restaurantes.value.forEach(async (r, i) => {
+    try {
+      const { promedio } = await feedbackService.getPromedioCalificaciones(r.id)
+      restaurantes.value[i].rating = promedio > 0 ? promedio : '—'
+    } catch {}
+  })
 })
 
 const favorites = computed(() => restaurantes.value)

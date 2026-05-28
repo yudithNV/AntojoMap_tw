@@ -235,6 +235,24 @@
                   </div>
                 </div>
 
+                <!-- ImageUploader fuera del form para evitar submit accidental -->
+              <div class="form-group" style="margin-top: 24px;">
+                <label>Foto del Establecimiento</label>
+                <ImageUploader v-model="restaurantForm.foto_comprobante" />
+                <div 
+                  v-if="formErrors.restaurant.foto_comprobante" 
+                  class="error-alert"
+                  role="alert"
+                  aria-live="polite"
+                >
+                  <div class="error-alert-content">
+                    <div class="error-icon-wrapper">
+                      <AlertCircle :size="18" class="error-icon" stroke-width="2" />
+                    </div>
+                    <span class="error-text">{{ formErrors.restaurant.foto_comprobante }}</span>
+                  </div>
+                </div>
+              </div>
                 <div class="form-group">
                   <label for="rest-category">Categoría</label>
                   <select
@@ -335,34 +353,7 @@
                   </div>
                 </div>
 
-                <div class="form-group">
-                  <label for="rest-photo">Foto del Establecimiento</label>
-                  <input
-                    id="rest-photo"
-                    v-model="restaurantForm.foto_comprobante"
-                    type="text"
-                    placeholder="URL de la foto (ej: https://...)"
-                    :class="{ 'input-error': formErrors.restaurant.foto_comprobante }"
-                    @blur="validateRestaurantField('foto_comprobante')"
-                    @input="validateRestaurantField('foto_comprobante')"
-                  />
-                  <p class="field-hint">Por ahora ingresa la URL de una foto. Pronto podrás subir archivos directamente.</p>
-                  <div 
-                    v-if="formErrors.restaurant.foto_comprobante" 
-                    class="error-alert"
-                    role="alert"
-                    aria-live="polite"
-                  >
-                    <div class="error-alert-content">
-                      <div class="error-icon-wrapper">
-                        <AlertCircle :size="18" class="error-icon" stroke-width="2" />
-                      </div>
-                      <span class="error-text">{{ formErrors.restaurant.foto_comprobante }}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <button type="submit" class="btn-submit" :disabled="!isRestaurantFormValid || isLoading">
+                <button type="submit" class="btn-submit" style="margin-top: 24px;" :disabled="!isRestaurantFormValid || isLoading">
                   {{ isLoading ? 'Enviando...' : 'Registrar Restaurante' }}
                 </button>
               </form>
@@ -425,6 +416,7 @@ import { useRouter } from 'vue-router'
 import { UtensilsCrossed, Utensils, Eye, EyeOff, User, Store, AlertCircle } from 'lucide-vue-next'
 import { authService } from '../services/auth.service.js'
 import { api } from '../services/api.js'
+import ImageUploader from '../components/ImageUploader.vue'
 
 const categorias = ref([])
 const router = useRouter()

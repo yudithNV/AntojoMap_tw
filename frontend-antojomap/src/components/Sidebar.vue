@@ -116,18 +116,19 @@ const menuItems = computed(() => {
       { id: 2, label: 'Solicitudes', icon: ClipboardList, path: '/admin/requests' },
       { id: 3, label: 'Usuarios', icon: Users, path: '/admin/users' },
       { id: 4, label: 'Restaurantes', icon: Store, path: '/admin/restaurants' },
-      { id: 5, label: 'Reportes', icon: BarChart3, path: '/admin/reports' }
+      //{ id: 5, label: 'Reportes', icon: BarChart3, path: '/admin/reports' }
     ],
     restaurant: [
-      { id: 1, label: 'Dashboard', icon: LayoutDashboard, path: '/restaurant/dashboard' },
+      { id: 1, label: 'Resumen', icon: LayoutDashboard, path: '/restaurant/dashboard' },
       { id: 2, label: 'Menú', icon: Menu, path: '/restaurant/menu' },
       { id: 3, label: 'Perfil', icon: User, path: '/restaurant/profile' },
       { id: 4, label: 'Feedbacks', icon: Heart, path: '/restaurant/feedbacks' }
     ],
     user: [
       { id: 1, label: 'Explorar', icon: Search, path: '/user/feed' },
-      { id: 2, label: 'Favoritos', icon: Heart, path: '/user/favorites' },
-      { id: 3, label: 'Perfil', icon: User, path: '/user/profile' }
+      { id: 2, label: 'Mapa', icon: Store, path: '/user/mapa' },
+      { id: 3, label: 'Favoritos', icon: Heart, path: '/user/favorites' },
+      { id: 4, label: 'Perfil', icon: User, path: '/user/profile' }
     ]
   }
   return menus[userRole.value] || menus.user
@@ -355,7 +356,7 @@ const confirmLogout = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 9999 !important;
 }
 
 .modal-container {

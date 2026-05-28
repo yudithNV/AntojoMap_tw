@@ -22,13 +22,60 @@
           <p class="descripcion">{{ restaurante.descripcion }}</p>
         </section>
 
-        <!-- Menú -->
+        <!-- Menú del Día (Destacado) -->
+        <section v-if="menuDelDia.length > 0" class="section-card menu-del-dia-section">
+          <h2 class="section-title">🌟 Menú del Día</h2>
+          <div v-for="item in menuDelDia" :key="item.id" class="menu-del-dia-card">
+            <div class="menu-del-dia-img">
+              <img v-if="item.foto_url" :src="item.foto_url" :alt="item.nombre" />
+              <div v-else class="img-placeholder">🍽️</div>
+            </div>
+            <div class="menu-del-dia-content">
+              <div class="menu-del-dia-header">
+                <div>
+                  <h3>{{ item.nombre }}</h3>
+                  <p class="menu-del-dia-subtitle">{{ item.descripcion }}</p>
+                </div>
+                <div class="menu-del-dia-price">
+                  <div class="price-value">Bs {{ item.precio }}</div>
+                  <div class="price-label">PRECIO POR PERSONA</div>
+                </div>
+              </div>
+
+              <div v-if="item.tipo === 'almuerzo_completo'" class="meal-components">
+                <div v-if="item.entrada_nombre" class="component-item">
+                  <span class="component-icon">🍴</span>
+                  <div>
+                    <strong>Entrada</strong>
+                    <p>{{ item.entrada_nombre }}</p>
+                  </div>
+                </div>
+                <div v-if="item.principal_nombre" class="component-item">
+                  <span class="component-icon">🍗</span>
+                  <div>
+                    <strong>Segundo</strong>
+                    <p>{{ item.principal_nombre }}</p>
+                  </div>
+                </div>
+                <div v-if="item.postre_nombre" class="component-item">
+                  <span class="component-icon">🍰</span>
+                  <div>
+                    <strong>Bebida o Postre</strong>
+                    <p>{{ item.postre_nombre }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Menú Regular -->
         <section class="section-card">
-          <h2 class="section-title">Menú</h2>
+          <h2 class="section-title">{{ menuDelDia.length > 0 ? 'Menú Regular' : 'Menú' }}</h2>
           <div v-if="cargando" class="loading">Cargando menú...</div>
-          <div v-else-if="menu.length === 0" class="empty">No hay platos disponibles aún.</div>
+          <div v-else-if="menuRegular.length === 0" class="empty">No hay platos disponibles aún.</div>
           <div v-else class="menu-grid">
-            <div v-for="item in menu" :key="item.id" class="menu-card">
+            <div v-for="item in menuRegular" :key="item.id" class="menu-card">
               <div class="menu-card-img">
                 <img v-if="item.foto_url" :src="item.foto_url" :alt="item.nombre" />
                 <div v-else class="img-placeholder">🍽️</div>
@@ -36,8 +83,21 @@
               </div>
               <div class="menu-card-info">
                 <h3>{{ item.nombre }}</h3>
-                <p v-if="item.descripcion">{{ item.descripcion }}</p>
                 <span class="menu-price">Bs {{ item.precio }}</span>
+                
+                <div v-if="item.tipo === 'almuerzo_completo'" class="almuerzo-detalles">
+                  <div v-if="item.entrada_nombre" class="detalle-item">
+                    <span class="detalle-icon">🍴</span> {{ item.entrada_nombre }}
+                  </div>
+                  <div v-if="item.principal_nombre" class="detalle-item">
+                    <span class="detalle-icon">🍗</span> {{ item.principal_nombre }}
+                  </div>
+                  <div v-if="item.postre_nombre" class="detalle-item">
+                    <span class="detalle-icon">🍰</span> {{ item.postre_nombre }}
+                  </div>
+                </div>
+                
+                <p v-else-if="item.descripcion" class="menu-desc">{{ item.descripcion }}</p>
               </div>
             </div>
           </div>
@@ -45,12 +105,7 @@
 
         <!-- Reseñas -->
         <section class="section-card">
-          <div class="reviews-header">
-            <h2 class="section-title">Reseñas</h2>
-            <button class="btn-review" @click="showReviewForm = !showReviewForm">
-              {{ showReviewForm ? 'Cancelar' : '✏️ Dejar reseña' }}
-            </button>
-          </div>
+          <h2 class="section-title">Reseñas</h2>
 
           <!-- Formulario de reseña -->
           <div v-if="showReviewForm" class="review-form">
@@ -67,9 +122,12 @@
               placeholder="Comparte tu experiencia..."
               rows="3"
             />
-            <button class="btn-submit-review" @click="enviarReview" :disabled="enviandoReview">
-              {{ enviandoReview ? 'Enviando...' : 'Publicar reseña' }}
-            </button>
+            <div class="review-form-buttons">
+              <button class="btn-submit-review" @click="enviarReview" :disabled="enviandoReview">
+                {{ enviandoReview ? 'Enviando...' : 'Publicar reseña' }}
+              </button>
+              <button class="btn-cancel-review" @click="showReviewForm = false">Cancelar</button>
+            </div>
             <p v-if="reviewError" class="review-error">{{ reviewError }}</p>
           </div>
 
@@ -77,11 +135,18 @@
           <div v-if="reviews.length === 0 && !showReviewForm" class="empty">Sin reseñas aún. ¡Sé el primero!</div>
           <div class="reviews-list">
             <div v-for="r in reviews" :key="r.id" class="review-card">
-              <div class="review-top">
-                <div class="review-stars">
-                  <span v-for="n in 5" :key="n" class="star" :class="{ active: n <= r.puntuacion }">★</span>
+              <div class="review-header">
+                <div class="review-avatar" :style="{ backgroundColor: avatarColor(r.usuario?.nombre) }">
+                  <img v-if="r.usuario?.foto_perfil" :src="r.usuario.foto_perfil" :alt="r.usuario.nombre" />
+                  <span v-else>{{ r.usuario?.nombre?.charAt(0)?.toUpperCase() || '?' }}</span>
                 </div>
-                <span class="review-fecha">{{ formatFecha(r.fecha) }}</span>
+                <div>
+                  <p class="review-autor">{{ r.usuario?.nombre || 'Usuario' }}</p>
+                  <div class="review-stars-row">
+                    <span v-for="n in 5" :key="n" class="star" :class="{ active: n <= r.puntuacion }">★</span>
+                    <span class="review-fecha">{{ formatFecha(r.fecha) }}</span>
+                  </div>
+                </div>
               </div>
               <p class="review-comentario">{{ r.comentario }}</p>
             </div>
@@ -91,33 +156,56 @@
 
       <!-- Columna derecha: info -->
       <aside class="col-aside">
+        <!-- Información Card -->
         <div class="section-card info-card">
           <h2 class="section-title">Información</h2>
 
-          <div v-if="restaurante.telefono" class="info-row">
-            <span class="info-icon">📞</span>
-            <span>{{ restaurante.telefono }}</span>
-          </div>
-
-          <div v-if="categoria" class="info-row">
-            <span class="info-icon">🍴</span>
-            <span>{{ categoria }}</span>
-          </div>
-
-          <!-- Horarios -->
-          <div v-if="horarios.length > 0" class="horarios">
-            <h3 class="horarios-title">Horarios</h3>
-            <div v-for="h in horarios" :key="h.id" class="horario-row">
-              <span class="dia">{{ diasSemana[h.dia_semana] }}</span>
-              <span class="horas">{{ h.apertura }} – {{ h.cierre }}</span>
+          <!-- Horario -->
+          <div v-if="horarios.length > 0" class="info-item">
+            <div class="info-label-row">
+              <span class="info-label-icon">⏰</span>
+              <span class="info-label">Horario de atención</span>
+            </div>
+            <div class="horario-compact">
+              <div v-for="h in horarios" :key="h.id" class="horario-line">
+                <span class="dia">{{ diasSemana[h.dia_semana] }}</span>
+                <span class="horas">{{ h.apertura }} – {{ h.cierre }}</span>
+              </div>
             </div>
           </div>
 
-          <!-- Mapa -->
+          <!-- Teléfono -->
+          <div v-if="restaurante.telefono" class="info-item">
+            <div class="info-label-row">
+              <span class="info-label-icon">📱</span>
+              <span class="info-label">Teléfono</span>
+            </div>
+            <p class="info-value">{{ restaurante.telefono }}</p>
+          </div>
+
+          <!-- Categoría -->
+          <div v-if="categoria" class="info-item">
+            <div class="info-label-row">
+              <span class="info-label-icon">🍽️</span>
+              <span class="info-label">Tipo de Cocina</span>
+            </div>
+            <p class="info-value">{{ categoria }}</p>
+          </div>
+
+          <!-- Ubicación / Mapa -->
           <div v-if="restaurante.latitud" class="mapa-section">
-            <h3 class="horarios-title">Ubicación</h3>
+            <h3 class="info-label">UBICACIÓN</h3>
             <div id="mapa-detalle" class="mapa"></div>
           </div>
+        </div>
+
+        <!-- Card Calificación Naranja -->
+        <div class="card-calificar">
+          <h3>¿Ya lo probaste?</h3>
+          <p>Comparte tu experiencia con otros usuarios.</p>
+          <button class="btn-calificar" @click="showReviewForm = true">
+            📷 Calificar
+          </button>
         </div>
       </aside>
     </div>
@@ -125,7 +213,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { restaurantesService, almuerzosService, feedbackService } from '@/services/menu.service.js'
 import { api } from '@/services/api.js'
@@ -144,6 +232,15 @@ const showReviewForm = ref(false)
 const enviandoReview = ref(false)
 const reviewError = ref('')
 const newReview = ref({ puntuacion: 5, comentario: '' })
+
+// Computed properties para separar menú en dos secciones
+const menuDelDia = computed(() => {
+  return menu.value.filter(item => item.es_menu_del_dia === true && item.disponible !== false)
+})
+
+const menuRegular = computed(() => {
+  return menu.value.filter(item => item.es_menu_del_dia !== true || item.disponible === false)
+})
 
 const diasSemana = {
   1: 'Lunes', 2: 'Martes', 3: 'Miércoles',
@@ -191,6 +288,11 @@ const enviarReview = async () => {
     enviandoReview.value = false
   }
 }
+const avatarColors = ['#e57373','#f06292','#ba68c8','#7986cb','#4fc3f7','#4db6ac','#aed581','#ffb74d']
+const avatarColor = (nombre) => {
+  if (!nombre) return '#ccc'
+  return avatarColors[nombre.charCodeAt(0) % avatarColors.length]
+}
 
 const initMapa = async () => {
   if (!restaurante.value.latitud) return
@@ -212,7 +314,7 @@ onMounted(async () => {
 
   try {
     const data = await almuerzosService.getAlmuerzos(restauranteId)
-    menu.value = data || []
+    menu.value = (data || []).filter(item => item.disponible)
   } catch (e) {}
 
   cargando.value = false
@@ -395,7 +497,41 @@ onMounted(async () => {
 .menu-price {
   font-size: 1.1rem;
   font-weight: 800;
-  color: #FF6B00;
+  color: #C0392B;
+  display: block;
+  margin: 8px 0;
+}
+
+.almuerzo-detalles {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f0ede7;
+}
+
+.detalle-item {
+  font-size: 0.85rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.detalle-icon {
+  font-size: 1rem;
+}
+
+.menu-desc {
+  margin: 8px 0 0 0;
+  font-size: 0.83rem;
+  color: #888;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* Reseñas */
@@ -406,6 +542,42 @@ onMounted(async () => {
   margin-bottom: 20px;
 }
 .reviews-header .section-title { margin: 0; }
+
+.review-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.review-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: white;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.review-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.review-autor {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #333;
+  margin: 0 0 4px 0;
+}
+.review-stars-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 
 .btn-review {
   padding: 8px 16px;
@@ -426,6 +598,14 @@ onMounted(async () => {
   padding: 20px;
   margin-bottom: 24px;
 }
+
+.review-autor {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--plum, #481827);
+  margin: 0 0 4px 0;
+}
+
 .stars-input {
   display: flex;
   gap: 6px;
@@ -437,7 +617,7 @@ onMounted(async () => {
   cursor: pointer;
   transition: color 0.15s;
 }
-.star.active { color: #FF6B00; }
+.star.active { color: var(--plum, #481827); }
 
 .review-form textarea {
   width: 100%;
@@ -450,11 +630,11 @@ onMounted(async () => {
   margin-bottom: 12px;
   box-sizing: border-box;
 }
-.review-form textarea:focus { outline: none; border-color: #FF6B00; }
+.review-form textarea:focus { outline: none; border-color: var(--plum, #481827); }
 
 .btn-submit-review {
   padding: 10px 24px;
-  background: #FF6B00;
+  background: var(--plum, #481827);
   color: white;
   border: none;
   border-radius: 8px;
@@ -462,7 +642,7 @@ onMounted(async () => {
   cursor: pointer;
   transition: background 0.2s;
 }
-.btn-submit-review:hover:not(:disabled) { background: #e05f00; }
+.btn-submit-review:hover:not(:disabled) { background: var(--plum, #6b2540); }
 .btn-submit-review:disabled { opacity: 0.6; cursor: not-allowed; }
 .review-error { color: #c00; font-size: 0.88rem; margin-top: 8px; }
 
@@ -471,7 +651,7 @@ onMounted(async () => {
   padding: 16px;
   background: #faf8f6;
   border-radius: 10px;
-  border-left: 3px solid #FF6B00;
+  border-left: 3px solid var(--plum, #481827);
 }
 .review-top {
   display: flex;
@@ -484,38 +664,71 @@ onMounted(async () => {
 .review-comentario { margin: 0; color: #444; font-size: 0.93rem; line-height: 1.5; }
 
 /* Aside */
-.info-card { position: sticky; top: 24px; }
+.col-aside { position: sticky; top: 24px; align-self: start; }
+.info-card { position: static; }
 
-.info-row {
+.info-item {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f0ede7;
+}
+.info-item:last-of-type {
+  border-bottom: none;
+}
+
+.info-label-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid #f0ede7;
-  font-size: 0.95rem;
-  color: #444;
+  gap: 10px;
+  margin-bottom: 10px;
 }
-.info-icon { font-size: 1.1rem; }
 
-.horarios { margin-top: 20px; }
-.horarios-title {
-  font-size: 1rem;
-  font-weight: 700;
+.info-label-icon {
+  font-size: 1.2rem;
   color: var(--plum, #481827);
-  margin: 0 0 12px 0;
 }
-.horario-row {
+
+.info-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.info-value {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.horario-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.horario-line {
   display: flex;
   justify-content: space-between;
-  padding: 6px 0;
   font-size: 0.88rem;
-  color: #555;
-  border-bottom: 1px solid #f5f5f5;
+  padding: 4px 0;
 }
-.dia { font-weight: 600; color: #333; }
-.horas { color: #FF6B00; font-weight: 600; }
+.horario-line .dia {
+  font-weight: 600;
+  color: #333;
+}
+.horario-line .horas {
+  color: var(--plum, #481827);
+  font-weight: 600;
+}
 
-.mapa-section { margin-top: 20px; }
+.mapa-section { 
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
 .mapa {
   width: 100%;
   height: 200px;
@@ -531,10 +744,219 @@ onMounted(async () => {
   font-size: 0.95rem;
 }
 
+/* Menú del Día */
+.menu-del-dia-section {
+  background: linear-gradient(135deg, rgba(248, 245, 240, 0.8) 0%, rgba(255, 107, 0, 0.05) 100%);
+  border: 2px solid #C0392B;
+  box-shadow: 0 4px 16px rgba(72, 24, 39, 0.15);
+}
+
+.menu-del-dia-section .section-title {
+  color: var(--plum, #C0392B);
+  font-size: 1.5rem;
+  text-shadow: 0 2px 4px rgba(72, 24, 39, 0.1);
+  margin-bottom: 24px;
+}
+
+.menu-del-dia-card {
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #FFE8CC;
+  box-shadow: 0 2px 8px rgba(255, 107, 0, 0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 20px;
+}
+.menu-del-dia-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(255, 107, 0, 0.15);
+}
+
+.menu-del-dia-img {
+  flex-shrink: 0;
+  width: 260px;
+  min-height: 220px;
+  position: relative;
+  background: #f5f0eb;
+}
+.menu-del-dia-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.menu-del-dia-content {
+  padding: 20px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.menu-del-dia-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+
+.menu-del-dia-header > div:first-child {
+  flex-grow: 1;
+}
+
+.menu-del-dia-header h3 {
+  font-size: 1.3rem;
+  color: var(--plum, #C0392B);
+  margin: 0 0 4px 0;
+  font-weight: 700;
+}
+
+.menu-del-dia-subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--plum, #C0392B);
+  font-weight: 500;
+}
+
+.menu-del-dia-price {
+  text-align: right;
+}
+
+.price-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #C0392B;
+}
+
+.price-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.meal-components {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.component-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 10px;
+  background: #FFF5ED;
+  border-left: 3px solid #C0392B;
+  border-radius: 6px;
+}
+
+.component-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.component-item strong {
+  display: block;
+  color: #333;
+  font-size: 0.95rem;
+  margin-bottom: 2px;
+}
+
+.component-item p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* Card Calificar */
+.card-calificar {
+  background: linear-gradient(135deg, var(--plum, #481827) 0%, var(--plum-dark, #6b2540) 100%);
+  border-radius: 16px;
+  padding: 24px;
+  color: white;
+  text-align: center;
+  box-shadow: 0 6px 16px rgba(72, 24, 39, 0.25);
+  margin-top: 24px;
+}
+
+.card-calificar h3 {
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin: 0 0 8px 0;
+  color: white;
+}
+
+.card-calificar p {
+  margin: 0 0 18px 0;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.5;
+}
+
+.btn-calificar {
+  width: 100%;
+  background: white;
+  color: var(--plum, #481827);
+  border: none;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-calificar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-calificar:active {
+  transform: translateY(0);
+}
+
+/* Review Form Buttons */
+.review-form-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.btn-cancel-review {
+  background: #f5f5f5;
+  color: #666;
+  border: 1px solid #ddd;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  flex: 1;
+  transition: all 0.2s;
+}
+
+.btn-cancel-review:hover {
+  background: #efefef;
+  border-color: #ccc;
+}
+
+.btn-submit-review {
+  flex: 1;
+}
+
 @media (max-width: 900px) {
   .page-body { grid-template-columns: 1fr; }
   .info-card { position: static; }
   .hero-content h1 { font-size: 1.8rem; }
+  .menu-del-dia-card { flex-direction: column; }
+  .menu-del-dia-img { width: 100%; height: 180px; }
 }
 
 @media (max-width: 600px) {
@@ -543,5 +965,9 @@ onMounted(async () => {
   .page-body { padding: 16px; }
   .section-card { padding: 20px; }
   .menu-grid { grid-template-columns: 1fr; }
+  .menu-del-dia-card { flex-direction: column; }
+  .menu-del-dia-img { width: 100%; height: 150px; }
+  .menu-del-dia-header { flex-direction: column; }
+  .menu-del-dia-price { text-align: left; }
 }
 </style>
