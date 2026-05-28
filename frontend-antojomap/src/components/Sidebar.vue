@@ -40,14 +40,13 @@
           <p class="user-email">{{ userEmail }}</p>
         </div>
       </div>
-      <!-- 🔥 BOTÓN SALIR MODIFICADO - ABRE MODAL 🔥 -->
       <button class="logout-btn" @click="openLogoutModal" :title="props.collapsed ? 'Salir' : ''">
         <span v-if="!props.collapsed">Salir</span>
         <LogOut v-else :size="20" stroke-width="2.5" />
       </button>
     </div>
 
-    <!-- 🔥 MODAL DE CONFIRMACIÓN DE SALIDA 🔥 -->
+    <!-- Modal de confirmación de salida -->
     <Transition name="modal-fade-scale">
       <div v-if="showLogoutModal" class="modal-overlay" @click.self="closeLogoutModal">
         <div class="modal-container">
@@ -81,7 +80,7 @@ import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { 
   LayoutDashboard, ClipboardList, Users, Store, BarChart3,
-  Menu, Heart, Search, User, UtensilsCrossed, LogOut
+  Menu, Heart, Search, User, UtensilsCrossed, LogOut, Star
 } from 'lucide-vue-next'
 import { useAuthStore } from '../stores/auth.store.js'
 import { useFavoritosStore } from '../stores/favoritos.store.js'
@@ -104,7 +103,7 @@ const showLogoutModal = ref(false)
 const isLoggingOut = ref(false)
 
 // ========== USUARIO ==========
-const userRole = computed(() => authStore.rol || 'user')
+const userRole = computed(() => (authStore.rol || 'USER').toLowerCase())
 const userEmail = computed(() => authStore.email)
 const userName = computed(() => authStore.nombre)
 
@@ -127,7 +126,9 @@ const menuItems = computed(() => {
     user: [
       { id: 1, label: 'Explorar', icon: Search, path: '/user/feed' },
       { id: 2, label: 'Favoritos', icon: Heart, path: '/user/favorites' },
-      { id: 3, label: 'Perfil', icon: User, path: '/user/profile' }
+      { id: 3, label: 'Perfil', icon: User, path: '/user/profile' },
+      // ✅ NUEVO: Mis feedbacks (solo para usuarios comunes)
+      { id: 4, label: 'Mis feedbacks', icon: Star, path: '/user/feedbacks' }
     ]
   }
   return menus[userRole.value] || menus.user
@@ -135,7 +136,7 @@ const menuItems = computed(() => {
 
 const isActive = (path) => route.path === path
 
-// ========== 🔥 FUNCIONES DEL MODAL 🔥 ==========
+// ========== FUNCIONES DEL MODAL ==========
 const openLogoutModal = () => {
   showLogoutModal.value = true
 }
@@ -343,7 +344,7 @@ const confirmLogout = async () => {
   color: white; 
 }
 
-/* ===== 🔥 MODAL DE CONFIRMACIÓN 🔥 ===== */
+/* ===== MODAL DE CONFIRMACIÓN ===== */
 .modal-overlay {
   position: fixed;
   top: 0;

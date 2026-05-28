@@ -25,6 +25,7 @@ import UserFeed from '../views/user/UserFeed.vue'
 import UserFavorites from '../views/user/UserFavorites.vue'
 import UserProfile from '../views/user/UserProfile.vue'
 import UserMenuView from '../views/user/UserMenuView.vue'
+import UserFeedbacks from '../views/user/UserFeedbacks.vue'  // ✅ AGREGADO
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -146,6 +147,13 @@ const router = createRouter({
       path: '/user/profile',
       name: 'user-profile',
       component: UserProfile,
+      meta: { requiresAuth: true, role: 'user' }
+    },
+    // ✅ RUTA AGREGADA - Mis feedbacks
+    {
+      path: '/user/feedbacks',
+      name: 'user-feedbacks',
+      component: UserFeedbacks,
       meta: { requiresAuth: true, role: 'user' }
     }
   ]

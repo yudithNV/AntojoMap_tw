@@ -29,7 +29,7 @@ export const crearReview = async (req, res) => {
       return res.status(404).json({ error: 'Restaurante no encontrado' })
     }
 
-    // Insertar en la tabla 'reviews'
+    // ✅ CORREGIDO: SOLO 'fecha', sin 'creado_en'
     const { data, error } = await supabase
       .from('reviews')
       .insert({
@@ -37,7 +37,6 @@ export const crearReview = async (req, res) => {
         restaurante_id,
         comentario: comentario || null,
         puntuacion: parseInt(puntuacion),
-        creado_en: new Date(),
         fecha: new Date()
       })
       .select()
@@ -63,6 +62,7 @@ export const getReviewsRestaurante = async (req, res) => {
     const { restaurante_id } = req.params
     console.log('🔍 Buscando reviews para restaurante:', restaurante_id)
 
+    // ✅ CORREGIDO: ordenar por 'fecha', no por 'creado_en'
     const { data, error } = await supabase
       .from('reviews')
       .select(`
@@ -70,11 +70,10 @@ export const getReviewsRestaurante = async (req, res) => {
         puntuacion,
         comentario,
         fecha,
-        creado_en,
         usuario:usuarios(id, nombre, email)
       `)
       .eq('restaurante_id', restaurante_id)
-      .order('creado_en', { ascending: false })
+      .order('fecha', { ascending: false })
 
     if (error) {
       console.error('❌ Error en consulta:', error)

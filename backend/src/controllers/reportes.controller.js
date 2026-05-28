@@ -100,21 +100,22 @@ export const topRestaurantes = async (req, res) => {
   }
 }
 
-// GET actividad de usuarios
+// GET actividad de usuarios (CORREGIDO)
 export const actividadUsuarios = async (req, res) => {
   try {
     const limite = req.query.limite || 30
 
+    // ✅ CORREGIDO: 'creado_en' → 'fecha'
     const { data: reviews } = await supabase
       .from('reviews')
       .select(`
         id,
-        creado_en,
+        fecha,
         puntuacion,
         usuario:usuarios(id, nombre),
         restaurante:restaurantes(id, nombre)
       `)
-      .order('creado_en', { ascending: false })
+      .order('fecha', { ascending: false })
       .limit(parseInt(limite))
 
     res.json(reviews || [])

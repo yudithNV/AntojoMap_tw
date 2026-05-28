@@ -67,7 +67,6 @@
                   </button>
                 </div>
                 
-                <!-- 🔥 MENSAJE DE ERROR DINÁMICO 🔥 -->
                 <div 
                   v-if="passwordError" 
                   class="error-alert"
@@ -133,7 +132,7 @@
             <p class="modal-message">{{ modalMessage }}</p>
             <div class="modal-spinner">
               <div class="spinner"></div>
-              <span>Redirigiendo...</span>
+              <!-- ❌ ELIMINADA la palabra "Redirigiendo..." -->
             </div>
           </div>
         </div>

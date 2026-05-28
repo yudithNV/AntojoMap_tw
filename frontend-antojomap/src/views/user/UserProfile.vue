@@ -62,7 +62,7 @@
 
           <div class="modal-actions">
             <button class="btn-cancel" @click="closeModal">Cancelar</button>
-            <button class="btn-save" @click="guardarCambios" :disabled="guardando">
+            <button class="btn-save" @click="openConfirmModal" :disabled="guardando">
               {{ guardando ? 'Guardando...' : 'Guardar' }}
             </button>
           </div>
@@ -70,6 +70,31 @@
           <p v-if="error" class="error-msg">{{ error }}</p>
         </div>
       </div>
+    </Teleport>
+
+    <!-- ===== MODAL DE CONFIRMACIÓN ===== -->
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div v-if="showConfirmModal" class="confirm-overlay" @click.self="closeConfirmModal">
+          <div class="confirm-modal">
+            <div class="confirm-icon">
+              <div class="icon-circle-warning">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+              </div>
+            </div>
+            <h3 class="confirm-title">¿Estás seguro de guardar los cambios?</h3>
+            <p class="confirm-message">Los cambios se aplicarán a tu perfil inmediatamente.</p>
+            <div class="confirm-actions">
+              <button class="confirm-btn cancel" @click="closeConfirmModal">No, cancelar</button>
+              <button class="confirm-btn save" @click="confirmGuardar">Sí, guardar</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
     </Teleport>
 
     <!-- ===== TOAST DE ÉXITO ===== -->
@@ -83,7 +108,7 @@
               </svg>
             </div>
             <div class="toast-message">
-              <strong>¡Perfil actualizado exitosamente!</strong>
+              <strong>¡Cambios guardados exitosamente!</strong>
             </div>
           </div>
         </div>
@@ -118,6 +143,17 @@ const form = ref({
   bio: ''
 })
 
+// ========== MODAL DE CONFIRMACIÓN ==========
+const showConfirmModal = ref(false)
+
+const openConfirmModal = () => {
+  showConfirmModal.value = true
+}
+
+const closeConfirmModal = () => {
+  showConfirmModal.value = false
+}
+
 // ========== TOAST ==========
 const showSuccessToast = ref(false)
 let toastTimeout = null
@@ -135,7 +171,6 @@ const cargarPerfil = async () => {
   try {
     const data = await usuariosService.getMiPerfil()
     perfil.value = data
-    // Actualizar store también
     authStore.actualizarPerfil(data)
   } catch (e) {
     console.error('Error cargando perfil:', e)
@@ -157,10 +192,11 @@ const closeModal = () => {
   error.value = ''
 }
 
-const guardarCambios = async () => {
+// Función real de guardado (ahora llamada desde el modal de confirmación)
+const ejecutarGuardado = async () => {
   if (!form.value.nombre.trim()) {
     error.value = 'El nombre es obligatorio'
-    return
+    return false
   }
 
   guardando.value = true
@@ -169,22 +205,28 @@ const guardarCambios = async () => {
   try {
     const data = await usuariosService.editarPerfil(form.value)
     
-    // Actualizar datos locales
     perfil.value = { ...perfil.value, ...data }
-    // Actualizar store para sidebar
     authStore.actualizarPerfil(data)
     
-    // Cerrar modal
+    // Cerrar ambos modales
     closeModal()
     
     // Mostrar toast de éxito
     showToast()
     
+    return true
   } catch (e) {
     error.value = e.message || 'Error al guardar, intenta de nuevo.'
+    return false
   } finally {
     guardando.value = false
   }
+}
+
+// Manejar clic en "Sí, guardar" del modal de confirmación
+const confirmGuardar = async () => {
+  closeConfirmModal()
+  await ejecutarGuardado()
 }
 
 const formatFecha = (fecha) => {
@@ -198,7 +240,6 @@ const formatFecha = (fecha) => {
 
 // ========== LIFECYCLE ==========
 onMounted(async () => {
-  // Precargar datos del store
   perfil.value = {
     nombre: authStore.nombre || '',
     email: authStore.email || '',
@@ -206,7 +247,6 @@ onMounted(async () => {
     bio: authStore.bio || '',
     creado_en: ''
   }
-  // Cargar datos frescos del backend
   await cargarPerfil()
 })
 </script>
@@ -349,7 +389,7 @@ onMounted(async () => {
   font-size: 0.95rem;
 }
 
-/* ===== MODAL ===== */
+/* ===== MODAL DE EDICIÓN ===== */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -456,18 +496,105 @@ label {
   margin: 0;
 }
 
+/* ===== MODAL DE CONFIRMACIÓN ===== */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 1rem;
+}
+
+.confirm-modal {
+  background: white;
+  border-radius: 1.5rem;
+  padding: 1.75rem;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.confirm-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.icon-circle-warning {
+  background-color: #fff3e6;
+  border-radius: 9999px;
+  padding: 0.75rem;
+  color: #f2a359;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.confirm-message {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.confirm-btn {
+  padding: 0.6rem 1.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.confirm-btn.cancel {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.confirm-btn.cancel:hover {
+  background-color: #e5e7eb;
+}
+
+.confirm-btn.save {
+  background-color: var(--plum);
+  color: white;
+}
+
+.confirm-btn.save:hover {
+  background-color: #6b2540;
+}
+
 /* ===== TOAST DE ÉXITO ===== */
 .success-toast {
   position: fixed;
   top: 24px;
   right: 24px;
-  z-index: 1100;
+  z-index: 1200;
   background-color: #f0fdf4;
   border: 1px solid #bbf7d0;
   border-radius: 12px;
   padding: 12px 20px;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
-  min-width: 260px;
+  min-width: 280px;
 }
 
 .toast-content {
@@ -494,7 +621,28 @@ label {
   display: block;
 }
 
-/* Animación del Toast */
+/* ===== TRANSICIONES ===== */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.modal-fade-enter-active .confirm-modal,
+.modal-fade-leave-active .confirm-modal {
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+.modal-fade-enter-from .confirm-modal,
+.modal-fade-leave-to .confirm-modal {
+  transform: scale(0.95);
+  opacity: 0;
+}
+
 .toast-slide-enter-active,
 .toast-slide-leave-active {
   transition: all 0.3s ease;
@@ -517,6 +665,10 @@ label {
     right: 16px;
     left: 16px;
     min-width: auto;
+  }
+
+  .confirm-modal {
+    margin: 1rem;
   }
 }
 </style>

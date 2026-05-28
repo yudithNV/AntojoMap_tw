@@ -5,15 +5,53 @@
       <p class="subtitle">Revisa y aprueba/rechaza nuevas solicitudes</p>
     </div>
 
-    <!-- Search Bar -->
-    <div class="search-bar">
-      <Search class="search-icon" :size="20" />
-      <input
-        v-model="searchQuery"
-        type="text"
-        placeholder="Buscar por nombre del restaurante..."
-        class="search-input"
-      />
+    <!-- Barra de búsqueda y filtros inteligentes -->
+    <div class="filters-section">
+      <div class="search-bar">
+        <Search class="search-icon" :size="20" />
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Buscar por nombre del restaurante..."
+          class="search-input"
+        />
+      </div>
+
+      <div class="advanced-filters">
+        <!-- Primer select: criterio de filtro -->
+        <select v-model="filterCriterion" class="filter-select">
+          <option value="">Sin filtros avanzados</option>
+          <option value="status">Filtrar por Estado</option>
+          <option value="category">Filtrar por Categoría</option>
+        </select>
+
+        <!-- Segundo select dinámico (solo si hay criterio seleccionado) -->
+        <select 
+          v-if="filterCriterion === 'status'" 
+          v-model="statusValue" 
+          class="filter-select dynamic-select"
+        >
+          <option value="">Todos los estados</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="aprobado">Aprobado</option>
+          <option value="rechazado">Rechazado</option>
+        </select>
+
+        <select 
+          v-else-if="filterCriterion === 'category'" 
+          v-model="categoryValue" 
+          class="filter-select dynamic-select"
+        >
+          <option value="">Todas las categorías</option>
+          <option value="mariscos">Mariscos</option>
+          <option value="ensaladas">Ensaladas</option>
+          <option value="tacos">Tacos</option>
+          <option value="vegano">Vegano</option>
+          <option value="hamburguesas">Hamburguesas</option>
+          <option value="pasta">Pasta</option>
+          <option value="pizza">Pizza</option>
+        </select>
+      </div>
     </div>
 
     <!-- Loading -->
@@ -65,7 +103,6 @@
               </span>
             </td>
             <td class="acciones">
-              <!-- Botón APROBAR -->
               <button
                 v-if="solicitud.estado === 'PENDIENTE'"
                 class="btn btn-approve"
@@ -74,7 +111,6 @@
               >
                 ✓
               </button>
-              <!-- Botón RECHAZAR -->
               <button
                 v-if="solicitud.estado === 'PENDIENTE'"
                 class="btn btn-reject"
@@ -89,7 +125,7 @@
       </table>
     </div>
 
-    <!-- ===== MODAL DE CONFIRMACIÓN PARA APROBAR ===== -->
+    <!-- Modales y Toast (sin cambios) -->
     <Teleport to="body">
       <Transition name="modal-fade">
         <div v-if="showApproveModal" class="modal-overlay" @click.self="closeApproveModal">
@@ -112,7 +148,6 @@
       </Transition>
     </Teleport>
 
-    <!-- ===== MODAL DE CONFIRMACIÓN PARA RECHAZAR ===== -->
     <Teleport to="body">
       <Transition name="modal-fade">
         <div v-if="showRejectModal" class="modal-overlay" @click.self="closeRejectModal">
@@ -137,7 +172,6 @@
       </Transition>
     </Teleport>
 
-    <!-- ===== TOAST FLOTANTE DINÁMICO ===== -->
     <Teleport to="body">
       <Transition name="toast-slide">
         <div v-if="toast.visible" :class="['success-toast', toast.type === 'success' ? 'toast-success' : 'toast-error']">
@@ -163,7 +197,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import DashboardLayout from '../../components/DashboardLayout.vue'
 import { adminService } from '../../services/admin.service.js'
 import { Search } from 'lucide-vue-next'
@@ -174,6 +208,11 @@ const isLoading = ref(false)
 const error = ref('')
 const processingId = ref(null)
 const searchQuery = ref('')
+
+// ========== FILTROS AVANZADOS ==========
+const filterCriterion = ref('')
+const statusValue = ref('')
+const categoryValue = ref('')
 
 // ========== MODALES ==========
 const showApproveModal = ref(false)
@@ -189,18 +228,51 @@ const toast = ref({
 
 let toastTimeout = null
 
+// ========== WATCH: Reiniciar valores al cambiar criterio ==========
+watch(filterCriterion, () => {
+  statusValue.value = ''
+  categoryValue.value = ''
+})
+
+// ========== PROPIEDAD COMPUTADA PARA FILTRAR ==========
+const filteredSolicitudes = computed(() => {
+  let result = [...solicitudes.value]
+
+  // 1. Filtro por búsqueda (nombre del restaurante)
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim()
+    result = result.filter(s =>
+      s.nombre_restaurante?.toLowerCase().includes(query)
+    )
+  }
+
+  // 2. Filtro por estado (si está seleccionado)
+  if (filterCriterion.value === 'status' && statusValue.value) {
+    result = result.filter(s =>
+      s.estado?.toLowerCase() === statusValue.value.toLowerCase()
+    )
+  }
+
+  // 3. Filtro por categoría (si está seleccionado)
+  if (filterCriterion.value === 'category' && categoryValue.value) {
+    result = result.filter(s =>
+      s.categoria?.toLowerCase() === categoryValue.value.toLowerCase()
+    )
+  }
+
+  return result
+})
+
+// ========== FUNCIONES DE TOAST ==========
 const showToast = (message, type = 'success') => {
-  // Limpiar timeout anterior si existe
   if (toastTimeout) clearTimeout(toastTimeout)
   
-  // Configurar nuevo toast
   toast.value = {
     visible: true,
     message,
     type
   }
   
-  // Ocultar después de 3 segundos
   toastTimeout = setTimeout(() => {
     toast.value.visible = false
   }, 3000)
@@ -219,7 +291,6 @@ const closeApproveModal = () => {
 
 const confirmApprove = async () => {
   if (!selectedSolicitudId.value) return
-  
   const id = selectedSolicitudId.value
   closeApproveModal()
   await processApproval(id)
@@ -238,7 +309,6 @@ const closeRejectModal = () => {
 
 const confirmReject = async () => {
   if (!selectedSolicitudId.value) return
-  
   const id = selectedSolicitudId.value
   closeRejectModal()
   await processRejection(id)
@@ -270,14 +340,6 @@ const processRejection = async (id) => {
     processingId.value = null
   }
 }
-
-// ========== FILTRADO ==========
-const filteredSolicitudes = computed(() => {
-  if (!searchQuery.value) return solicitudes.value
-  return solicitudes.value.filter(s =>
-    s.nombre_restaurante.toLowerCase().includes(searchQuery.value.toLowerCase())
-  )
-})
 
 // ========== CARGA DE DATOS ==========
 const cargarSolicitudes = async () => {
@@ -316,18 +378,41 @@ onMounted(() => {
   margin: 0;
 }
 
+/* ===== SECCIÓN DE FILTROS ===== */
+.filters-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .filters-section {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .advanced-filters {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+  }
+}
+
 .search-bar {
   position: relative;
-  margin-bottom: 25px;
+  flex: 1;
 }
 
 .search-input {
   width: 100%;
   padding: 12px 16px 12px 40px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   font-size: 0.95rem;
   transition: all 0.3s ease;
+  background-color: white;
 }
 
 .search-input:focus {
@@ -341,7 +426,56 @@ onMounted(() => {
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #999;
+  color: #94a3b8;
+}
+
+.advanced-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .advanced-filters {
+    flex-direction: row;
+  }
+}
+
+.filter-select {
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  background-color: white;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 180px;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--color-blood-orange);
+  box-shadow: 0 0 0 3px rgba(163, 51, 51, 0.1);
+}
+
+.filter-select:hover {
+  border-color: #cbd5e1;
+}
+
+.dynamic-select {
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .loading-message,
@@ -511,7 +645,7 @@ onMounted(() => {
   cursor: not-allowed;
 }
 
-/* ===== MODALES ===== */
+/* ===== MODALES (sin cambios) ===== */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -622,7 +756,6 @@ onMounted(() => {
   background-color: #b91c1c;
 }
 
-/* Transiciones del modal */
 .modal-fade-enter-active,
 .modal-fade-leave-active {
   transition: opacity 0.25s ease;
@@ -644,7 +777,7 @@ onMounted(() => {
   opacity: 0;
 }
 
-/* ===== TOAST FLOTANTE ===== */
+/* ===== TOAST ===== */
 .success-toast {
   position: fixed;
   top: 24px;
@@ -704,7 +837,6 @@ onMounted(() => {
   color: #991b1b;
 }
 
-/* Animación del Toast */
 .toast-slide-enter-active,
 .toast-slide-leave-active {
   transition: all 0.3s ease;
