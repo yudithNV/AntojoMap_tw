@@ -1,14 +1,12 @@
 <template>
   <DashboardLayout>
     <div class="mapa-container">
-      <!-- Panel izquierdo con lista -->
       <div class="panel-izquierdo">
         <div class="panel-header">
           <h2>Resultados cerca de ti</h2>
           <router-link to="/user/feed" class="ver-todos">VER TODOS</router-link>
         </div>
 
-        <!-- Chips de categoría -->
         <div class="categorias-filter">
           <button 
             class="categoria-chip" 
@@ -28,7 +26,6 @@
           </button>
         </div>
 
-        <!-- Lista de restaurantes -->
         <div class="restaurantes-list">
           <div 
             v-for="restaurante in restaurantesFiltrados" 
@@ -38,7 +35,6 @@
             @click="seleccionarRestaurante(restaurante)"
             ref="cardElements"
           >
-            <!-- Foto -->
             <div class="card-foto">
               <img 
                 v-if="restaurante.foto_portada" 
@@ -55,30 +51,27 @@
               </div>
             </div>
 
-            <!-- Info -->
             <div class="card-info">
-              <h3>{{ restaurante.nombre }}</h3>
-              <p class="distancia">
-                📍 {{ restaurante.distancia.toFixed(1) }} km
-              </p>
-              <div class="rating">
-                <span class="star">⭐</span>
-                <span class="rating-text">{{ restaurante.rating || 'N/A' }}</span>
+              <div>
+                <h3>{{ restaurante.nombre }}</h3>
+                <p class="distancia">📍 {{ restaurante.distancia.toFixed(1) }} km</p>
+                <div class="rating">
+                  <span class="star">⭐</span>
+                  <span class="rating-text">{{ restaurante.rating || 'N/A' }}</span>
+                </div>
               </div>
               <button class="btn-detalle" @click.stop="irAlMenu(restaurante.id)">
-                Ver Detalle
+                Ver Detalle →
               </button>
             </div>
           </div>
 
-          <!-- Empty state -->
           <div v-if="restaurantesFiltrados.length === 0" class="empty-state">
             <p>No hay restaurantes disponibles en esta categoría.</p>
           </div>
         </div>
       </div>
 
-      <!-- Mapa derecho -->
       <div class="panel-derecho">
         <div ref="mapContainer" class="mapa"></div>
       </div>
@@ -87,7 +80,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, watch, nextTick, markRaw, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import { useRestaurantesStore } from '@/stores/restaurantes.store.js'
@@ -99,7 +92,7 @@ import 'leaflet/dist/leaflet.css'
 const router = useRouter()
 const restaurantesStore = useRestaurantesStore()
 
-// Arreglar bug de Leaflet con Vite
+// Configurar icono por defecto
 const DefaultIcon = L.icon({ 
   iconUrl, 
   shadowUrl: iconShadow, 
@@ -117,15 +110,17 @@ const restauranteSeleccionado = ref(null)
 const cardElements = ref([])
 const markers = ref({})
 const userMarker = ref(null)
+const mapaInicializado = ref(false)
+let watchPositionId = null
 
 // Coordenadas por defecto (La Paz, Bolivia)
 const DEFAULT_LAT = -16.5000
 const DEFAULT_LNG = -68.1193
 const DEFAULT_ZOOM = 13
 
-// Calcular distancia con fórmula Haversine
+// Calcular distancia
 const haversineDistance = (lat1, lon1, lat2, lon2) => {
-  const R = 6371 // Radio de la Tierra en km
+  const R = 6371
   const dLat = ((lat2 - lat1) * Math.PI) / 180
   const dLon = ((lon2 - lon1) * Math.PI) / 180
   const a =
@@ -138,7 +133,7 @@ const haversineDistance = (lat1, lon1, lat2, lon2) => {
   return R * c
 }
 
-// Restaurantes con distancia calculada
+// Restaurantes con distancia
 const restaurantesConDistancia = computed(() => {
   const userLat = userLocation.value?.lat || DEFAULT_LAT
   const userLng = userLocation.value?.lng || DEFAULT_LNG
@@ -153,7 +148,6 @@ const restaurantesConDistancia = computed(() => {
     .sort((a, b) => a.distancia - b.distancia)
 })
 
-// Categorías disponibles
 const categoriasDisponibles = computed(() => {
   const categorias = new Set()
   restaurantesConDistancia.value.forEach(r => {
@@ -162,7 +156,6 @@ const categoriasDisponibles = computed(() => {
   return Array.from(categorias).sort()
 })
 
-// Restaurantes filtrados por categoría
 const restaurantesFiltrados = computed(() => {
   if (categoriaSeleccionada.value === null) {
     return restaurantesConDistancia.value
@@ -172,7 +165,7 @@ const restaurantesFiltrados = computed(() => {
   )
 })
 
-// Crear icono personalizado para restaurante
+// Iconos
 const crearIconoRestaurante = () => {
   return L.divIcon({
     className: '',
@@ -180,8 +173,8 @@ const crearIconoRestaurante = () => {
       <div style="
         background: #481827;
         color: white;
-        width: 36px;
-        height: 36px;
+        width: 32px;
+        height: 32px;
         border-radius: 50% 50% 50% 0;
         transform: rotate(-45deg);
         display: flex;
@@ -189,126 +182,166 @@ const crearIconoRestaurante = () => {
         justify-content: center;
         border: 2px solid white;
         box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        cursor: pointer;
       ">
-        <span style="transform: rotate(45deg); font-size: 16px;">🍴</span>
+        <span style="transform: rotate(45deg); font-size: 14px;">🍴</span>
       </div>
     `,
-    iconSize: [36, 36],
-    iconAnchor: [18, 36],
-    popupAnchor: [0, -36]
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32]
   })
 }
-// Crear icono personalizado para usuario
+
 const crearIconoUsuario = () => {
   return L.divIcon({
     className: '', 
     html: `
       <div style="
-        width: 20px;
-        height: 20px;
+        width: 18px;
+        height: 18px;
         background: #4A90D9;
         border-radius: 50%;
         border: 3px solid white;
-        box-shadow: 0 0 0 3px rgba(74,144,217,0.4);
+        box-shadow: 0 0 0 2px rgba(74,144,217,0.4);
       "></div>
     `,
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
     popupAnchor: [0, -14]
   })
 }
 
-// Inicializar mapa
+// 🚀 OPTIMIZACIÓN: Cargar mapa INMEDIATAMENTE sin esperar geolocalización
 const inicializarMapa = async () => {
-  await nextTick()
+  if (mapaInicializado.value) return
   
+  await nextTick()
   if (!mapContainer.value) return
 
-  const centerLat = userLocation.value?.lat || DEFAULT_LAT
-  const centerLng = userLocation.value?.lng || DEFAULT_LNG
+  // Usar coordenadas por defecto primero, luego se actualizará
+  const centerLat = DEFAULT_LAT
+  const centerLng = DEFAULT_LNG
 
-  if (map.value) {
-    map.value.remove()
-  }
+  // ✅ OPTIMIZACIÓN: MarkRaw para evitar reactividad
+  const leafletMap = L.map(mapContainer.value, {
+    preferCanvas: true,
+    zoomControl: true,
+    fadeAnimation: true,
+    zoomAnimation: true,
+    markerZoomAnimation: false
+  }).setView([centerLat, centerLng], DEFAULT_ZOOM)
+  
+  map.value = markRaw(leafletMap)
 
-  map.value = L.map(mapContainer.value).setView([centerLat, centerLng], DEFAULT_ZOOM)
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors',
-    maxZoom: 19
+  // ✅ OPTIMIZACIÓN: Tile layer con mejor rendimiento
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> & CartoDB',
+    maxZoom: 19,
+    subdomains: 'abcd',
+    updateWhenIdle: false,
+    keepBuffer: 2,
+    updateWhenZooming: false,
+    unloadInvisibleTiles: true
   }).addTo(map.value)
 
-  // Agregar pin del usuario
-  if (userLocation.value) {
-    userMarker.value = L.marker(
-      [userLocation.value.lat, userLocation.value.lng],
-      { icon: crearIconoUsuario() }
-    )
-      .addTo(map.value)
-      .bindPopup('<div style="text-align: center;"><strong>Tu ubicación</strong></div>')
-  }
-
-  // Agregar pins de restaurantes
-  actualizarPinsRestaurantes()
+  mapaInicializado.value = true
+  console.log('🗺️ Mapa inicializado en', Date.now())
 }
 
-// Actualizar pins según filtro
+// Agregar marcadores SIN bloquear el mapa
+const agregarMarcador = (restaurante) => {
+  if (!map.value) return
+  
+  const marker = L.marker([restaurante.latitud, restaurante.longitud], {
+    icon: crearIconoRestaurante(),
+    interactive: true
+  })
+  marker.addTo(map.value)
+  marker.bindPopup(`
+    <div style="min-width: 160px;">
+      <strong>${restaurante.nombre}</strong><br/>
+      <small>${restaurante.category || ''}</small><br/>
+      <small>📍 ${restaurante.distancia.toFixed(1)} km</small><br/>
+      <button onclick="window.location.href='/user/menu/${restaurante.id}'" 
+        style="
+          background: #D893A1;
+          color: white;
+          border: none;
+          padding: 4px 10px;
+          border-radius: 6px;
+          cursor: pointer;
+          margin-top: 6px;
+          width: 100%;
+          font-size: 12px;
+        ">
+        Ver menú
+      </button>
+    </div>
+  `)
+
+  marker.on('click', () => {
+    seleccionarRestaurante(restaurante)
+  })
+
+  markers.value[restaurante.id] = markRaw(marker)
+}
+
+// Actualizar pins - Solo agregar nuevos, no recrear todos
 const actualizarPinsRestaurantes = () => {
   if (!map.value) return
 
-  // Limpiar markers anteriores
-  Object.values(markers.value).forEach(marker => marker.remove())
-  markers.value = {}
+  const currentIds = new Set(Object.keys(markers.value))
+  const newIds = new Set(restaurantesFiltrados.value.map(r => r.id))
 
-  // Agregar nuevos markers
-  restaurantesFiltrados.value.forEach(restaurante => {
-    const marker = L.marker([restaurante.latitud, restaurante.longitud], {
-      icon: crearIconoRestaurante()
+  // Eliminar marcadores que ya no están en el filtro
+  for (const id of currentIds) {
+    if (!newIds.has(parseInt(id))) {
+      markers.value[id]?.remove()
+      delete markers.value[id]
+    }
+  }
+
+  // Agregar solo los nuevos marcadores
+  for (const restaurante of restaurantesFiltrados.value) {
+    if (!markers.value[restaurante.id]) {
+      agregarMarcador(restaurante)
+    }
+  }
+}
+
+// Actualizar ubicación del usuario en el mapa
+const actualizarUbicacionUsuario = () => {
+  if (!map.value || !userLocation.value) return
+
+  if (userMarker.value) {
+    userMarker.value.setLatLng([userLocation.value.lat, userLocation.value.lng])
+  } else {
+    const marker = L.marker([userLocation.value.lat, userLocation.value.lng], {
+      icon: crearIconoUsuario()
     })
-      .addTo(map.value)
-      .bindPopup(`
-        <div style="min-width: 180px;">
-          <strong>${restaurante.nombre}</strong><br/>
-          <small>${restaurante.category}</small><br/>
-          <small>📍 ${restaurante.distancia.toFixed(1)} km</small><br/>
-          <button onclick="window.location.href='/user/menu/${restaurante.id}'" 
-            style="
-              background: #D893A1;
-              color: white;
-              border: none;
-              padding: 6px 12px;
-              border-radius: 6px;
-              cursor: pointer;
-              margin-top: 8px;
-              width: 100%;
-              font-weight: 600;
-            ">
-            Ver menú
-          </button>
-        </div>
-      `)
-
-    marker.on('click', () => {
-      seleccionarRestaurante(restaurante)
-    })
-
-    markers.value[restaurante.id] = marker
-  })
+    marker.addTo(map.value)
+    marker.bindPopup('<strong>Tu ubicación</strong>')
+    userMarker.value = markRaw(marker)
+  }
+  
+  // Centrar mapa en ubicación del usuario SOLO si no hay restaurante seleccionado
+  if (!restauranteSeleccionado.value) {
+    map.value.setView([userLocation.value.lat, userLocation.value.lng], 15)
+  }
 }
 
 // Seleccionar restaurante
 const seleccionarRestaurante = (restaurante) => {
   restauranteSeleccionado.value = restaurante
 
-  // Centrar mapa en restaurante
   if (map.value) {
-    map.value.setView([restaurante.latitud, restaurante.longitud], 15)
+    map.value.setView([restaurante.latitud, restaurante.longitud], 16)
     if (markers.value[restaurante.id]) {
       markers.value[restaurante.id].openPopup()
     }
   }
 
-  // Scroll a la card
   nextTick(() => {
     const index = restaurantesFiltrados.value.findIndex(r => r.id === restaurante.id)
     if (cardElements.value[index]) {
@@ -317,67 +350,80 @@ const seleccionarRestaurante = (restaurante) => {
   })
 }
 
-// Navegar a menú
 const irAlMenu = (restauranteId) => {
   router.push(`/user/menu/${restauranteId}`)
 }
 
-// Pedir geolocalización
+// 🚀 OPTIMIZACIÓN: Geolocalización en paralelo, no bloqueante
 const solicitarGeolocalizacion = () => {
-  return new Promise((resolve) => {
-    if (!navigator.geolocation) return resolve()
+  if (!navigator.geolocation) return
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        userLocation.value = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        }
-        resolve()
-
-        // Seguir actualizando posición en tiempo real
-        navigator.geolocation.watchPosition(
-          (pos) => {
-            userLocation.value = {
-              lat: pos.coords.latitude,
-              lng: pos.coords.longitude
-            }
-            // Mover el pin del usuario en el mapa
-            if (userMarker.value) {
-              userMarker.value.setLatLng([pos.coords.latitude, pos.coords.longitude])
-            }
-          },
-          null,
-          { enableHighAccuracy: true, maximumAge: 5000 }
-        )
-      },
-      () => {
-        userLocation.value = null
-        resolve()
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      userLocation.value = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
       }
-    )
-  })
+      actualizarUbicacionUsuario()
+      console.log('📍 Ubicación obtenida en', Date.now())
+    },
+    (error) => {
+      console.warn('⚠️ Error de geolocalización:', error.message)
+      userLocation.value = null
+    },
+    { enableHighAccuracy: true, timeout: 5000, maximumAge: 10000 }
+  )
 }
 
-// Ciclo de vida
+// 🚀 OPTIMIZACIÓN: Cargar TODO en paralelo, no en serie
 onMounted(async () => {
-  // Cargar restaurantes
-  await restaurantesStore.cargarRestaurantes()
-
-  // Pedir geolocalización
-  await solicitarGeolocalizacion()
-
-  // Inicializar mapa
+  const startTime = Date.now()
+  console.log('🚀 Iniciando carga...', startTime)
+  
+  // Cargar restaurantes en segundo plano
+  restaurantesStore.cargarRestaurantes()
+  
+  // Inicializar mapa INMEDIATAMENTE (no espera nada)
   await inicializarMapa()
+  
+  console.log('✅ Mapa cargado en', Date.now() - startTime, 'ms')
+  
+  // Una vez que los restaurantes estén listos, agregar marcadores
+  const checkRestaurantes = setInterval(() => {
+    if (restaurantesStore.restaurantes.length > 0 && map.value) {
+      clearInterval(checkRestaurantes)
+      // Agregar marcadores de forma diferida
+      setTimeout(() => {
+        actualizarPinsRestaurantes()
+        console.log('📍 Marcadores agregados en', Date.now() - startTime, 'ms')
+      }, 100)
+    }
+  }, 100)
+  
+  // Geolocalización en paralelo (no bloquea)
+  setTimeout(() => {
+    solicitarGeolocalizacion()
+  }, 500)
 })
 
-// Actualizar pins cuando cambia el filtro
+// Watch para actualizar marcadores cuando cambia el filtro
 watch(restaurantesFiltrados, () => {
   actualizarPinsRestaurantes()
+}, { deep: true })
+
+// Limpiar al desmontar
+onUnmounted(() => {
+  if (watchPositionId) {
+    navigator.geolocation?.clearWatch(watchPositionId)
+  }
+  if (map.value) {
+    map.value.remove()
+  }
 })
 </script>
 
 <style scoped>
+/* Tus estilos existentes (sin cambios) */
 :deep(.leaflet-pane),
 :deep(.leaflet-tile),
 :deep(.leaflet-marker-icon),
@@ -394,25 +440,29 @@ watch(restaurantesFiltrados, () => {
 :deep(.leaflet-control) {
   z-index: 2 !important;
 }
+
 .mapa-container {
   display: flex;
+  gap: 24px;
   height: calc(100vh - 80px);
-  gap: 0;
-  background: white;
+  background: #faf8f6;
+  padding: 0 24px;
 }
 
 .panel-izquierdo {
-  width: 35%;
-  background: #fafafa;
+  flex: 1;
+  min-width: 320px;
+  background: white;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #e0e0e0;
+  border-radius: 28px;
   overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 }
 
 .panel-header {
-  padding: 24px 20px 16px 20px;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 24px 24px 16px 24px;
+  border-bottom: 1px solid #ede8e2;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -420,9 +470,9 @@ watch(restaurantesFiltrados, () => {
 
 .panel-header h2 {
   margin: 0;
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   color: var(--plum, #481827);
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .ver-todos {
@@ -440,16 +490,17 @@ watch(restaurantesFiltrados, () => {
 
 .categorias-filter {
   display: flex;
-  gap: 8px;
-  padding: 12px 20px;
+  gap: 10px;
+  padding: 16px 24px;
   overflow-x: auto;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid #ede8e2;
   align-items: center;
+  background: white;
 }
 
 .categoria-chip {
-  padding: 6px 14px;
-  border-radius: 20px;
+  padding: 8px 18px;
+  border-radius: 40px;
   border: 1.5px solid var(--dusty-coral, #D893A1);
   background: transparent;
   color: var(--dusty-coral, #D893A1);
@@ -462,54 +513,59 @@ watch(restaurantesFiltrados, () => {
 }
 
 .categoria-chip:hover {
-  background: rgba(216, 147, 161, 0.05);
+  background: rgba(216, 147, 161, 0.08);
+  transform: translateY(-1px);
 }
 
 .categoria-chip.active {
   background: var(--plum, #481827);
   color: white;
   border-color: var(--plum, #481827);
+  box-shadow: 0 2px 8px rgba(72, 24, 39, 0.2);
 }
 
 .restaurantes-list {
   flex: 1;
   overflow-y: auto;
-  padding: 12px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .restaurante-card {
   background: white;
-  border-radius: 12px;
+  border-radius: 24px;
   overflow: hidden;
   display: flex;
-  gap: 12px;
-  padding: 12px;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
   cursor: pointer;
-  border: 3px solid transparent;
-  border-left: 3px solid transparent;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-  transition: all 0.2s;
+  border: 2px solid transparent;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  transition: all 0.25s ease;
 }
 
 .restaurante-card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
 }
 
 .restaurante-card.active {
-  border-left-color: var(--plum, #481827);
+  border-color: var(--plum, #481827);
   background: rgba(72, 24, 39, 0.02);
+  box-shadow: 0 8px 24px rgba(72, 24, 39, 0.1);
 }
 
 .card-foto {
-  width: 80px;
-  height: 80px;
-  border-radius: 8px;
+  width: 96px;
+  height: 96px;
+  border-radius: 20px;
   overflow: hidden;
   flex-shrink: 0;
-  background: #f0f0f0;
+  background: linear-gradient(135deg, #f5ede6, #e8dfd6);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .foto-img {
@@ -524,46 +580,50 @@ watch(restaurantesFiltrados, () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #4a122a;
+  background: linear-gradient(135deg, #481827, #6b253c);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .card-info {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
   min-width: 0;
+  gap: 10px;
 }
 
 .card-info h3 {
   margin: 0 0 4px 0;
-  font-size: 0.95rem;
+  font-size: 1.15rem;
   color: var(--plum, #481827);
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-weight: 800;
+  line-height: 1.3;
 }
 
 .distancia {
-  margin: 0;
+  margin: 0 0 4px 0;
   font-size: 0.85rem;
-  color: #666;
+  color: #6b6b6b;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .rating {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.8rem;
+  gap: 6px;
 }
 
 .star {
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .rating-text {
   color: #999;
+  font-size: 0.8rem;
+  font-weight: 500;
 }
 
 .btn-detalle {
@@ -574,24 +634,35 @@ watch(restaurantesFiltrados, () => {
   font-size: 0.8rem;
   cursor: pointer;
   padding: 0;
-  text-decoration: underline;
-  transition: color 0.2s;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
 }
 
 .btn-detalle:hover {
-  color: #c17a8b;
+  color: var(--plum, #481827);
+  gap: 10px;
 }
 
 .empty-state {
   text-align: center;
-  padding: 24px;
+  padding: 40px 24px;
   color: #999;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  background: white;
+  border-radius: 20px;
 }
 
 .panel-derecho {
-  width: 65%;
+  flex: 1.2;
+  min-width: 400px;
   position: relative;
+  background: #e8e2da;
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 }
 
 .mapa {
@@ -599,50 +670,67 @@ watch(restaurantesFiltrados, () => {
   height: 100%;
 }
 
-/* Responsive */
+@media (max-width: 1024px) {
+  .mapa-container {
+    padding: 0 16px;
+    gap: 16px;
+  }
+  .panel-derecho {
+    min-width: 300px;
+  }
+}
+
 @media (max-width: 768px) {
   .mapa-container {
     flex-direction: column;
     height: auto;
+    padding: 0 16px;
+    gap: 16px;
   }
-
   .panel-izquierdo {
-    width: 100%;
-    max-height: 40vh;
-    border-right: none;
-    border-bottom: 1px solid #e0e0e0;
+    min-width: auto;
+    max-height: 50vh;
   }
-
   .panel-derecho {
-    width: 100%;
-    height: 300px;
+    min-width: auto;
+    height: 350px;
   }
-
   .restaurante-card {
-    gap: 10px;
-    padding: 10px;
+    padding: 16px;
+    gap: 14px;
   }
-
   .card-foto {
     width: 70px;
     height: 70px;
   }
+  .card-info h3 {
+    font-size: 1rem;
+  }
+  .panel-header {
+    padding: 16px 20px;
+  }
+  .categorias-filter {
+    padding: 12px 20px;
+  }
+  .restaurantes-list {
+    padding: 16px;
+    gap: 12px;
+  }
+}
 
+@media (max-width: 480px) {
+  .card-foto {
+    width: 60px;
+    height: 60px;
+  }
   .card-info h3 {
     font-size: 0.9rem;
   }
-
-  .panel-header {
-    padding: 16px;
+  .distancia {
+    font-size: 0.7rem;
   }
-
-  .categorias-filter {
-    padding: 10px 16px;
-  }
-
-  .restaurantes-list {
-    padding: 10px;
-    gap: 10px;
+  .btn-detalle {
+    font-size: 0.7rem;
   }
 }
 </style>
