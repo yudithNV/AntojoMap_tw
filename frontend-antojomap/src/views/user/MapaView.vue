@@ -112,9 +112,10 @@
       </div>
 
       <!-- Panel derecho - Mapa -->
+      <!-- IMPORTANTE: usamos v-show en vez de v-if / display:none para que Leaflet pueda medir el contenedor -->
       <div 
         class="panel-derecho" 
-        :class="{ 'mobile-hidden': activeTab === 'list' }"
+        v-show="activeTab === 'map' || !showTabs"
       >
         <div ref="mapContainer" class="mapa"></div>
       </div>
@@ -123,7 +124,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick, markRaw, onUnmounted } from 'vue'
+import { ref, shallowRef, computed, onMounted, watch, nextTick, markRaw, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import { useRestaurantesStore } from '@/stores/restaurantes.store.js'
@@ -146,18 +147,18 @@ L.Marker.prototype.options.icon = DefaultIcon
 
 // Estado
 const mapContainer = ref(null)
-const map = ref(null)
+const map = shallowRef(null)
 const userLocation = ref(null)
 const categoriaSeleccionada = ref(null)
 const restauranteSeleccionado = ref(null)
 const cardElements = ref([])
-const markers = ref({})
-const userMarker = ref(null)
+const markers = shallowRef({})
+const userMarker = shallowRef(null)
 const mapaInicializado = ref(false)
 let watchPositionId = null
 
 // Estado para pestañas móvil
-const activeTab = ref('list') // 'list' o 'map'
+const activeTab = ref('list')
 const showTabs = ref(false)
 
 // Detectar si es móvil para mostrar pestañas
@@ -271,16 +272,13 @@ const inicializarMapa = async () => {
   await nextTick()
   if (!mapContainer.value) return
 
-  const centerLat = DEFAULT_LAT
-  const centerLng = DEFAULT_LNG
-
   const leafletMap = L.map(mapContainer.value, {
     preferCanvas: true,
     zoomControl: true,
     fadeAnimation: true,
     zoomAnimation: true,
     markerZoomAnimation: false
-  }).setView([centerLat, centerLng], DEFAULT_ZOOM)
+  }).setView([DEFAULT_LAT, DEFAULT_LNG], DEFAULT_ZOOM)
   
   map.value = markRaw(leafletMap)
 
@@ -295,7 +293,11 @@ const inicializarMapa = async () => {
   }).addTo(map.value)
 
   mapaInicializado.value = true
-  console.log('🗺️ Mapa inicializado')
+
+  // Forzar recálculo de tamaño múltiples veces para asegurar render correcto
+  setTimeout(() => map.value?.invalidateSize({ animate: false }), 100)
+  setTimeout(() => map.value?.invalidateSize({ animate: false }), 300)
+  setTimeout(() => map.value?.invalidateSize({ animate: false }), 600)
 }
 
 // Agregar marcadores
@@ -333,7 +335,10 @@ const agregarMarcador = (restaurante) => {
     seleccionarRestaurante(restaurante)
   })
 
-  markers.value[restaurante.id] = markRaw(marker)
+  markers.value = {
+    ...markers.value,
+    [restaurante.id]: markRaw(marker)
+  }
 }
 
 // Actualizar pins
@@ -346,7 +351,9 @@ const actualizarPinsRestaurantes = () => {
   for (const id of currentIds) {
     if (!newIds.has(parseInt(id))) {
       markers.value[id]?.remove()
-      delete markers.value[id]
+      const nextMarkers = { ...markers.value }
+      delete nextMarkers[id]
+      markers.value = nextMarkers
     }
   }
 
@@ -410,42 +417,59 @@ const solicitarGeolocalizacion = () => {
         lng: position.coords.longitude
       }
       actualizarUbicacionUsuario()
-      console.log('📍 Ubicación obtenida')
     },
-    (error) => {
-      console.warn('⚠️ Error de geolocalización:', error.message)
+    () => {
       userLocation.value = null
     },
     { enableHighAccuracy: true, timeout: 5000, maximumAge: 10000 }
   )
 }
 
-// Escuchar cambios de tamaño de ventana
-window.addEventListener('resize', checkMobile)
+// ✅ FIX PRINCIPAL: Watchear el cambio de tab para inicializar/redimensionar el mapa
+watch(activeTab, async (newTab) => {
+  if (newTab === 'map') {
+    await nextTick()
+    if (!mapaInicializado.value) {
+      await inicializarMapa()
+      actualizarPinsRestaurantes()
+      if (userLocation.value) {
+        actualizarUbicacionUsuario()
+      }
+    }
+    // Llamar invalidateSize varias veces para asegurar que el mapa se renderice
+    // (el panel puede tardar varios frames en tener dimensiones reales)
+    const forceSizeUpdate = () => {
+      map.value?.invalidateSize({ animate: false, pan: false })
+    }
+    forceSizeUpdate()
+    setTimeout(forceSizeUpdate, 50)
+    setTimeout(forceSizeUpdate, 150)
+    setTimeout(forceSizeUpdate, 300)
+    setTimeout(forceSizeUpdate, 500)
+  }
+})
 
 onMounted(async () => {
   checkMobile()
+  window.addEventListener('resize', checkMobile)
   
-  restaurantesStore.cargarRestaurantes()
-  await inicializarMapa()
-  
-  const checkRestaurantes = setInterval(() => {
-    if (restaurantesStore.restaurantes.length > 0 && map.value) {
-      clearInterval(checkRestaurantes)
-      setTimeout(() => {
-        actualizarPinsRestaurantes()
-      }, 100)
-    }
-  }, 100)
+  await restaurantesStore.cargarRestaurantes()
+
+  // En desktop (sin tabs), inicializar el mapa directamente
+  // En móvil, el watch de activeTab lo inicializa cuando el usuario toca "Mapa"
+  if (!showTabs.value) {
+    await inicializarMapa()
+    actualizarPinsRestaurantes()
+  }
   
   setTimeout(() => {
     solicitarGeolocalizacion()
   }, 500)
 })
 
-watch(restaurantesFiltrados, () => {
+watch(() => restaurantesFiltrados.value.map(r => r.id).join(','), () => {
   actualizarPinsRestaurantes()
-}, { deep: true })
+})
 
 onUnmounted(() => {
   if (watchPositionId) {
@@ -530,7 +554,7 @@ onUnmounted(() => {
 .panel-izquierdo {
   flex: 1;
   min-width: 360px;
-  background: white;
+  background: #faf8f6;
   display: flex;
   flex-direction: column;
   border-radius: 28px;
@@ -627,46 +651,47 @@ onUnmounted(() => {
 .restaurantes-list {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: 16px 16px 100px 16px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
+  background: #faf8f6;
 }
 
 .restaurante-card {
   background: white;
-  border-radius: 24px;
-  overflow: hidden;
+  border-radius: 18px;
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 20px;
+  gap: 14px;
+  padding: 12px 14px;
   cursor: pointer;
-  border: 2px solid transparent;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  transition: all 0.25s ease;
+  border: 2px solid #f0ede8;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .restaurante-card:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+  border-color: #e8dfd6;
 }
 
 .restaurante-card.active {
   border-color: var(--plum, #481827);
   background: rgba(72, 24, 39, 0.02);
-  box-shadow: 0 8px 24px rgba(72, 24, 39, 0.1);
+  box-shadow: 0 4px 16px rgba(72, 24, 39, 0.1);
 }
 
 .card-foto {
-  width: 96px;
-  height: 96px;
-  border-radius: 20px;
+  width: 68px;
+  height: 68px;
+  border-radius: 14px;
   overflow: hidden;
   flex-shrink: 0;
   background: linear-gradient(135deg, #f5ede6, #e8dfd6);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .foto-img {
@@ -691,32 +716,32 @@ onUnmounted(() => {
   flex-direction: column;
   justify-content: center;
   min-width: 0;
-  gap: 12px;
+  gap: 5px;
 }
 
 .card-info-top {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }
 
 .card-info-top h3 {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 0.95rem;
   color: var(--plum, #481827);
   font-weight: 800;
   line-height: 1.3;
-  word-break: break-word;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .card-info-bottom {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .distancia {
@@ -813,57 +838,64 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .mapa-container {
     flex-direction: column;
-    height: auto;
+    /* ✅ FIX: altura fija para que los hijos puedan calcular su altura */
+    height: calc(100vh - 80px);
     padding: 0 12px;
     gap: 0;
+    position: relative;
   }
   
   .panel-izquierdo {
     min-width: auto;
-    max-height: calc(100vh - 120px);
+    width: 100%;
+    height: 100%;
     border-radius: 20px;
     margin-bottom: 0;
+    /* ✅ FIX: ocupar todo el espacio disponible */
+    flex: 1;
   }
-  
+
   .panel-izquierdo.mobile-hidden {
     display: none;
   }
   
   .panel-derecho {
     min-width: auto;
-    height: calc(100vh - 100px);
+    width: 100%;
+    /* ✅ FIX: altura explícita para que Leaflet pueda medirla */
+    height: calc(100vh - 80px);
+    flex: 1;
     border-radius: 20px;
   }
-  
-  .panel-derecho.mobile-hidden {
-    display: none;
-  }
-  
+
   .restaurante-card {
-    padding: 16px;
-    gap: 14px;
+    padding: 12px 14px;
+    gap: 12px;
   }
   
   .card-foto {
-    width: 70px;
-    height: 70px;
+    width: 60px;
+    height: 60px;
   }
   
   .card-info-top h3 {
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
   
   .panel-header {
     padding: 16px 20px;
+    background: white;
+    border-radius: 20px 20px 0 0;
   }
   
   .categorias-filter {
-    padding: 12px 20px;
+    padding: 10px 16px;
+    background: white;
   }
   
   .restaurantes-list {
-    padding: 16px;
-    gap: 12px;
+    padding: 12px 12px 100px 12px;
+    gap: 8px;
   }
   
   .mobile-tabs {
@@ -880,37 +912,33 @@ onUnmounted(() => {
 /* Móvil pequeño */
 @media (max-width: 480px) {
   .mapa-container {
-    padding: 0 8px;
+    padding: 0 6px;
   }
   
   .card-foto {
-    width: 56px;
-    height: 56px;
-    border-radius: 16px;
+    width: 54px;
+    height: 54px;
+    border-radius: 12px;
   }
   
   .card-info-top h3 {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
   }
   
   .distancia {
-    font-size: 0.7rem;
+    font-size: 0.72rem;
   }
   
   .btn-detalle {
-    font-size: 0.7rem;
+    font-size: 0.72rem;
   }
   
   .rating-text {
-    font-size: 0.7rem;
-  }
-  
-  .star {
-    font-size: 0.8rem;
+    font-size: 0.72rem;
   }
   
   .panel-header h2 {
-    font-size: 1.2rem;
+    font-size: 1.15rem;
   }
   
   .categoria-chip {
@@ -929,12 +957,12 @@ onUnmounted(() => {
   }
   
   .restaurante-card {
-    padding: 12px;
-    gap: 12px;
+    padding: 10px 12px;
+    gap: 10px;
   }
   
   .card-info {
-    gap: 8px;
+    gap: 4px;
   }
 }
 
@@ -944,8 +972,7 @@ onUnmounted(() => {
     display: none;
   }
   
-  .panel-izquierdo.mobile-hidden,
-  .panel-derecho.mobile-hidden {
+  .panel-izquierdo.mobile-hidden {
     display: flex !important;
   }
 }

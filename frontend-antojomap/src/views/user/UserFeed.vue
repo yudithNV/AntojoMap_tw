@@ -180,7 +180,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router' 
 import { Search, UtensilsCrossed, Store } from 'lucide-vue-next'
 import DashboardLayout from '../../components/DashboardLayout.vue'
@@ -212,22 +212,24 @@ const selectedTipoPlato = ref('')
 const platosResultados = ref([])
 const buscandoPlatos = ref(false)
 const mostrarRuleta = ref(false)
+let busquedaActual = 0
 
 // Búsqueda y filtrado de RESTAURANTES
 const filteredRestaurants = computed(() => {
   let resultado = restaurantesStore.restaurantes
+  const query = searchRestaurantes.value.trim().toLowerCase()
 
   // Filtrar por búsqueda de nombre
-  if (searchRestaurantes.value) {
-    const query = searchRestaurantes.value.toLowerCase()
+  if (query) {
     resultado = resultado.filter(r => r.nombre?.toLowerCase().includes(query))
   }
 
   // Filtrar por categorías (OR - si selecciona múltiples)
   if (selectedCategories.value.length > 0) {
+    const categorias = new Set(selectedCategories.value)
     resultado = resultado.filter(r => {
       const catNombre = r.category || ''
-      return selectedCategories.value.includes(catNombre)
+      return categorias.has(catNombre)
     })
   }
 
@@ -251,8 +253,12 @@ const clearRestaurantesFilters = () => {
 
 // 🔥 BÚSQUEDA DE PLATOS - USANDO EL NUEVO MÉTODO DEL SERVICIO 🔥
 const buscarPlatos = async () => {
+  const query = searchPlatos.value.trim()
+  const tipo = selectedTipoPlato.value
+  const busquedaId = ++busquedaActual
+
   // Si no hay búsqueda ni filtro, mostrar vacío
-  if (!searchPlatos.value && !selectedTipoPlato.value) {
+  if (!query && !tipo) {
     platosResultados.value = []
     return
   }
@@ -260,23 +266,18 @@ const buscarPlatos = async () => {
   buscandoPlatos.value = true
 
   try {
-    console.log('🔍 Buscando platos con:', {
-      search: searchPlatos.value,
-      tipo: selectedTipoPlato.value
-    })
+    const data = await almuerzosService.buscarPlatos(query, tipo)
 
-    const data = await almuerzosService.buscarPlatos(searchPlatos.value, selectedTipoPlato.value)
-    
-    console.log('📊 [PLATOS] Datos obtenidos:', data)
-    console.log('📊 [PLATOS] Cantidad de resultados:', data?.length || 0)
-
+    if (busquedaId !== busquedaActual) return
     platosResultados.value = data || []
     
   } catch (err) {
-    console.error('❌ [PLATOS] Error en búsqueda:', err)
+    if (busquedaId !== busquedaActual) return
     platosResultados.value = []
   } finally {
-    buscandoPlatos.value = false
+    if (busquedaId === busquedaActual) {
+      buscandoPlatos.value = false
+    }
   }
 }
 
@@ -297,7 +298,6 @@ const clearPlatosFilters = () => {
 }
 
 onMounted(() => {
-  console.log('🚀 UserFeed montado')
   restaurantesStore.cargarRestaurantes()
   restaurantesStore.cargarCategorias()
   favoritosStore.cargarFavoritos()
@@ -306,6 +306,11 @@ onMounted(() => {
   if (categoria) {
     selectedCategories.value = [categoria]
   }
+})
+
+onUnmounted(() => {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  busquedaActual++
 })
 </script>
 

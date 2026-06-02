@@ -1,13 +1,10 @@
 <template>
   <DashboardLayout>
-    
-
     <div class="content-wrapper">
+      <!-- Panel izquierdo: controles -->
       <div class="controls-panel">
         <div class="intro-section">
-            <button class="back-button" @click="$router.go(-1)">
-            ← Volver
-        </button>
+          <button class="back-button" @click="$router.go(-1)">← Volver</button>
           <p class="intro-title">Elige tus antojos</p>
           <p class="intro-text">
             Selecciona una o varias categorías y la ruleta decidirá entre tus favoritas.
@@ -26,37 +23,32 @@
         <div class="filters-section">
           <h3 class="filters-title">Categorías</h3>
           <div class="filter-chips">
-            <button 
-              v-for="item in items" 
+            <button
+              v-for="item in items"
               :key="item.name"
               class="chip category-chip"
               :class="{ active: selectedCategories.includes(item.name) }"
               @click="toggleCategory(item.name)"
             >
-              <component :is="item.icon" :size="18" />
+              <component :is="item.icon" :size="16" />
               {{ item.name }}
             </button>
           </div>
 
           <div class="filter-actions" v-if="items.length > 0">
-            <button 
-              class="action-button"
-              :class="{ disabled: selectedCategories.length === 0 }"
-              @click="selectAll"
-            >
-              Todas
-            </button>
-            <button 
+            <button class="action-button" @click="selectAll">Todas</button>
+            <button
               v-if="selectedCategories.length > 0"
               class="action-button clear"
               @click="clearSelection"
             >
-              Limpiar selección
+              Limpiar
             </button>
           </div>
         </div>
       </div>
 
+      <!-- Panel derecho: ruleta -->
       <div class="wheel-panel">
         <div class="wheel-wrapper">
           <WheelSpinner :filteredCategories="filteredCategoriesForWheel" />
@@ -68,8 +60,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-// He quitado el import de Navbar porque ya lo maneja el layout
-import DashboardLayout from '@/components/DashboardLayout.vue' // Asegúrate de ajustar la ruta
+import DashboardLayout from '@/components/DashboardLayout.vue'
 import WheelSpinner from '@/components/WheelSpinner.vue'
 import { Pizza, Hamburger, Fish, IceCream, Salad, Utensils, Drumstick, Soup, Leaf, Shell } from 'lucide-vue-next'
 import { restaurantesService } from '@/services/menu.service.js'
@@ -116,150 +107,257 @@ const clearSelection = () => {
 }
 
 const filteredCategoriesForWheel = computed(() => {
-  if (selectedCategories.value.length === 0) {
-    return items.value
-  }
+  if (selectedCategories.value.length === 0) return items.value
   return items.value.filter(item => selectedCategories.value.includes(item.name))
 })
 </script>
 
 <style scoped>
+/* Fondo oscuro en el main content del layout */
 :deep(.main-content) {
   background: radial-gradient(ellipse at top right, #7a1a3e 0%, #4a122a 45%, #2d0a1a 100%);
   min-height: 100vh;
 }
-/* Contenedor principal con un poco de aire */
+
+/* ===== LAYOUT PRINCIPAL ===== */
 .content-wrapper {
   max-width: 1200px;
-  margin: 2rem auto;
-  padding: 0 2rem;
+  margin: 0 auto;
+  padding: 2rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 4rem;
-  align-items: center; /* cambia start → center */
-  min-height: 80vh;   /* agrega esto */
+  gap: 3rem;
+  align-items: center;
+  min-height: calc(100vh - 80px);
 }
 
-/* Botón Volver con estilo minimalista */
-.back-button {
-  background: transparent;
-  color: #6B1B3C;
-  border: 1px solid #6B1B3C;
-  padding: 8px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  margin-bottom: 2rem;
-  transition: all 0.3s ease;
-}
-
-.back-button:hover {
-  background: #6B1B3C;
-  color: white;
-}
-
-/* Panel de controles */
+/* ===== PANEL IZQUIERDO ===== */
 .controls-panel {
   display: flex;
   flex-direction: column;
   gap: 2rem;
 }
 
+/* Botón volver */
+.back-button {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  transition: all 0.2s ease;
+  display: inline-block;
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+/* ✅ FIX: textos en blanco para que se lean sobre fondo oscuro */
 .intro-title {
   font-size: 2rem;
-  color: #333;
-  margin-bottom: 0.5rem;
+  font-weight: 800;
+  color: white;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.2;
 }
 
 .intro-text {
-  color: #666;
-  margin-bottom: 1.5rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 1.5rem 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
 }
 
-/* Caja de "Cómo funciona" */
+/* Steps box */
 .steps-box {
   background: rgba(255, 255, 255, 0.08);
-  padding: 1.5rem;
-  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  border-radius: 16px;
   border-left: 4px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(4px);
 }
 
 .steps-title {
-  font-weight: bold;
-  color: rgba(255, 255, 255, 0.9);
-  margin-bottom: 1rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .steps-list {
   color: rgba(255, 255, 255, 0.7);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
   font-size: 0.9rem;
 }
 
-/* Chips de categorías */
+/* ===== FILTROS ===== */
+.filters-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.filters-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 0.75rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Chips */
 .filter-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 1rem;
+  gap: 8px;
 }
 
 .chip {
-  padding: 8px 16px;
+  padding: 7px 14px;
   border-radius: 50px;
-  border: 1px solid #ddd;
-  background: white;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.8);
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  backdrop-filter: blur(4px);
+}
+
+.chip:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: white;
 }
 
 .chip.active {
-  background: #6B1B3C;
-  color: white;
-  border-color: #6B1B3C;
+  background: rgba(255, 255, 255, 0.95);
+  color: #4a122a;
+  border-color: transparent;
+  font-weight: 700;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* Botones de acción */
 .filter-actions {
-  margin-top: 1.5rem;
+  margin-top: 1rem;
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .action-button {
-  padding: 10px 20px;
-  border-radius: 8px;
+  padding: 9px 20px;
+  border-radius: 10px;
   border: none;
-  background: #6B1B3C;
+  background: rgba(255, 255, 255, 0.15);
   color: white;
   cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+}
+
+.action-button:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .action-button.clear {
-  background: #eee;
-  color: #333;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
-/* Ruleta */
+.action-button.clear:hover {
+  color: white;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* ===== PANEL RULETA ===== */
 .wheel-panel {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: transparent;
-  padding: 2rem;
-  min-height: 400px;
-  overflow: hidden; /* agrega esto */
+  /* ✅ FIX: tamaño contenido para que la ruleta no se corte */
+  width: 100%;
+  overflow: visible;
 }
 
-/* Responsive para pantallas pequeñas */
+.wheel-wrapper {
+  width: 100%;
+  max-width: 420px;
+  /* Permitir que la ruleta se redimensione sola */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ===== RESPONSIVE ===== */
+
+/* Tablet */
 @media (max-width: 900px) {
   .content-wrapper {
     grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    padding: 1.5rem 1rem;
+    gap: 2rem;
+    min-height: auto;
+  }
+
+  .wheel-panel {
+    /* Limitar la altura del panel para que no empuje el contenido */
+    max-height: 380px;
+  }
+
+  .wheel-wrapper {
+    max-width: min(320px, 80vw);
+  }
+
+  .intro-title {
+    font-size: 1.6rem;
+  }
+
+  .controls-panel {
+    gap: 1.25rem;
+  }
+}
+
+/* Móvil pequeño */
+@media (max-width: 480px) {
+  .content-wrapper {
+    padding: 1rem 0.75rem 6rem 0.75rem;
+    gap: 1.5rem;
+  }
+
+  .wheel-wrapper {
+    max-width: min(280px, 85vw);
+  }
+
+  .intro-title {
+    font-size: 1.4rem;
+  }
+
+  .chip {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+
+  .steps-box {
+    padding: 1rem 1.25rem;
   }
 }
 </style>

@@ -128,8 +128,176 @@
       </div>
     </div>
 
-    <!-- ===== MODALES (se mantienen igual) ===== -->
-    <!-- ... resto de modales sin cambios ... -->
+    <Transition name="modal-fade">
+      <div v-if="showForm" class="modal-overlay" @click.self="closeForm">
+        <div class="form-card">
+          <div class="form-header">
+            <h2>{{ editingId ? 'Editar Menú' : 'Agregar Menú' }}</h2>
+            <button class="close-btn" type="button" @click="closeForm">×</button>
+          </div>
+
+          <div class="tabs-nav">
+            <button
+              type="button"
+              class="tab-btn"
+              :class="{ active: formMenu.tipo === 'plato_suelto' }"
+              @click="selectMenuType('plato_suelto')"
+            >
+              Plato
+            </button>
+            <button
+              type="button"
+              class="tab-btn"
+              :class="{ active: formMenu.tipo === 'almuerzo_completo' }"
+              @click="selectMenuType('almuerzo_completo')"
+            >
+              Almuerzo
+            </button>
+          </div>
+
+          <form @submit.prevent="saveMenuDirect">
+            <div v-if="Object.keys(formErrors).length > 0" class="validation-summary">
+              <strong>Revisa el formulario</strong>
+              <span>Hay campos obligatorios o datos con formato incorrecto.</span>
+            </div>
+
+            <div class="upload-area">
+              <ImageUploader v-model="formMenu.foto_url" @update:modelValue="validateMenuForm" />
+            </div>
+            <p v-if="formErrors.foto_url" class="field-error">{{ formErrors.foto_url }}</p>
+
+            <label class="field">
+              Nombre
+              <input
+                v-model="formMenu.nombre"
+                :class="{ invalid: formErrors.nombre }"
+                type="text"
+                @blur="validateMenuForm"
+                @input="refreshVisibleErrors"
+              />
+              <span v-if="formErrors.nombre" class="field-error">{{ formErrors.nombre }}</span>
+            </label>
+
+            <label class="field">
+              Precio
+              <div class="price-input" :class="{ invalid: formErrors.precio }">
+                <span>Bs</span>
+                <input
+                  v-model="formMenu.precio"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  @blur="validateMenuForm"
+                  @input="refreshVisibleErrors"
+                />
+              </div>
+              <span v-if="formErrors.precio" class="field-error">{{ formErrors.precio }}</span>
+            </label>
+
+            <label class="field">
+              Descripción
+              <textarea
+                v-model="formMenu.descripcion"
+                :class="{ invalid: formErrors.descripcion }"
+                rows="3"
+                @blur="validateMenuForm"
+                @input="refreshVisibleErrors"
+              />
+              <small class="field-hint">{{ formMenu.descripcion.length }}/250 caracteres</small>
+              <span v-if="formErrors.descripcion" class="field-error">{{ formErrors.descripcion }}</span>
+            </label>
+
+            <div v-if="formMenu.tipo === 'almuerzo_completo'" class="meal-section">
+              <span class="meal-section-title">Componentes del almuerzo</span>
+
+              <label class="field">
+                Entrada
+                <input
+                  v-model="formMenu.entrada.nombre"
+                  :class="{ invalid: formErrors.entrada }"
+                  type="text"
+                  @blur="validateMenuForm"
+                  @input="refreshVisibleErrors"
+                />
+                <span v-if="formErrors.entrada" class="field-error">{{ formErrors.entrada }}</span>
+              </label>
+
+              <label class="field">
+                Principal
+                <input
+                  v-model="formMenu.principal.nombre"
+                  :class="{ invalid: formErrors.principal }"
+                  type="text"
+                  @blur="validateMenuForm"
+                  @input="refreshVisibleErrors"
+                />
+                <span v-if="formErrors.principal" class="field-error">{{ formErrors.principal }}</span>
+              </label>
+
+              <label class="field">
+                Postre
+                <input
+                  v-model="formMenu.postre.nombre"
+                  :class="{ invalid: formErrors.postre }"
+                  type="text"
+                  @blur="validateMenuForm"
+                  @input="refreshVisibleErrors"
+                />
+                <span v-if="formErrors.postre" class="field-error">{{ formErrors.postre }}</span>
+              </label>
+
+              <label class="checkbox-label">
+                <input v-model="formMenu.es_menu_del_dia" type="checkbox" />
+                Menú del día
+              </label>
+            </div>
+
+            <label class="checkbox-label">
+              <input v-model="formMenu.disponible" type="checkbox" />
+              Disponible
+            </label>
+
+            <p v-if="formErrors.general" class="form-error">{{ formErrors.general }}</p>
+
+            <div class="form-actions">
+              <button class="btn-save" type="submit" :disabled="guardando">
+                {{ guardando ? 'Guardando...' : 'Guardar Menú' }}
+              </button>
+              <button class="btn-cancel" type="button" @click="closeForm">Cancelar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </Transition>
+
+    <Transition name="modal-fade">
+      <div v-if="showDeleteModal" class="modal-overlay" @click.self="closeDeleteModal">
+        <div class="modal-card">
+          <div class="modal-icon">
+            <div class="icon-circle">
+              <Trash2 :size="28" />
+            </div>
+          </div>
+          <h3 class="modal-title">Eliminar menú</h3>
+          <p class="modal-message">Esta acción no se puede deshacer.</p>
+          <div class="modal-actions">
+            <button class="modal-btn cancel" type="button" @click="closeDeleteModal">Cancelar</button>
+            <button class="modal-btn confirm" type="button" @click="confirmDelete">Eliminar</button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <Transition name="toast-slide">
+      <div v-if="showSuccessToast" class="success-toast">
+        <div class="toast-content">
+          <div class="toast-icon">✓</div>
+          <div class="toast-message">
+            <strong>Menú guardado</strong>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </DashboardLayout>
 </template>
 
@@ -137,7 +305,7 @@
 import { useRouter } from 'vue-router'
 import DashboardLayout from '../../components/DashboardLayout.vue'
 import ImageUploader from '../../components/ImageUploader.vue'
-import { Plus, Pencil, Trash2, ImagePlus } from 'lucide-vue-next'
+import { Plus, Pencil, Trash2 } from 'lucide-vue-next'
 import { ref, onMounted, computed } from 'vue'
 import { almuerzosService } from '../../services/menu.service.js'
 
@@ -148,6 +316,7 @@ const guardando = ref(false)
 const showForm = ref(false)
 const editingId = ref(null)
 const restaurante_id = localStorage.getItem('restaurante_id')
+const formErrors = ref({})
 
 // ===== NUEVOS ESTADOS PARA FILTROS =====
 const searchQuery = ref('')
@@ -227,36 +396,84 @@ const showToast = () => {
 const showDeleteModal = ref(false)
 const itemToDelete = ref(null)
 
-// ===== FUNCIÓN DE GUARDADO DIRECTO (SIN MODAL) =====
-const saveMenuDirect = async () => {
-  // Validar campos
-  if (!formMenu.value.nombre || !formMenu.value.precio || !formMenu.value.foto_url) {
-    alert('Por favor completa los campos requeridos')
-    return
+const isValidUrl = (value) => {
+  if (value.startsWith('data:image/') || value.startsWith('blob:')) {
+    return true
   }
 
+  try {
+    const url = new URL(value)
+    return ['http:', 'https:'].includes(url.protocol)
+  } catch {
+    return false
+  }
+}
+
+const refreshVisibleErrors = () => {
+  if (Object.keys(formErrors.value).length > 0) {
+    validateMenuForm()
+  }
+}
+
+const selectMenuType = (type) => {
+  formMenu.value.tipo = type
+  refreshVisibleErrors()
+}
+
+const validateMenuForm = () => {
+  const nextErrors = {}
+  const nombre = formMenu.value.nombre.trim()
+  const precio = Number(formMenu.value.precio)
+  const fotoUrl = formMenu.value.foto_url.trim()
+  const descripcion = formMenu.value.descripcion.trim()
+  const entrada = formMenu.value.entrada.nombre.trim()
+  const principal = formMenu.value.principal.nombre.trim()
+  const postre = formMenu.value.postre.nombre.trim()
+
+  if (!nombre) nextErrors.nombre = 'El nombre es obligatorio.'
+  else if (nombre.length < 3) nextErrors.nombre = 'El nombre debe tener al menos 3 caracteres.'
+  else if (nombre.length > 80) nextErrors.nombre = 'El nombre no debe superar 80 caracteres.'
+
+  if (!formMenu.value.precio) nextErrors.precio = 'El precio es obligatorio.'
+  else if (!Number.isFinite(precio) || precio <= 0) nextErrors.precio = 'El precio debe ser mayor a 0.'
+  else if (precio > 999) nextErrors.precio = 'El precio no debe superar Bs 999.'
+
+  if (!fotoUrl) nextErrors.foto_url = 'La imagen es obligatoria.'
+  else if (!isValidUrl(fotoUrl)) nextErrors.foto_url = 'Usa una URL válida que empiece con http o https.'
+
+  if (descripcion.length > 250) nextErrors.descripcion = 'La descripción no debe superar 250 caracteres.'
+
   if (formMenu.value.tipo === 'almuerzo_completo') {
-    if (!formMenu.value.entrada.nombre || !formMenu.value.principal.nombre || !formMenu.value.postre.nombre) {
-      alert('Por favor completa entrada, principal y postre')
-      return
-    }
+    if (!entrada) nextErrors.entrada = 'La entrada es obligatoria para un almuerzo.'
+    if (!principal) nextErrors.principal = 'El plato principal es obligatorio para un almuerzo.'
+    if (!postre) nextErrors.postre = 'El postre es obligatorio para un almuerzo.'
+  }
+
+  formErrors.value = nextErrors
+  return Object.keys(nextErrors).length === 0
+}
+
+// ===== FUNCIÓN DE GUARDADO DIRECTO (SIN MODAL) =====
+const saveMenuDirect = async () => {
+  if (!validateMenuForm()) {
+    return
   }
 
   guardando.value = true
   try {
     const payload = {
       tipo: formMenu.value.tipo,
-      nombre: formMenu.value.nombre,
-      precio: parseFloat(formMenu.value.precio),
-      foto_url: formMenu.value.foto_url,
-      descripcion: formMenu.value.descripcion || null,
+      nombre: formMenu.value.nombre.trim(),
+      precio: Number(formMenu.value.precio),
+      foto_url: formMenu.value.foto_url.trim(),
+      descripcion: formMenu.value.descripcion.trim() || null,
       disponible: formMenu.value.disponible
     }
 
     if (formMenu.value.tipo === 'almuerzo_completo') {
-      payload.entrada = { nombre: formMenu.value.entrada.nombre }
-      payload.principal = { nombre: formMenu.value.principal.nombre }
-      payload.postre = { nombre: formMenu.value.postre.nombre }
+      payload.entrada = { nombre: formMenu.value.entrada.nombre.trim() }
+      payload.principal = { nombre: formMenu.value.principal.nombre.trim() }
+      payload.postre = { nombre: formMenu.value.postre.nombre.trim() }
       payload.es_menu_del_dia = formMenu.value.es_menu_del_dia
     }
 
@@ -272,7 +489,7 @@ const saveMenuDirect = async () => {
     
   } catch (error) {
     console.error('Error guardando menú:', error)
-    alert('Error al guardar el menú')
+    formErrors.value = { general: 'No se pudo guardar el menú. Intenta de nuevo.' }
   } finally {
     guardando.value = false
   }
@@ -307,6 +524,7 @@ const resetForm = () => {
     postre: { nombre: '' }
   }
   showForm.value = false
+  formErrors.value = {}
 }
 
 const openForm = () => {
@@ -893,6 +1111,20 @@ form {
 .field input:focus,
 .field textarea:focus {
   border-color: #f2a359;
+}
+
+.field input.invalid,
+.field textarea.invalid,
+.price-input.invalid {
+  border-color: #dc2626;
+  background: #fff7f7;
+}
+
+.field-error,
+.form-error {
+  color: #b91c1c;
+  font-size: 0.82rem;
+  font-weight: 600;
 }
 
 .price-input {

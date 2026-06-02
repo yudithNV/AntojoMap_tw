@@ -5,14 +5,10 @@
         <Menu :size="20" />
       </button>
       <router-link to="/" class="logo-link" v-if="!props.collapsed">
-        <div class="logo-icon">
-          <UtensilsCrossed :size="24" stroke-width="3" />
-        </div>
+        <img src="@/assets/logo2.svg" alt="AntojoMap" class="logo-img" />
         <span class="logo-text">AntojoMap</span>
       </router-link>
-      <div class="logo-icon" v-else>
-        <UtensilsCrossed :size="24" stroke-width="3" />
-      </div>
+      <img v-else src="@/assets/logo2.svg" alt="AntojoMap" class="logo-img" />
     </div>
 
     <nav class="sidebar-nav">
@@ -200,16 +196,14 @@ const confirmLogout = async () => {
   text-decoration: none;
 }
 
-.logo-icon {
+.logo-img {
   width: 40px;
   height: 40px;
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #6b253c, #481827);
   border-radius: 10px;
-  color: #FDFCFB;
+  object-fit: contain;
+  background: linear-gradient(135deg, #6b253c, #481827);
+  padding: 6px;
 }
 
 .logo-text {
