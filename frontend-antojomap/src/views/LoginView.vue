@@ -96,14 +96,7 @@
                 </div>
               </div>
 
-              <!-- Form options -->
-              <div class="form-options">
-                <label class="checkbox">
-                  <input v-model="form.remember" type="checkbox" />
-                  Recuérdame
-                </label>
-                <a href="#" class="forgot-password" @click.prevent="handleForgotPassword">¿Olvidaste tu contraseña?</a>
-              </div>
+              
 
               <button type="submit" class="btn-submit" :disabled="isLoading || !!passwordError">
                 {{ isLoading ? 'Cargando...' : 'Iniciar Sesión' }}
