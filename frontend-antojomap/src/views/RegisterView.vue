@@ -104,52 +104,74 @@
                   </div>
                 </div>
 
-                <!-- Campo: Contraseña con validación SEGURA (FLEXIBLE) -->
-                <div class="form-group">
-                  <label for="user-password">Contraseña</label>
-                  <div class="password-input-wrapper">
-                    <input
-                      id="user-password"
-                      v-model="userForm.password"
-                      :type="showUserPassword ? 'text' : 'password'"
-                      placeholder="••••••••"
-                      :class="{ 'input-error': formErrors.user.password }"
-                      @blur="validateUserField('password')"
-                      @input="validateUserField('password')"
-                    />
-                    <button type="button" class="toggle-password" @click="showUserPassword = !showUserPassword">
-                      <Eye v-if="showUserPassword" :size="20" stroke-width="2" />
-                      <EyeOff v-else :size="20" stroke-width="2" />
-                    </button>
-                  </div>
-                  
-                  <div 
-                    v-if="formErrors.user.password" 
-                    class="error-alert"
-                    role="alert"
-                    aria-live="polite"
-                  >
-                    <div class="error-alert-content">
-                      <div class="error-icon-wrapper">
-                        <AlertCircle :size="18" class="error-icon" stroke-width="2" />
-                      </div>
-                      <span class="error-text">{{ formErrors.user.password }}</span>
-                    </div>
-                  </div>
-                  
-                  <div v-if="userForm.password && !formErrors.user.password" class="password-strength">
-                    <div class="strength-bar">
-                      <div class="strength-fill" :class="userPasswordStrength.class"></div>
-                    </div>
-                    <span class="strength-text">{{ userPasswordStrength.text }}</span>
-                  </div>
-                </div>
+                <!-- Contraseña -->
+<div class="form-group">
+  <label for="user-password">Contraseña</label>
+  <div class="password-input-wrapper">
+    <input
+      id="user-password"
+      v-model="userForm.password"
+      :type="showUserPassword ? 'text' : 'password'"
+      placeholder="••••••••"
+      :class="{ 'input-error': formErrors.user.password }"
+      @blur="validateUserField('password')"
+      @input="validateUserField('password')"
+    />
+    <button type="button" class="toggle-password" @click="showUserPassword = !showUserPassword">
+      <Eye v-if="showUserPassword" :size="20" stroke-width="2" />
+      <EyeOff v-else :size="20" stroke-width="2" />
+    </button>
+  </div>
+  <div v-if="formErrors.user.password" class="error-alert" role="alert">
+    <div class="error-alert-content">
+      <div class="error-icon-wrapper">
+        <AlertCircle :size="18" class="error-icon" stroke-width="2" />
+      </div>
+      <span class="error-text">{{ formErrors.user.password }}</span>
+    </div>
+  </div>
+  <div v-if="userForm.password && !formErrors.user.password" class="password-strength">
+    <div class="strength-bar">
+      <div class="strength-fill" :class="userPasswordStrength.class"></div>
+    </div>
+    <span class="strength-text">{{ userPasswordStrength.text }}</span>
+  </div>
+</div>
 
+<!-- Confirmar Contraseña -->
+<div class="form-group">
+  <label for="user-password-confirm">Confirmar Contraseña</label>
+  <div class="password-input-wrapper">
+    <input
+      id="user-password-confirm"
+      v-model="userForm.passwordConfirmation"
+      :type="showUserPasswordConfirm ? 'text' : 'password'"
+      placeholder="••••••••"
+      :class="{ 'input-error': formErrors.user.passwordConfirmation }"
+      @blur="validateUserField('passwordConfirmation')"
+      @input="validateUserField('passwordConfirmation')"
+    />
+    <button type="button" class="toggle-password" @click="showUserPasswordConfirm = !showUserPasswordConfirm">
+      <Eye v-if="showUserPasswordConfirm" :size="20" stroke-width="2" />
+      <EyeOff v-else :size="20" stroke-width="2" />
+    </button>
+  </div>
+  <div v-if="formErrors.user.passwordConfirmation" class="error-alert" role="alert">
+    <div class="error-alert-content">
+      <div class="error-icon-wrapper">
+        <AlertCircle :size="18" class="error-icon" stroke-width="2" />
+      </div>
+      <span class="error-text">{{ formErrors.user.passwordConfirmation }}</span>
+    </div>
+  </div>
+</div>
                 <button type="submit" class="btn-submit" :disabled="!isUserFormValid || isLoading">
                   {{ isLoading ? 'Registrando...' : 'Registrarse' }}
                 </button>
               </form>
             </template>
+            
+
 
             <!-- Restaurante Form -->
             <template v-else>
@@ -218,7 +240,7 @@
                     placeholder="+591 XXXX XXXX"
                     :class="{ 'input-error': formErrors.restaurant.phone }"
                     @blur="validateRestaurantField('phone')"
-                    @input="validateRestaurantField('phone')"
+                    @input="filterPhoneInput" 
                   />
                   <div 
                     v-if="formErrors.restaurant.phone" 
@@ -310,48 +332,65 @@
 
                 <!-- Campo: Contraseña de Acceso con validación SEGURA (FLEXIBLE) -->
                 <div class="form-group">
-                  <label for="rest-password">Contraseña de Acceso</label>
-                  <div class="password-input-wrapper">
-                    <input
-                      id="rest-password"
-                      v-model="restaurantForm.password"
-                      :type="showRestaurantPassword ? 'text' : 'password'"
-                      placeholder="••••••••"
-                      :class="{ 'input-error': formErrors.restaurant.password }"
-                      @blur="validateRestaurantField('password')"
-                      @input="validateRestaurantField('password')"
-                    />
-                    <button 
-                      type="button" 
-                      class="toggle-password" 
-                      @click="showRestaurantPassword = !showRestaurantPassword"
-                    >
-                      <Eye v-if="showRestaurantPassword" :size="20" stroke-width="2" />
-                      <EyeOff v-else :size="20" stroke-width="2" />
-                    </button>
-                  </div>
-                  
-                  <div 
-                    v-if="formErrors.restaurant.password" 
-                    class="error-alert"
-                    role="alert"
-                    aria-live="polite"
-                  >
-                    <div class="error-alert-content">
-                      <div class="error-icon-wrapper">
-                        <AlertCircle :size="18" class="error-icon" stroke-width="2" />
-                      </div>
-                      <span class="error-text">{{ formErrors.restaurant.password }}</span>
-                    </div>
-                  </div>
-                  
-                  <div v-if="restaurantForm.password && !formErrors.restaurant.password" class="password-strength">
-                    <div class="strength-bar">
-                      <div class="strength-fill" :class="restaurantPasswordStrength.class"></div>
-                    </div>
-                    <span class="strength-text">{{ restaurantPasswordStrength.text }}</span>
-                  </div>
-                </div>
+  <label for="rest-password">Contraseña de Acceso</label>
+  <div class="password-input-wrapper">
+    <input
+      id="rest-password"
+      v-model="restaurantForm.password"
+      :type="showRestaurantPassword ? 'text' : 'password'"
+      placeholder="••••••••"
+      :class="{ 'input-error': formErrors.restaurant.password }"
+      @blur="validateRestaurantField('password')"
+      @input="validateRestaurantField('password')"
+    />
+    <button type="button" class="toggle-password" @click="showRestaurantPassword = !showRestaurantPassword">
+      <Eye v-if="showRestaurantPassword" :size="20" stroke-width="2" />
+      <EyeOff v-else :size="20" stroke-width="2" />
+    </button>
+  </div>
+  <div v-if="formErrors.restaurant.password" class="error-alert" role="alert">
+    <div class="error-alert-content">
+      <div class="error-icon-wrapper">
+        <AlertCircle :size="18" class="error-icon" stroke-width="2" />
+      </div>
+      <span class="error-text">{{ formErrors.restaurant.password }}</span>
+    </div>
+  </div>
+  <div v-if="restaurantForm.password && !formErrors.restaurant.password" class="password-strength">
+    <div class="strength-bar">
+      <div class="strength-fill" :class="restaurantPasswordStrength.class"></div>
+    </div>
+    <span class="strength-text">{{ restaurantPasswordStrength.text }}</span>
+  </div>
+</div>
+
+<!-- CONFIRMAR CONTRASEÑA - RESTAURANTE (separado y correcto) -->
+<div class="form-group">
+  <label for="rest-password-confirm">Confirmar Contraseña</label>
+  <div class="password-input-wrapper">
+    <input
+      id="rest-password-confirm"
+      v-model="restaurantForm.passwordConfirmation"
+      :type="showRestaurantPasswordConfirm ? 'text' : 'password'"
+      placeholder="••••••••"
+      :class="{ 'input-error': formErrors.restaurant.passwordConfirmation }"
+      @blur="validateRestaurantField('passwordConfirmation')"
+      @input="validateRestaurantField('passwordConfirmation')"
+    />
+    <button type="button" class="toggle-password" @click="showRestaurantPasswordConfirm = !showRestaurantPasswordConfirm">
+      <Eye v-if="showRestaurantPasswordConfirm" :size="20" stroke-width="2" />
+      <EyeOff v-else :size="20" stroke-width="2" />
+    </button>
+  </div>
+  <div v-if="formErrors.restaurant.passwordConfirmation" class="error-alert" role="alert">
+    <div class="error-alert-content">
+      <div class="error-icon-wrapper">
+        <AlertCircle :size="18" class="error-icon" stroke-width="2" />
+      </div>
+      <span class="error-text">{{ formErrors.restaurant.passwordConfirmation }}</span>
+    </div>
+  </div>
+</div>
 
                 <button type="submit" class="btn-submit" style="margin-top: 24px;" :disabled="!isRestaurantFormValid || isLoading">
                   {{ isLoading ? 'Enviando...' : 'Registrar Restaurante' }}
@@ -423,6 +462,8 @@ const router = useRouter()
 const activeTab = ref('usuario')
 const showUserPassword = ref(false)
 const showRestaurantPassword = ref(false)
+const showUserPasswordConfirm = ref(false)
+const showRestaurantPasswordConfirm = ref(false)
 const isLoading = ref(false)
 
 // ===== TOAST =====
@@ -458,6 +499,9 @@ const closeSuccessModal = () => {
   }
 }
 
+// Acepta letras, espacios, acentos (áéíóúÁÉÍÓÚ) y la ñ/Ñ
+const NAME_REGEX = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+
 // ===== NUEVA EXPRESIÓN REGULAR FLEXIBLE =====
 // Verifica: Mayúscula + Minúscula + Carácter especial (en CUALQUIER orden)
 const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[a-z])(?=.*[\W_]).+$/
@@ -468,7 +512,8 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 const userForm = ref({
   name: '',
   email: '',
-  password: ''
+  password: '',
+  passwordConfirmation: ''
 })
 
 const restaurantForm = ref({
@@ -478,6 +523,7 @@ const restaurantForm = ref({
   category: '',
   email: '',
   password: '',
+  passwordConfirmation: '',
   foto_comprobante: ''
 })
 
@@ -486,7 +532,8 @@ const formErrors = reactive({
   user: {
     name: '',
     email: '',
-    password: ''
+    password: '',
+    passwordConfirmation: ''
   },
   restaurant: {
     name: '',
@@ -495,6 +542,7 @@ const formErrors = reactive({
     category: '',
     email: '',
     password: '',
+    passwordConfirmation: '',
     foto_comprobante: ''
   }
 })
@@ -531,6 +579,22 @@ const restaurantPasswordStrength = computed(() => {
 })
 
 // ========== FUNCIONES DE VALIDACIÓN ==========
+// Filtra el input para permitir SOLO números y el signo + al inicio
+const filterPhoneInput = () => {
+  let value = restaurantForm.value.phone;
+
+  // 1. Si tiene un '+' al principio, lo guardamos temporalmente
+  const hasPlus = value.startsWith('+');
+
+  // 2. Quitamos ABSOLUTAMENTE todo lo que no sea un número
+  value = value.replace(/\D/g, '');
+
+  // 3. Si originalmente tenía el '+', se lo volvemos a poner adelante
+  restaurantForm.value.phone = hasPlus ? '+' + value : value;
+
+  // 4. Ejecutamos la validación normal para que el botón se entere del cambio
+  validateRestaurantField('phone');
+}
 // Usuario
 const validateUserField = (field) => {
   const value = userForm.value[field]
@@ -539,6 +603,19 @@ const validateUserField = (field) => {
     formErrors.user[field] = 'Este campo es obligatorio'
     return false
   }
+
+  // NUEVA VALIDACIÓN: Si es nombre, verificar que solo tenga letras
+  if (field === 'name' && !NAME_REGEX.test(value)) {
+    formErrors.user[field] = 'El nombre no puede contener números'
+    return false
+  }
+  
+  if (field === 'name') {
+  if (value.length < 3) {
+    formErrors.user[field] = 'El nombre es muy corto';
+    return false;
+  }
+}
 
   if (field === 'email' && !emailRegex.test(value)) {
     formErrors.user[field] = 'Ingresa un correo válido'
@@ -555,6 +632,13 @@ const validateUserField = (field) => {
       return false
     }
   }
+  // Dentro de validateUserField:
+if (field === 'passwordConfirmation') {
+  if (value !== userForm.value.password) {
+    formErrors.user[field] = 'Las contraseñas no coinciden'
+    return false
+  }
+}
 
   formErrors.user[field] = ''
   return true
@@ -564,6 +648,13 @@ const validateUserField = (field) => {
 const validateRestaurantField = (field) => {
   const value = restaurantForm.value[field]
   
+  if (field === 'name') {
+  if (value.length < 3) {
+    formErrors.restaurant[field] = 'El nombre es muy corto';
+    return false;
+  }
+}
+
   if (field !== 'foto_comprobante' && (!value || !String(value).trim())) {
     formErrors.restaurant[field] = 'Este campo es obligatorio'
     return false
@@ -584,6 +675,13 @@ const validateRestaurantField = (field) => {
       return false
     }
   }
+  // Dentro de validateRestaurantField:
+if (field === 'passwordConfirmation') {
+  if (value !== restaurantForm.value.password) {
+    formErrors.restaurant[field] = 'Las contraseñas no coinciden'
+    return false
+  }
+}
 
   formErrors.restaurant[field] = ''
   return true
@@ -603,6 +701,13 @@ watch(() => userForm.value.email, (newVal) => {
 watch(() => userForm.value.password, (newVal) => {
   if (newVal && newVal.length >= 8 && PASSWORD_REGEX.test(newVal)) {
     formErrors.user.password = ''
+  }
+})
+watch(() => userForm.value.passwordConfirmation, (newVal) => {
+  if (newVal === userForm.value.password) {
+    formErrors.user.passwordConfirmation = ''
+  } else {
+    formErrors.user.passwordConfirmation = 'Las contraseñas no coinciden'
   }
 })
 
@@ -638,6 +743,14 @@ watch(() => restaurantForm.value.foto_comprobante, (newVal) => {
   if (newVal && newVal.trim()) formErrors.restaurant.foto_comprobante = ''
 })
 
+watch(() => restaurantForm.value.passwordConfirmation, (newVal) => {
+  if (newVal === restaurantForm.value.password) {
+    formErrors.restaurant.passwordConfirmation = ''
+  } else {
+    formErrors.restaurant.passwordConfirmation = 'Las contraseñas no coinciden'
+  }
+})
+
 // ========== VALIDACIÓN COMPLETA ==========
 const validateAllUserFields = () => {
   return validateUserField('name') && validateUserField('email') && validateUserField('password')
@@ -656,33 +769,49 @@ const validateAllRestaurantFields = () => {
 
 // ========== VALIDACIÓN BOTÓN ==========
 const isUserFormValid = computed(() => {
-  return (
-    userForm.value.name.trim() &&
+  const hasFields = 
+    userForm.value.name.trim() !== '' &&
+    userForm.value.email.trim() !== '' &&
+    userForm.value.password !== '';
+
+  const isValidFormat = 
     emailRegex.test(userForm.value.email) &&
     userForm.value.password.length >= 8 &&
-    PASSWORD_REGEX.test(userForm.value.password) &&
+    PASSWORD_REGEX.test(userForm.value.password);
+
+  const hasNoErrors = 
     !formErrors.user.name &&
     !formErrors.user.email &&
-    !formErrors.user.password
-  )
+    !formErrors.user.password;
+
+ const matches = userForm.value.password === userForm.value.passwordConfirmation;
+  
+  return hasFields && isValidFormat && hasNoErrors && matches;
 })
 
 const isRestaurantFormValid = computed(() => {
-  return (
-    restaurantForm.value.name.trim() &&
-    restaurantForm.value.address.trim() &&
-    restaurantForm.value.phone.trim() &&
-    restaurantForm.value.category.trim() &&
+  const hasFields = 
+    restaurantForm.value.name.trim() !== '' &&
+    restaurantForm.value.address.trim() !== '' &&
+    restaurantForm.value.phone.trim() !== '' &&
+    restaurantForm.value.category.trim() !== '' &&
+    restaurantForm.value.email.trim() !== '' &&
+    restaurantForm.value.password !== '';
+
+  const isValidFormat = 
     emailRegex.test(restaurantForm.value.email) &&
     restaurantForm.value.password.length >= 8 &&
-    PASSWORD_REGEX.test(restaurantForm.value.password) &&
+    PASSWORD_REGEX.test(restaurantForm.value.password);
+
+  const hasNoErrors = 
     !formErrors.restaurant.name &&
     !formErrors.restaurant.address &&
     !formErrors.restaurant.phone &&
     !formErrors.restaurant.category &&
     !formErrors.restaurant.email &&
-    !formErrors.restaurant.password
-  )
+    !formErrors.restaurant.password;
+
+  return hasFields && isValidFormat && hasNoErrors;
 })
 
 // ========== HANDLERS ==========
