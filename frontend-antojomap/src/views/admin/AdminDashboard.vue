@@ -79,8 +79,9 @@
             <p class="pending-label">Solicitudes Pendientes</p>
             <p class="pending-number">{{ dashboard.solicitudes_pendientes }}</p>
           </div>
-          <button class="btn-pending" @click="$router.push('/admin/solicitudes')">
+          <button class="btn-pending" @click="$router.push('/admin/requests')">
             Ver solicitudes
+            <span class="btn-arrow">→</span>
           </button>
         </div>
       </div>
@@ -88,8 +89,11 @@
       <!-- Fila Inferior: 3 Columnas -->
       <div class="lower-grid">
         <!-- Top 5 Restaurantes -->
-        <div class="section-card top-restaurants">
-          <h2>🏆 Top 5 Restaurantes</h2>
+        <div class="section-card">
+          <div class="section-header">
+            <h2>Restaurantes destacados</h2>
+            <span class="section-badge">Mejor valorados</span>
+          </div>
           <div class="ranking-list">
             <div v-for="(restaurante, index) in dashboard.top_5_restaurantes" :key="restaurante.id" class="ranking-item">
               <div class="ranking-position">{{ index + 1 }}</div>
@@ -105,8 +109,11 @@
         </div>
 
         <!-- Solicitudes Recientes -->
-        <div class="section-card recent-requests">
-          <h2>📋 Solicitudes Recientes</h2>
+        <div class="section-card">
+          <div class="section-header">
+            <h2>Solicitudes recientes</h2>
+            <span class="section-badge">Últimas solicitudes</span>
+          </div>
           <div class="requests-list">
             <div v-for="solicitud in dashboard.solicitudes_recientes" :key="solicitud.id" class="request-item">
               <div class="request-header">
@@ -116,7 +123,6 @@
                 </span>
               </div>
               <p class="request-email">{{ solicitud.email }}</p>
-              
             </div>
             <div v-if="dashboard.solicitudes_recientes.length === 0" class="empty-state">
               <p>No hay solicitudes recientes</p>
@@ -124,20 +130,29 @@
           </div>
         </div>
 
-        <!-- Distribución por Categorías -->
-        <div class="section-card categories">
-          <h2>📊 Categorías</h2>
+        <!-- Distribución por Categorías (barra mejorada) -->
+        <div class="section-card">
+          <div class="section-header">
+            <h2>Distribución por categoría</h2>
+            <span class="section-badge">Restaurantes por tipo</span>
+          </div>
           <div class="categories-list">
             <div v-for="categoria in dashboard.distribucion_categorias" :key="categoria.nombre_categoria" class="category-item">
               <div class="category-header">
-                <p class="category-name">{{ categoria.nombre_categoria }}</p>
+                <div class="category-name-wrapper">
+                  <span class="category-bullet" :style="{ backgroundColor: getCategoryColor(categoria.nombre_categoria) }"></span>
+                  <p class="category-name">{{ categoria.nombre_categoria }}</p>
+                </div>
                 <span class="category-count">{{ categoria.total }}</span>
               </div>
-              <div class="category-bar">
-                <div 
-                  class="category-fill" 
-                  :style="{ width: getBarWidth(categoria.total) + '%' }"
-                ></div>
+              <div class="category-bar-wrapper">
+                <div class="category-bar-bg">
+                  <div 
+                    class="category-fill" 
+                    :style="{ width: getBarWidth(categoria.total) + '%', backgroundColor: getCategoryColor(categoria.nombre_categoria) }"
+                  ></div>
+                </div>
+                <span class="category-percent">{{ Math.round((categoria.total / getMaxTotal()) * 100) }}%</span>
               </div>
             </div>
             <div v-if="dashboard.distribucion_categorias.length === 0" class="empty-state">
@@ -174,9 +189,30 @@ const cargando = ref(true)
 const error = ref('')
 
 const getBarWidth = (total) => {
-  if (dashboard.value.distribucion_categorias.length === 0) return 0
-  const max = Math.max(...dashboard.value.distribucion_categorias.map(c => c.total))
+  const max = getMaxTotal()
   return max > 0 ? (total / max) * 100 : 0
+}
+
+const getMaxTotal = () => {
+  if (dashboard.value.distribucion_categorias.length === 0) return 0
+  return Math.max(...dashboard.value.distribucion_categorias.map(c => c.total))
+}
+
+// Colores para cada categoría (puedes ampliarlos)
+const getCategoryColor = (nombre) => {
+  const colors = {
+    'Pizza': '#E76F51',
+    'Sushi': '#2A9D8F',
+    'Pollo': '#E9C46A',
+    'Postres': '#F4A261',
+    'Pasta': '#E76F51',
+    'Hamburguesas': '#D68C45',
+    'Vegan': '#6A9C89',
+    'Mariscos': '#264653',
+    'Tacos': '#E76F51',
+    'Ensaladas': '#6A9C89'
+  }
+  return colors[nombre] || '#D893A1'
 }
 
 onMounted(async () => {
@@ -197,44 +233,44 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* Header */
+/* ===== HEADER ===== */
 .dashboard-header {
-  margin-bottom: 40px;
+  margin-bottom: 32px;
 }
 
 .dashboard-header h1 {
-  color: var(--plum, #481827);
-  font-size: 2rem;
-  margin: 0 0 12px 0;
-  font-weight: 700;
+  color: #1E293B;
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.3px;
 }
 
 .subtitle {
-  color: #888;
-  font-size: 1rem;
+  color: #64748B;
+  font-size: 0.9rem;
   margin: 0;
-  font-weight: 400;
 }
 
-/* Error Banner */
+/* ===== ERROR BANNER ===== */
 .error-banner {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px 20px;
-  background: #fee;
-  border: 1px solid #fcc;
-  border-radius: 8px;
-  color: #c00;
+  padding: 12px 20px;
+  background: #FEF2F2;
+  border-left: 4px solid #EF4444;
+  border-radius: 16px;
   margin-bottom: 24px;
-  font-size: 0.95rem;
+  color: #B91C1C;
 }
 
 .error-banner p {
   margin: 0;
+  font-size: 0.85rem;
 }
 
-/* Skeleton Loading */
+/* ===== SKELETON LOADING ===== */
 .skeleton-container {
   display: flex;
   flex-direction: column;
@@ -243,108 +279,110 @@ onMounted(async () => {
 
 .skeleton-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px;
 }
 
 .skeleton-card {
-  height: 120px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: loading 1.5s infinite;
-  border-radius: 8px;
+  height: 110px;
+  background: #E2E8F0;
+  border-radius: 24px;
 }
 
 .skeleton-full {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: loading 1.5s infinite;
-  border-radius: 8px;
+  background: #E2E8F0;
+  border-radius: 24px;
 }
 
-@keyframes loading {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-/* Metrics Grid */
+/* ===== METRICS GRID ===== */
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 28px;
 }
 
 .metric-card {
   background: white;
+  border-radius: 24px;
   padding: 20px;
-  border-radius: 12px;
   display: flex;
   align-items: center;
   gap: 16px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-  border: 1px solid #f0f0f0;
+  box-shadow: 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  border: 1px solid #E2E8F0;
+  transition: all 0.2s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.1);
+  border-color: #CBD5E1;
 }
 
 .metric-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 10px;
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
 }
 
 .metric-icon.users {
-  background: rgba(72, 24, 39, 0.1);
-  color: var(--plum, #481827);
+  background: #EFF6FF;
+  color: #3B82F6;
 }
 
 .metric-icon.active {
-  background: rgba(72, 24, 39, 0.1);
-  color: var(--plum, #481827);
+  background: #ECFDF5;
+  color: #10B981;
 }
 
 .metric-icon.restaurants {
-  background: rgba(216, 147, 161, 0.1);
-  color: var(--dusty-coral, #D893A1);
+  background: #FFF7ED;
+  color: #F97316;
 }
 
 .metric-icon.reviews {
-  background: rgba(72, 24, 39, 0.1);
-  color: var(--plum, #481827);
+  background: #FEF2F2;
+  color: #EF4444;
+}
+
+.metric-info {
+  flex: 1;
 }
 
 .metric-label {
-  margin: 0;
-  font-size: 0.8rem;
-  color: #666;
-  font-weight: 500;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #64748B;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
 }
 
 .metric-value {
-  margin: 6px 0 0 0;
   font-size: 1.8rem;
-  font-weight: 700;
-  color: var(--plum, #481827);
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1.2;
 }
 
-/* Pending Card */
+/* ===== PENDING CARD ===== */
 .pending-card {
   background: white;
-  padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-  border: 2px solid #f0f0f0;
-  margin-bottom: 24px;
-  transition: all 0.3s;
+  border-radius: 24px;
+  padding: 20px 28px;
+  margin-bottom: 28px;
+  box-shadow: 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border: 1px solid #E2E8F0;
+  transition: all 0.2s;
 }
 
 .pending-card.has-pending {
-  border-color: var(--dusty-coral, #D893A1);
-  background: rgba(216, 147, 161, 0.05);
+  background: #FFFBEB;
+  border-left: 6px solid #F59E0B;
 }
 
 .pending-content {
@@ -354,15 +392,14 @@ onMounted(async () => {
 }
 
 .pending-icon {
-  width: 70px;
-  height: 70px;
-  border-radius: 12px;
+  width: 56px;
+  height: 56px;
+  background: #FEF3C7;
+  border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(216, 147, 161, 0.1);
-  color: var(--dusty-coral, #D893A1);
-  flex-shrink: 0;
+  color: #D97706;
 }
 
 .pending-info {
@@ -370,90 +407,117 @@ onMounted(async () => {
 }
 
 .pending-label {
+  font-size: 0.85rem;
+  color: #6B7280;
   margin: 0;
-  font-size: 0.9rem;
-  color: #666;
-  font-weight: 500;
 }
 
 .pending-number {
-  margin: 6px 0 0 0;
-  font-size: 2.2rem;
-  font-weight: 700;
-  color: var(--dusty-coral, #D893A1);
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #D97706;
+  margin-top: 4px;
 }
 
+/* Botón "Ver solicitudes" */
 .btn-pending {
-  padding: 10px 20px;
-  background: var(--dusty-coral, #D893A1);
+  background: #D893A1;
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 40px;
+  padding: 10px 28px;
   font-weight: 600;
+  font-size: 0.85rem;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   transition: all 0.2s;
-  font-size: 0.9rem;
 }
 
 .btn-pending:hover {
-  background: #c17a8b;
-  transform: translateY(-2px);
+  background: #C17A8B;
+  transform: translateY(-1px);
 }
 
-/* Lower Grid */
+.btn-arrow {
+  transition: transform 0.2s;
+}
+
+.btn-pending:hover .btn-arrow {
+  transform: translateX(4px);
+}
+
+/* ===== LOWER GRID ===== */
 .lower-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
 }
 
 .section-card {
   background: white;
-  padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-  border: 1px solid #f0f0f0;
+  border-radius: 24px;
+  border: 1px solid #E2E8F0;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
 }
 
-.section-card h2 {
-  margin: 0 0 20px 0;
-  font-size: 1.2rem;
-  color: var(--plum, #481827);
+.section-card:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+}
+
+.section-header {
+  padding: 18px 24px 12px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.section-header h2 {
+  font-size: 1rem;
   font-weight: 700;
+  color: #1E293B;
+  margin: 0 0 4px;
 }
 
-/* Ranking List */
+.section-badge {
+  font-size: 0.65rem;
+  color: #94A3B8;
+  letter-spacing: 0.3px;
+}
+
+/* ===== RANKING LIST ===== */
 .ranking-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  padding: 8px 0;
 }
 
 .ranking-item {
   display: flex;
-  gap: 12px;
-  padding: 12px;
-  background: #f9f9f9;
-  border-radius: 8px;
-  transition: all 0.2s;
+  gap: 16px;
+  padding: 12px 20px;
+  align-items: center;
+  transition: background 0.2s;
+  border-bottom: 1px solid #F8FAFC;
+}
+
+.ranking-item:last-child {
+  border-bottom: none;
 }
 
 .ranking-item:hover {
-  background: #f0f0f0;
+  background: #F8FAFC;
 }
 
 .ranking-position {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
-  background: var(--plum, #481827);
-  color: white;
+  background: #F1F5F9;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 0.9rem;
-  flex-shrink: 0;
+  color: #334155;
 }
 
 .ranking-info {
@@ -461,10 +525,10 @@ onMounted(async () => {
 }
 
 .ranking-name {
-  margin: 0 0 4px 0;
   font-weight: 600;
-  color: #333;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
+  color: #1E293B;
+  margin-bottom: 6px;
 }
 
 .stars {
@@ -474,180 +538,193 @@ onMounted(async () => {
 }
 
 .star {
-  font-size: 0.9rem;
-  color: #ddd;
+  font-size: 0.75rem;
+  color: #E2E8F0;
 }
 
 .star.filled {
-  color: var(--dusty-coral, #D893A1);
+  color: #FBBF24;
 }
 
 .rating-value {
   margin-left: 6px;
-  font-size: 0.85rem;
-  color: #666;
+  font-size: 0.7rem;
   font-weight: 600;
+  color: #FBBF24;
 }
 
-/* Requests List */
+/* ===== REQUESTS LIST ===== */
 .requests-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  padding: 8px 0;
 }
 
 .request-item {
-  padding: 12px;
-  background: #f9f9f9;
-  border-radius: 8px;
-  border-left: 3px solid var(--dusty-coral, #D893A1);
+  padding: 14px 20px;
+  border-left: 3px solid #D893A1;
+  margin-bottom: 1px;
+  transition: background 0.2s;
+}
+
+.request-item:hover {
+  background: #FAFAFA;
 }
 
 .request-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 6px;
 }
 
 .request-name {
-  margin: 0;
-  font-weight: 600;
-  color: #333;
-  font-size: 0.95rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #1F2937;
 }
 
 .status-badge {
-  font-size: 0.75rem;
-  padding: 4px 10px;
-  border-radius: 20px;
+  font-size: 0.65rem;
+  padding: 2px 10px;
+  border-radius: 40px;
   font-weight: 600;
 }
 
 .status-badge.pendiente {
-  background: rgba(216, 147, 161, 0.2);
-  color: var(--dusty-coral, #D893A1);
+  background: #FEF3C7;
+  color: #B45309;
 }
 
 .status-badge.aprobado {
-  background: rgba(72, 24, 39, 0.1);
-  color: var(--plum, #481827);
+  background: #D1FAE5;
+  color: #065F46;
 }
 
 .status-badge.rechazado {
-  background: #ffe0e0;
-  color: #c00;
+  background: #FEE2E2;
+  color: #991B1B;
 }
 
 .request-email {
-  margin: 0 0 8px 0;
-  font-size: 0.85rem;
-  color: #666;
+  font-size: 0.7rem;
+  color: #6B7280;
+  margin: 0;
 }
 
-.btn-review {
-  width: 100%;
-  padding: 8px 12px;
-  background: var(--plum, #481827);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  font-size: 0.85rem;
-  transition: all 0.2s;
-}
-
-.btn-review:hover {
-  background: #6b2540;
-}
-
-/* Categories */
+/* ===== CATEGORIES LIST ===== */
 .categories-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  padding: 16px 24px;
 }
 
 .category-item {
-  padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.category-item:last-child {
-  border-bottom: none;
+  margin-bottom: 20px;
 }
 
 .category-header {
   display: flex;
   justify-content: space-between;
+  align-items: baseline;
   margin-bottom: 8px;
 }
 
+.category-name-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.category-bullet {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
 .category-name {
-  margin: 0;
+  font-size: 0.85rem;
   font-weight: 600;
-  color: #333;
-  font-size: 0.95rem;
+  color: #334155;
+  margin: 0;
 }
 
 .category-count {
   font-weight: 700;
-  color: var(--dusty-coral, #D893A1);
-  font-size: 0.95rem;
+  font-size: 0.85rem;
+  color: #D893A1;
 }
 
-.category-bar {
-  height: 8px;
-  background: #f0f0f0;
-  border-radius: 4px;
+.category-bar-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.category-bar-bg {
+  flex: 1;
+  height: 6px;
+  background: #F1F5F9;
+  border-radius: 12px;
   overflow: hidden;
+  position: relative;
 }
 
 .category-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
   height: 100%;
-  background: linear-gradient(90deg, var(--dusty-coral, #D893A1), var(--plum, #481827));
-  border-radius: 4px;
-  transition: width 0.3s ease;
+  border-radius: 12px;
+  transition: width 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
 }
 
-/* Empty State */
+.category-percent {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #94A3B8;
+  min-width: 38px;
+  text-align: right;
+}
+
+/* ===== EMPTY STATE ===== */
 .empty-state {
-  padding: 32px 16px;
+  padding: 48px 20px;
   text-align: center;
-  color: #999;
-  font-size: 0.95rem;
-  background: #f9f9f9;
-  border-radius: 8px;
+  color: #94A3B8;
+  font-size: 0.8rem;
 }
 
-.empty-state p {
-  margin: 0;
-}
-
-/* Responsive */
-@media (max-width: 1024px) {
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1100px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
   .lower-grid {
     grid-template-columns: 1fr;
+  }
+  .skeleton-row {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 768px) {
   .dashboard-header h1 {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
   }
-
   .metrics-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
   }
-
   .pending-content {
     flex-direction: column;
     text-align: center;
   }
-
   .btn-pending {
     width: 100%;
+    justify-content: center;
+  }
+  .request-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 </style>

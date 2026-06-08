@@ -4,7 +4,82 @@
       <div class="header-top">
         <h1>¿Qué se te antoja hoy?</h1>
         <p class="subtitle">Busca por nombre, categoría o deja que la ruleta decida por ti.</p>
+      </div>
+    </div>
+
+    <!-- 🔥 BANNER CARRUSEL MEJORADO CON GSAP 🔥 -->
+    <div class="hero-banner-wrapper">
+      <div 
+        class="banner-container group"
+        @mouseenter="pauseBannerAutoPlay"
+        @mouseleave="startBannerAutoPlay"
+      >
+        <div class="banner-carousel">
+          <div 
+            class="banner-track"
+            :style="{ transform: `translateX(-${bannerIndex * 100}%)` }"
+          >
+            <div 
+              v-for="(slide, idx) in banners" 
+              :key="slide.id"
+              class="banner-slide"
+              :data-slide-index="idx"
+            >
+              <div class="banner-bg">
+                <img :src="slide.image" :alt="slide.title" />
+                <div class="banner-overlay"></div>
+              </div>
+              
+              <div class="banner-content">
+                <div class="content-wrapper">
+                  <div class="badge-wrapper">
+                    <span class="banner-badge" :class="slide.badgeClass">
+                      {{ slide.badge }}
+                    </span>
+                  </div>
+                  <h2 class="banner-title">{{ slide.title }}</h2>
+                  <p class="banner-description">{{ slide.description }}</p>
+                  <button class="banner-btn" @click="handleBannerAction(slide.action)">
+                    {{ slide.btnText }}
+                    <svg class="btn-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button 
+          class="banner-nav-btn prev-btn"
+          :class="{ visible: isBannerHovering }"
+          @click="prevBannerSlide"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+          </svg>
+        </button>
         
+        <button 
+          class="banner-nav-btn next-btn"
+          :class="{ visible: isBannerHovering }"
+          @click="nextBannerSlide"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+          </svg>
+        </button>
+
+        <div class="banner-dots">
+          <button
+            v-for="(_, idx) in banners"
+            :key="idx"
+            class="dot-line"
+            :class="{ active: bannerIndex === idx }"
+            @click="goToBannerSlide(idx)"
+          ></button>
+        </div>
       </div>
     </div>
 
@@ -32,7 +107,6 @@
 
     <!-- TAB RESTAURANTES -->
     <div v-if="activeTab === 'restaurantes'" class="tab-content">
-      <!-- Barra de búsqueda -->
       <div class="search-bar">
         <Search :size="20" class="search-icon" />
         <input 
@@ -43,7 +117,6 @@
         />
       </div>
 
-      <!-- Chips de categoría -->
       <div v-if="restaurantesStore.categorias.length > 0" class="category-filter">
         <button 
           class="category-chip" 
@@ -64,24 +137,57 @@
         <button class="btn-ruleta" @click="irARuleta">🎲 Sorpréndeme</button>
       </div>
 
-      <!-- Grid de restaurantes -->
+      <!-- 🔥 CARRUSEL DE RESTAURANTES (en lugar de grid) 🔥 -->
+      <div class="restaurants-carousel-wrapper">
+        <div class="restaurants-carousel-container">
+          <button 
+            class="carousel-arrow carousel-arrow-left"
+            @click="scrollRestaurantsLeft"
+            v-if="showRestaurantArrows"
+          >
+            ‹
+          </button>
+          
+          <div class="restaurants-carousel" ref="restaurantsCarouselRef">
+            <div class="restaurants-carousel-track">
+              <RestaurantCard 
+                v-for="restaurant in filteredRestaurants" 
+                :key="restaurant.id" 
+                :restaurant="restaurant" 
+                :linkTo="`/user/menu/${restaurant.id}`" 
+                class="restaurant-carousel-card"
+              />
+            </div>
+          </div>
+          
+          <button 
+            class="carousel-arrow carousel-arrow-right"
+            @click="scrollRestaurantsRight"
+            v-if="showRestaurantArrows"
+          >
+            ›
+          </button>
+        </div>
+        
+        <div class="carousel-dots" v-if="filteredRestaurants.length > 0">
+          <button
+            v-for="(_, idx) in Math.ceil(filteredRestaurants.length / restaurantsPerView)"
+            :key="idx"
+            class="carousel-dot"
+            :class="{ active: restaurantDotIndex === idx }"
+            @click="goToRestaurantDot(idx)"
+          ></button>
+        </div>
+      </div>
+
       <div v-if="filteredRestaurants.length === 0" class="no-results">
         <p>No encontramos restaurantes con esos filtros.</p>
         <button class="btn-clear" @click="clearRestaurantesFilters">Limpiar filtros</button>
-      </div>
-      <div v-else class="restaurants-grid">
-        <RestaurantCard 
-          v-for="restaurant in filteredRestaurants" 
-          :key="restaurant.id" 
-          :restaurant="restaurant" 
-          :linkTo="`/user/menu/${restaurant.id}`" 
-        />
       </div>
     </div>
 
     <!-- TAB PLATOS -->
     <div v-if="activeTab === 'platos'" class="tab-content">
-      <!-- Barra de búsqueda -->
       <div class="search-bar">
         <Search :size="20" class="search-icon" />
         <input 
@@ -92,7 +198,6 @@
         />
       </div>
 
-      <!-- Chips de tipo -->
       <div class="tipo-filter">
         <button 
           class="tipo-chip" 
@@ -123,7 +228,6 @@
         </button>
       </div>
 
-      <!-- Grid de platos -->
       <div v-if="buscandoPlatos" class="loading-state">
         <p>Buscando platos...</p>
       </div>
@@ -162,7 +266,6 @@
       </div>
     </div>
 
-    <!-- Componente RuletaPlatos -->
     <RuletaPlatos 
       :isOpen="mostrarRuleta" 
       @close="mostrarRuleta = false"
@@ -180,9 +283,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router' 
 import { Search, UtensilsCrossed, Store } from 'lucide-vue-next'
+import gsap from 'gsap'
 import DashboardLayout from '../../components/DashboardLayout.vue'
 import RestaurantCard from '../../components/RestaurantCard.vue'
 import RuletaPlatos from '../../components/RuletaPlatos.vue'
@@ -197,16 +301,182 @@ const restaurantesStore = useRestaurantesStore()
 const favoritosStore = useFavoritosStore()
 const irARuleta = () => router.push('/user/ruleta')
 
-// Estado de la ruleta
-const showRuletaRestaurantes = ref(false)
-// Estado de tabs
-const activeTab = ref('restaurantes')
+// ========== BANNER CARRUSEL ==========
+const bannerIndex = ref(0)
+const bannerAutoPlayInterval = ref(null)
+const isBannerHovering = ref(false)
+const isBannerAnimating = ref(false)
 
-// Estado de RESTAURANTES
+const banners = ref([
+  {
+    id: 1,
+    title: '🍕 Pizzas Lovers',
+    description: 'Las mejores pizzas artesanales con ingredientes frescos y masa madre.',
+    image: 'https://images.unsplash.com/photo-1604068549290-dea0e4a305ca?w=1200&h=400&fit=crop',
+    badge: 'Promoción',
+    badgeClass: 'badge-promo',
+    btnText: 'Ver restaurante',
+    action: { type: 'restaurant', id: '00eab37-7fe5-491b-a2e9-b236d2fdfb85' }
+  },
+  {
+    id: 2,
+    title: '🍣 Takeshii Sushi',
+    description: 'El mejor sushi japonés con ingredientes de primera calidad.',
+    image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=1200&h=400&fit=crop',
+    badge: 'Destacado',
+    badgeClass: 'badge-featured',
+    btnText: 'Ordenar ahora',
+    action: { type: 'restaurant', id: '327d6b43-c02f-45c1-bfda-0c1255c48095' }
+  },
+  {
+    id: 3,
+    title: '🌮 Taqueria El Chilango',
+    description: 'Los tacos más auténticos con tortilla recién hecha. ¡Llega a tu casa en 20 min!',
+    image: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=1200&h=400&fit=crop',
+    badge: 'Nuevo',
+    badgeClass: 'badge-new',
+    btnText: 'Explorar',
+    action: { type: 'restaurant', id: 'ab0c4e2f-eb29-45bb-a6a5-5836376da8bb' }
+  },
+  {
+    id: 4,
+    title: '🍔 Smash & Go Burger',
+    description: 'Las mejores hamburguesas artesanales con mucho sabor.',
+    image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=1200&h=400&fit=crop',
+    badge: 'Popular',
+    badgeClass: 'badge-featured',
+    btnText: 'Ver restaurante',
+    action: { type: 'restaurant', id: '8774d1a2-58de-4cdb-a50a-f8d8ccafad6' }
+  },
+  {
+    id: 5,
+    title: '🥗 Green & Fresh Co.',
+    description: 'Ensaladas frescas y bowls nutritivos para una vida saludable.',
+    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=1200&h=400&fit=crop',
+    badge: 'Oferta',
+    badgeClass: 'badge-offer',
+    btnText: 'Ver más',
+    action: { type: 'restaurant', id: 'aaf87690-156d-45e7-840a-3d5920a70c5a' }
+  }
+])
+
+const animateSlideContent = async (slideElement) => {
+  if (!slideElement) return
+  const badge = slideElement.querySelector('.badge-wrapper')
+  const title = slideElement.querySelector('.banner-title')
+  const description = slideElement.querySelector('.banner-description')
+  const button = slideElement.querySelector('.banner-btn')
+  
+  gsap.set([badge, title, description, button], { opacity: 0, y: 20, filter: 'blur(4px)' })
+  const tl = gsap.timeline()
+  tl.to(badge, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.4, ease: 'back.out(0.5)' })
+  tl.to(title, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.4, ease: 'back.out(0.5)' }, '-=0.2')
+  tl.to(description, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.4, ease: 'back.out(0.5)' }, '-=0.15')
+  tl.to(button, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.4, ease: 'back.out(0.5)' }, '-=0.1')
+}
+
+const changeBannerSlide = async (newIndex) => {
+  if (isBannerAnimating.value) return
+  isBannerAnimating.value = true
+  const slides = document.querySelectorAll('.banner-slide')
+  const currentSlide = slides[bannerIndex.value]
+  const newSlide = slides[newIndex]
+  
+  if (currentSlide && newSlide) {
+    const currentContent = currentSlide.querySelectorAll('.badge-wrapper, .banner-title, .banner-description, .banner-btn')
+    gsap.to(currentContent, { opacity: 0, y: -20, filter: 'blur(4px)', duration: 0.3, ease: 'power2.in' })
+    await new Promise(resolve => setTimeout(resolve, 150))
+    bannerIndex.value = newIndex
+    await nextTick()
+    await animateSlideContent(newSlide)
+  } else {
+    bannerIndex.value = newIndex
+    await nextTick()
+    const newSlideElem = slides[newIndex]
+    if (newSlideElem) await animateSlideContent(newSlideElem)
+  }
+  isBannerAnimating.value = false
+  resetBannerAutoPlay()
+}
+
+const nextBannerSlide = async () => {
+  if (isBannerAnimating.value) return
+  const newIndex = (bannerIndex.value + 1) % banners.value.length
+  await changeBannerSlide(newIndex)
+}
+
+const prevBannerSlide = async () => {
+  if (isBannerAnimating.value) return
+  const newIndex = (bannerIndex.value - 1 + banners.value.length) % banners.value.length
+  await changeBannerSlide(newIndex)
+}
+
+const goToBannerSlide = async (index) => {
+  if (isBannerAnimating.value || index === bannerIndex.value) return
+  await changeBannerSlide(index)
+}
+
+const startBannerAutoPlay = () => {
+  if (bannerAutoPlayInterval.value) clearInterval(bannerAutoPlayInterval.value)
+  bannerAutoPlayInterval.value = setInterval(() => {
+    if (!isBannerHovering.value && !isBannerAnimating.value) nextBannerSlide()
+  }, 5000)
+}
+
+const pauseBannerAutoPlay = () => {
+  isBannerHovering.value = true
+  if (bannerAutoPlayInterval.value) clearInterval(bannerAutoPlayInterval.value)
+}
+
+const resetBannerAutoPlay = () => {
+  if (bannerAutoPlayInterval.value) clearInterval(bannerAutoPlayInterval.value)
+  isBannerHovering.value = false
+  startBannerAutoPlay()
+}
+
+const handleBannerAction = (action) => {
+  if (action.type === 'restaurant') router.push(`/user/menu/${action.id}`)
+}
+
+// ========== CARRUSEL DE RESTAURANTES ==========
+const restaurantsCarouselRef = ref(null)
+const showRestaurantArrows = ref(true)
+const restaurantDotIndex = ref(0)
+const restaurantsPerView = 3
+
+// Verificar si hay scroll para mostrar flechas
+const updateRestaurantArrows = () => {
+  if (!restaurantsCarouselRef.value) return
+  const { scrollLeft, scrollWidth, clientWidth } = restaurantsCarouselRef.value
+  showRestaurantArrows.value = scrollWidth > clientWidth
+  const currentDot = Math.round(scrollLeft / (clientWidth))
+  restaurantDotIndex.value = currentDot
+}
+
+const scrollRestaurantsLeft = () => {
+  if (restaurantsCarouselRef.value) {
+    restaurantsCarouselRef.value.scrollBy({ left: -320, behavior: 'smooth' })
+  }
+}
+
+const scrollRestaurantsRight = () => {
+  if (restaurantsCarouselRef.value) {
+    restaurantsCarouselRef.value.scrollBy({ left: 320, behavior: 'smooth' })
+  }
+}
+
+const goToRestaurantDot = (index) => {
+  if (restaurantsCarouselRef.value) {
+    const scrollAmount = index * restaurantsCarouselRef.value.clientWidth
+    restaurantsCarouselRef.value.scrollTo({ left: scrollAmount, behavior: 'smooth' })
+  }
+}
+
+// ========== ESTADO EXISTENTE ==========
+const showRuletaRestaurantes = ref(false)
+const activeTab = ref('restaurantes')
 const searchRestaurantes = ref('')
 const selectedCategories = ref([])
-
-// Estado de PLATOS
 const searchPlatos = ref('')
 const selectedTipoPlato = ref('')
 const platosResultados = ref([])
@@ -214,36 +484,20 @@ const buscandoPlatos = ref(false)
 const mostrarRuleta = ref(false)
 let busquedaActual = 0
 
-// Búsqueda y filtrado de RESTAURANTES
 const filteredRestaurants = computed(() => {
   let resultado = restaurantesStore.restaurantes
   const query = searchRestaurantes.value.trim().toLowerCase()
-
-  // Filtrar por búsqueda de nombre
-  if (query) {
-    resultado = resultado.filter(r => r.nombre?.toLowerCase().includes(query))
-  }
-
-  // Filtrar por categorías (OR - si selecciona múltiples)
+  if (query) resultado = resultado.filter(r => r.nombre?.toLowerCase().includes(query))
   if (selectedCategories.value.length > 0) {
     const categorias = new Set(selectedCategories.value)
-    resultado = resultado.filter(r => {
-      const catNombre = r.category || ''
-      return categorias.has(catNombre)
-    })
+    resultado = resultado.filter(r => categorias.has(r.category || ''))
   }
-
   return resultado
 })
 
-// Funciones de RESTAURANTES
 const toggleCategory = (category) => {
   const index = selectedCategories.value.indexOf(category)
-  if (index > -1) {
-    selectedCategories.value.splice(index, 1)
-  } else {
-    selectedCategories.value.push(category)
-  }
+  index > -1 ? selectedCategories.value.splice(index, 1) : selectedCategories.value.push(category)
 }
 
 const clearRestaurantesFilters = () => {
@@ -251,44 +505,26 @@ const clearRestaurantesFilters = () => {
   selectedCategories.value = []
 }
 
-// 🔥 BÚSQUEDA DE PLATOS - USANDO EL NUEVO MÉTODO DEL SERVICIO 🔥
 const buscarPlatos = async () => {
   const query = searchPlatos.value.trim()
   const tipo = selectedTipoPlato.value
   const busquedaId = ++busquedaActual
-
-  // Si no hay búsqueda ni filtro, mostrar vacío
-  if (!query && !tipo) {
-    platosResultados.value = []
-    return
-  }
-
+  if (!query && !tipo) { platosResultados.value = []; return }
   buscandoPlatos.value = true
-
   try {
     const data = await almuerzosService.buscarPlatos(query, tipo)
-
-    if (busquedaId !== busquedaActual) return
-    platosResultados.value = data || []
-    
+    if (busquedaId === busquedaActual) platosResultados.value = data || []
   } catch (err) {
-    if (busquedaId !== busquedaActual) return
-    platosResultados.value = []
+    if (busquedaId === busquedaActual) platosResultados.value = []
   } finally {
-    if (busquedaId === busquedaActual) {
-      buscandoPlatos.value = false
-    }
+    if (busquedaId === busquedaActual) buscandoPlatos.value = false
   }
 }
 
-// Watchers para búsqueda de PLATOS (con debounce)
 let debounceTimer = null
-
 watch([searchPlatos, selectedTipoPlato], () => {
   if (debounceTimer) clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => {
-    buscarPlatos()
-  }, 300)
+  debounceTimer = setTimeout(() => buscarPlatos(), 300)
 })
 
 const clearPlatosFilters = () => {
@@ -297,24 +533,36 @@ const clearPlatosFilters = () => {
   platosResultados.value = []
 }
 
-onMounted(() => {
+onMounted(async () => {
+  startBannerAutoPlay()
   restaurantesStore.cargarRestaurantes()
   restaurantesStore.cargarCategorias()
   favoritosStore.cargarFavoritos()
-
+  await nextTick()
+  const firstSlide = document.querySelector('.banner-slide')
+  if (firstSlide) await animateSlideContent(firstSlide)
   const categoria = route.query.categoria
-  if (categoria) {
-    selectedCategories.value = [categoria]
+  if (categoria) selectedCategories.value = [categoria]
+  
+  // Inicializar carrusel de restaurantes
+  if (restaurantsCarouselRef.value) {
+    restaurantsCarouselRef.value.addEventListener('scroll', updateRestaurantArrows)
+    updateRestaurantArrows()
   }
 })
 
 onUnmounted(() => {
+  if (bannerAutoPlayInterval.value) clearInterval(bannerAutoPlayInterval.value)
   if (debounceTimer) clearTimeout(debounceTimer)
   busquedaActual++
+  if (restaurantsCarouselRef.value) {
+    restaurantsCarouselRef.value.removeEventListener('scroll', updateRestaurantArrows)
+  }
 })
 </script>
 
 <style scoped>
+/* ========== ESTILOS EXISTENTES ========== */
 .page-header {
   margin-bottom: 32px;
 }
@@ -336,6 +584,351 @@ onUnmounted(() => {
   margin: 0 0 16px 0;
 }
 
+/* ========== ESTILOS DEL BANNER ========== */
+.hero-banner-wrapper {
+  margin-bottom: 32px;
+}
+
+.banner-container {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.banner-carousel {
+  overflow: hidden;
+  border-radius: 24px;
+}
+
+.banner-track {
+  display: flex;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.banner-slide {
+  flex: 0 0 100%;
+  position: relative;
+  min-height: 180px;
+}
+
+@media (min-width: 768px) {
+  .banner-slide {
+    min-height: 220px;
+  }
+}
+
+.banner-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.banner-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.4) 50%, rgba(0, 0, 0, 0.2) 100%);
+}
+
+.banner-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  min-height: 180px;
+  padding: 24px;
+}
+
+@media (min-width: 768px) {
+  .banner-content {
+    min-height: 220px;
+    padding: 32px;
+  }
+}
+
+.content-wrapper {
+  max-width: 65%;
+}
+
+@media (max-width: 640px) {
+  .content-wrapper {
+    max-width: 85%;
+  }
+}
+
+.badge-wrapper {
+  margin-bottom: 12px;
+}
+
+.banner-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(4px);
+}
+
+.badge-promo {
+  background: linear-gradient(135deg, #F97316, #EA580C);
+  color: white;
+}
+
+.badge-featured {
+  background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+  color: white;
+}
+
+.badge-new {
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: white;
+}
+
+.badge-offer {
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  color: white;
+}
+
+.banner-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: white;
+  margin: 0 0 8px 0;
+  line-height: 1.3;
+}
+
+@media (min-width: 768px) {
+  .banner-title {
+    font-size: 1.5rem;
+  }
+}
+
+.banner-description {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0 0 16px 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.banner-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 8px 20px;
+  border-radius: 40px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.banner-btn:hover {
+  background: rgba(249, 115, 22, 0.9);
+  border-color: rgba(249, 115, 22, 0.9);
+  transform: translateX(4px);
+}
+
+.btn-arrow {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+
+.banner-btn:hover .btn-arrow {
+  transform: translateX(3px);
+}
+
+.banner-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 20;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.2s ease;
+}
+
+.banner-nav-btn.visible {
+  opacity: 1;
+}
+
+.banner-nav-btn:hover {
+  background: #F97316;
+  color: white;
+  transform: translateY(-50%) scale(1.05);
+}
+
+.prev-btn { left: 16px; }
+.next-btn { right: 16px; }
+
+.banner-dots {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 20;
+}
+
+.dot-line {
+  width: 24px;
+  height: 3px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+  border: none;
+}
+
+.dot-line.active {
+  background: #F97316;
+  width: 40px;
+}
+
+/* ========== CARRUSEL DE RESTAURANTES - SIN BARRA DE SCROLL, MOVIMIENTO SUAVE ========== */
+.restaurants-carousel-wrapper {
+  position: relative;
+  margin: 20px 0;
+  width: 100%;
+}
+
+.restaurants-carousel-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.restaurants-carousel {
+  flex: 1;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  /* OCULTAR LA BARRA DE SCROLL COMPLETAMENTE */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+  padding: 10px 0;
+  cursor: grab;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Ocultar scrollbar en Chrome/Safari/Opera */
+.restaurants-carousel::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.restaurants-carousel:active {
+  cursor: grabbing;
+}
+
+.restaurants-carousel-track {
+  display: flex;
+  gap: 24px;
+  padding: 5px;
+}
+
+.restaurant-carousel-card {
+  flex: 0 0 320px;
+  scroll-snap-align: start;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.restaurant-carousel-card:hover {
+  transform: translateY(-4px);
+}
+
+/* Flechas de navegación - más elegantes */
+.carousel-arrow {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: white;
+  border: 1px solid rgba(216, 147, 161, 0.3);
+  font-size: 2rem;
+  font-weight: 400;
+  color: #D893A1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+  backdrop-filter: blur(4px);
+  z-index: 10;
+}
+
+.carousel-arrow:hover {
+  background: #D893A1;
+  color: white;
+  transform: scale(1.08);
+  box-shadow: 0 6px 16px rgba(216, 147, 161, 0.3);
+  border-color: transparent;
+}
+
+.carousel-arrow:active {
+  transform: scale(0.96);
+}
+
+/* Puntos indicadores (dots) - más elegantes */
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+  margin-bottom: 8px;
+}
+
+.carousel-dot {
+  width: 32px;
+  height: 4px;
+  border-radius: 4px;
+  background: #e0c4cb;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  padding: 0;
+}
+
+.carousel-dot.active {
+  background: #D893A1;
+  width: 56px;
+  box-shadow: 0 2px 6px rgba(216, 147, 161, 0.4);
+}
+
+/* ========== RESTO DE ESTILOS EXISTENTES ========== */
 .btn-ruleta {
   padding: 10px 20px;
   background: linear-gradient(135deg, #8A9A8B 0%, #7D8F81 100%);
@@ -353,6 +946,7 @@ onUnmounted(() => {
   background: linear-gradient(135deg, #7D8F81 0%, #657869 100%);
   transform: translateY(-2px);
 }
+
 .ruleta-overlay {
   position: fixed;
   inset: 0;
@@ -363,6 +957,7 @@ onUnmounted(() => {
   z-index: 100;
   padding: 20px;
 }
+
 .ruleta-modal {
   background: linear-gradient(135deg, #8B2A4E 0%, #6B1B3C 100%);
   border-radius: 24px;
@@ -374,6 +969,7 @@ onUnmounted(() => {
   max-height: 95vh;
   overflow-y: auto;
 }
+
 .ruleta-close {
   position: absolute;
   top: 12px;
@@ -385,25 +981,28 @@ onUnmounted(() => {
   cursor: pointer;
   line-height: 1;
 }
+
 .ruleta-modal :deep(.wheel-container) {
   margin: 0;
   padding: 0;
 }
+
 .ruleta-modal :deep(.wheel) {
   width: 300px;
   height: 300px;
 }
+
 .ruleta-modal :deep(.wheel-center) {
   width: 90px;
   height: 90px;
 }
+
 .ruleta-modal :deep(.go-button) {
   width: 80px;
   height: 80px;
   font-size: 1.2rem;
 }
 
-/* TABS */
 .tabs-container {
   margin-bottom: 32px;
 }
@@ -431,33 +1030,11 @@ onUnmounted(() => {
   font-family: inherit;
 }
 
-.tab-btn:hover {
-  color: var(--plum, #481827);
-}
+.tab-btn:hover { color: var(--plum, #481827); }
+.tab-btn.active { color: var(--plum, #481827); border-bottom-color: var(--dusty-coral, #D893A1); }
+.tab-btn svg { stroke-width: 2.5; }
+.tab-content { animation: fadeIn 0.3s ease; }
 
-.tab-btn.active {
-  color: var(--plum, #481827);
-  border-bottom-color: var(--dusty-coral, #D893A1);
-}
-
-.tab-btn svg {
-  stroke-width: 2.5;
-}
-
-.tab-content {
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* SEARCH BAR */
 .search-bar {
   display: flex;
   align-items: center;
@@ -470,30 +1047,11 @@ onUnmounted(() => {
   transition: border 0.2s;
 }
 
-.search-bar:focus-within {
-  border-color: var(--dusty-coral, #D893A1);
-}
+.search-bar:focus-within { border-color: var(--dusty-coral, #D893A1); }
+.search-icon { color: #999; flex-shrink: 0; }
+.search-input { flex: 1; border: none; background: transparent; font-size: 0.95rem; outline: none; color: #333; }
+.search-input::placeholder { color: #bbb; }
 
-.search-icon {
-  color: #999;
-  flex-shrink: 0;
-}
-
-.search-input {
-  flex: 1;
-  border: none;
-  background: transparent;
-  font-size: 0.95rem;
-  font-family: inherit;
-  outline: none;
-  color: #333;
-}
-
-.search-input::placeholder {
-  color: #bbb;
-}
-
-/* CATEGORY FILTER */
 .category-filter {
   display: flex;
   flex-wrap: wrap;
@@ -513,21 +1071,11 @@ onUnmounted(() => {
   font-size: 0.88rem;
   cursor: pointer;
   transition: all 0.2s;
-  font-family: inherit;
 }
 
-.category-chip:hover {
-  background: rgba(216, 147, 161, 0.08);
-}
+.category-chip:hover { background: rgba(216, 147, 161, 0.08); }
+.category-chip.active { background: var(--plum, #481827); color: white; border-color: var(--plum, #481827); box-shadow: 0 4px 12px rgba(72, 24, 39, 0.3); }
 
-.category-chip.active {
-  background: var(--plum, #481827);
-  color: white;
-  border-color: var(--plum, #481827);
-  box-shadow: 0 4px 12px rgba(72, 24, 39, 0.3);
-}
-
-/* TIPO FILTER */
 .tipo-filter {
   display: flex;
   gap: 10px;
@@ -545,18 +1093,10 @@ onUnmounted(() => {
   font-size: 0.88rem;
   cursor: pointer;
   transition: all 0.2s;
-  font-family: inherit;
 }
 
-.tipo-chip:hover {
-  background: rgba(72, 24, 39, 0.05);
-}
-
-.tipo-chip.active {
-  background: var(--plum, #481827);
-  color: white;
-  box-shadow: 0 4px 12px rgba(72, 24, 39, 0.3);
-}
+.tipo-chip:hover { background: rgba(72, 24, 39, 0.05); }
+.tipo-chip.active { background: var(--plum, #481827); color: white; box-shadow: 0 4px 12px rgba(72, 24, 39, 0.3); }
 
 .btn-sorprendeme {
   background: linear-gradient(135deg, var(--dusty-coral, #D893A1) 0%, #e8a8b8 100%);
@@ -567,17 +1107,10 @@ onUnmounted(() => {
 
 .btn-sorprendeme:hover {
   background: linear-gradient(135deg, #e8a8b8 0%, var(--dusty-coral, #D893A1) 100%);
-  box-shadow: 0 6px 16px rgba(216, 147, 161, 0.35);
   transform: translateY(-2px);
 }
 
-/* GRIDS */
-.restaurants-grid {
-  display: grid;
-  gap: 24px;
-  grid-template-columns: repeat(3, 1fr);
-}
-
+/* Grid de platos */
 .platos-grid {
   display: grid;
   gap: 20px;
@@ -593,16 +1126,6 @@ onUnmounted(() => {
   align-items: center;
   gap: 12px;
 }
-.empty-platos p {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--plum);
-  margin: 0;
-}
-.empty-platos span {
-  font-size: 0.95rem;
-  color: #999;
-}
 
 .restaurante-strip {
   display: flex;
@@ -612,29 +1135,11 @@ onUnmounted(() => {
   background: #faf8f6;
   border-bottom: 1px solid #f0ede7;
 }
-.rest-mini-img {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-.rest-mini-placeholder {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--plum);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.7rem;
-}
-.rest-mini-nombre {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--plum);
-}
 
-/* PLATO CARD */
+.rest-mini-img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
+.rest-mini-placeholder { width: 24px; height: 24px; border-radius: 50%; background: var(--plum); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; }
+.rest-mini-nombre { font-size: 0.8rem; font-weight: 700; color: var(--plum); }
+
 .plato-card {
   background: white;
   border-radius: 15px;
@@ -644,10 +1149,7 @@ onUnmounted(() => {
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.plato-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-}
+.plato-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12); }
 
 .plato-img {
   position: relative;
@@ -656,20 +1158,8 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-.plato-img img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.plato-img-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2.5rem;
-}
+.plato-img img { width: 100%; height: 100%; object-fit: cover; }
+.plato-img-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
 
 .plato-tipo-badge {
   position: absolute;
@@ -683,46 +1173,12 @@ onUnmounted(() => {
   font-weight: 700;
 }
 
-.plato-info {
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+.plato-info { padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.plato-info h3 { margin: 0; font-size: 1rem; color: var(--plum, #481827); font-weight: 700; }
+.plato-desc { margin: 0; font-size: 0.83rem; color: #888; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.plato-detalles { display: flex; flex-direction: column; gap: 3px; font-size: 0.8rem; color: #666; }
+.plato-precio { font-size: 1rem; font-weight: 800; color: #C0392B; }
 
-.plato-info h3 {
-  margin: 0;
-  font-size: 1rem;
-  color: var(--plum, #481827);
-  font-weight: 700;
-}
-
-.plato-desc {
-  margin: 0;
-  font-size: 0.83rem;
-  color: #888;
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.plato-detalles {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  font-size: 0.8rem;
-  color: #666;
-}
-
-.plato-precio {
-  font-size: 1rem;
-  font-weight: 800;
-  color: #C0392B;
-}
-
-/* NO RESULTS */
 .no-results {
   grid-column: 1 / -1;
   padding: 60px 20px;
@@ -737,10 +1193,7 @@ onUnmounted(() => {
   gap: 16px;
 }
 
-.no-results p {
-  font-size: 1.1rem;
-  margin: 0;
-}
+.no-results p { font-size: 1.1rem; margin: 0; }
 
 .btn-clear {
   padding: 8px 16px;
@@ -754,51 +1207,29 @@ onUnmounted(() => {
   transition: all 0.3s;
 }
 
-.btn-clear:hover {
-  background: linear-gradient(135deg, #7D8F81 0%, #657869 100%);
-  transform: translateY(-2px);
-}
+.btn-clear:hover { background: linear-gradient(135deg, #7D8F81 0%, #657869 100%); transform: translateY(-2px); }
 
-.loading-state {
-  padding: 40px;
-  text-align: center;
-  color: var(--dusty-coral, #D893A1);
-  font-size: 1rem;
-}
+.loading-state { padding: 40px; text-align: center; color: var(--dusty-coral, #D893A1); font-size: 1rem; }
 
-/* RESPONSIVE */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
 @media (max-width: 1024px) {
-  .restaurants-grid,
-  .platos-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  .platos-grid { grid-template-columns: repeat(2, 1fr); }
+  .restaurant-carousel-card { flex: 0 0 300px; }
 }
 
 @media (max-width: 640px) {
-  .page-header h1 {
-    font-size: 1.5rem;
-  }
-
-  .restaurants-grid,
-  .platos-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .tabs-header {
-    gap: 8px;
-  }
-
-  .tab-btn {
-    padding: 12px 16px;
-    font-size: 0.85rem;
-  }
-
-  .category-filter {
-    gap: 8px;
-  }
-
-  .tipo-filter {
-    gap: 8px;
-  }
+  .page-header h1 { font-size: 1.5rem; }
+  .platos-grid { grid-template-columns: 1fr; }
+  .tabs-header { gap: 8px; }
+  .tab-btn { padding: 12px 16px; font-size: 0.85rem; }
+  .banner-nav-btn { width: 32px; height: 32px; }
+  .prev-btn { left: 8px; }
+  .next-btn { right: 8px; }
+  .dot-line { width: 16px; }
+  .dot-line.active { width: 28px; }
+  .banner-btn { padding: 6px 16px; font-size: 0.7rem; }
+  .restaurant-carousel-card { flex: 0 0 280px; }
+  .carousel-arrow { width: 36px; height: 36px; font-size: 1.5rem; }
 }
 </style>

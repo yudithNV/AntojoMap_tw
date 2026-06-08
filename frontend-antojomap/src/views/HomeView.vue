@@ -7,9 +7,12 @@
       <p>Descubre los mejores restaurantes cerca de ti</p>
     </section>
 
+    <!-- CARRUSEL PREMIUM DE RECOMENDADOS -->
+    <RecommendedSection />
+
     <section class="restaurants-section">
       <div class="section-header">
-        <h2>Restaurantes Recomendados</h2>
+        <h2>Todos los Restaurantes</h2>
         <div class="controls">
           <input v-model="searchQuery" type="text" placeholder="Buscar restaurante..." class="search-input" />
           <select v-model="selectedCategoria" class="category-select">
@@ -47,6 +50,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import Navbar from '../components/Navbar.vue'
+import RecommendedSection from '../components/RecommendedSection.vue'
 import { restaurantesService } from '../services/menu.service.js'
 
 const router = useRouter()
@@ -146,6 +150,7 @@ onMounted(() => {
 .section-header h2 {
   margin: 0;
   font-size: 1.8rem;
+  color: #333;
 }
 
 .controls {
@@ -158,6 +163,12 @@ onMounted(() => {
   border: 1px solid #ddd;
   border-radius: 8px;
   font-size: 1rem;
+}
+
+.search-input:focus, .category-select:focus {
+  outline: none;
+  border-color: #ff6b00;
+  box-shadow: 0 0 0 2px rgba(255, 107, 0, 0.1);
 }
 
 .restaurants-grid {
@@ -194,6 +205,7 @@ onMounted(() => {
 .restaurant-info h3 {
   margin: 0 0 8px;
   font-size: 1.1rem;
+  color: #333;
 }
 
 .description {
@@ -236,6 +248,7 @@ onMounted(() => {
   border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
+  transition: background 0.2s;
 }
 
 .pagination-btn:hover {
@@ -244,9 +257,18 @@ onMounted(() => {
 
 .page-info {
   font-weight: 500;
+  color: #555;
 }
 
 @media (max-width: 768px) {
+  .hero {
+    padding: 50px 20px;
+  }
+
+  .hero h1 {
+    font-size: 1.8rem;
+  }
+
   .section-header {
     flex-direction: column;
     align-items: stretch;

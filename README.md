@@ -16,7 +16,7 @@ Plataforma de comida basada en ubicación. Usuarios pueden explorar restaurantes
 ```bash
 cd backend
 npm install
-npm install express cors dotenv @supabase/supabase-js bcryptjs jsonwebtoken
+ 
 npm start
 ```
 

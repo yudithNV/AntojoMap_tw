@@ -1,45 +1,72 @@
 <template>
   <DashboardLayout>
-    <div class="page-header">
-      <h1>Mi perfil</h1>
-      <p class="subtitle">Tu información personal en AntojoMap</p>
-    </div>
+    <div class="profile-page">
+      <!-- Header decorativo -->
+      <div class="profile-header-bg"></div>
 
-    <div class="profile-wrapper">
-      <!-- Avatar + nombre -->
-      <div class="profile-left">
-        <div class="avatar">
-          <img v-if="perfil.foto_perfil" :src="perfil.foto_perfil" alt="foto de perfil" class="avatar-img" />
-          <User v-else :size="48" stroke-width="1.5" />
-        </div>
-        <h2 class="profile-name">{{ perfil.nombre }}</h2>
-        <p class="profile-email">{{ perfil.email }}</p>
-        <p v-if="perfil.bio" class="profile-bio">{{ perfil.bio }}</p>
-
-        <button class="btn-edit" @click="abrirEditor">
-          <Pen :size="16" :stroke-width="2" class="btn-icon" /> 
-          Editar perfil
-        </button>
+      <div class="page-header">
+        <h1>Mi perfil</h1>
+        <p class="subtitle">Tu información personal en AntojoMap</p>
       </div>
 
-      <!-- Info -->
-      <div class="profile-right">
-        <div class="info-card">
-          <div class="info-row">
-            <span class="info-label">Nombre</span>
-            <span class="info-value">{{ perfil.nombre }}</span>
+      <!-- SECCIÓN DE PROMOCIONES DE CUMPLEAÑOS -->
+      <div v-if="esCumpleanos" class="birthday-banner">
+        <div class="birthday-text">
+          <strong>¡Feliz Cumpleaños!</strong>
+          <span>Hoy es un día especial. Disfruta tu día al máximo.</span>
+        </div>
+      </div>
+
+      <div class="profile-wrapper">
+        <!-- Lado izquierdo - Avatar y acciones -->
+        <div class="profile-left">
+          <div class="avatar-container">
+            <div class="avatar">
+              <img v-if="perfil.foto_perfil" :src="perfil.foto_perfil" alt="foto de perfil" class="avatar-img" />
+              <User v-else :size="56" stroke-width="1.5" class="avatar-icon" />
+            </div>
+            <div class="avatar-decoration"></div>
           </div>
-          <div class="info-row">
-            <span class="info-label">Email</span>
-            <span class="info-value">{{ perfil.email }}</span>
+          <h2 class="profile-name">{{ perfil.nombre }}</h2>
+          <p class="profile-email">{{ perfil.email }}</p>
+          <div v-if="perfil.bio" class="profile-bio-wrapper">
+            <p class="profile-bio">{{ perfil.bio }}</p>
           </div>
-          <div class="info-row">
-            <span class="info-label">Bio</span>
-            <span class="info-value">{{ perfil.bio || 'Sin bio' }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Miembro desde</span>
-            <span class="info-value">{{ formatFecha(perfil.creado_en) }}</span>
+
+          <button class="btn-edit" @click="abrirEditor">
+            <Pen :size="16" :stroke-width="2" class="btn-icon" /> 
+            Editar perfil
+          </button>
+        </div>
+
+        <!-- Lado derecho - Información detallada -->
+        <div class="profile-right">
+          <div class="info-card">
+            <div class="info-card-header">
+              <h3>Información personal</h3>
+            </div>
+            <div class="info-card-content">
+              <div class="info-row">
+                <div class="info-label">Nombre completo</div>
+                <div class="info-value">{{ perfil.nombre }}</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">Correo electrónico</div>
+                <div class="info-value">{{ perfil.email }}</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">Biografía</div>
+                <div class="info-value">{{ perfil.bio || 'Sin bio aún' }}</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">Fecha de nacimiento</div>
+                <div class="info-value">{{ perfil.cumpleanos ? formatearFechaCumple(perfil.cumpleanos) : 'No especificado' }}</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">Miembro desde</div>
+                <div class="info-value">{{ formatFecha(perfil.creado_en) }}</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -49,21 +76,38 @@
     <Teleport to="body">
       <div v-if="editando" class="modal-overlay" @click.self="closeModal">
         <div class="modal">
-          <h2>Editar perfil</h2>
+          <div class="modal-header">
+            <h2>Editar perfil</h2>
+            <button class="modal-close" @click="closeModal">×</button>
+          </div>
 
-          <label>Nombre</label>
-          <input v-model="form.nombre" type="text" class="input" />
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Nombre completo</label>
+              <input v-model="form.nombre" type="text" class="input" placeholder="Tu nombre" />
+            </div>
 
-          <label>Foto de perfil</label>
-          <ImageUploader v-model="form.foto_perfil" />
+            <div class="form-group">
+              <label>Foto de perfil</label>
+              <ImageUploader v-model="form.foto_perfil" />
+            </div>
 
-          <label>Bio</label>
-          <textarea v-model="form.bio" class="input textarea" placeholder="Cuéntanos algo sobre ti..." />
+            <div class="form-group">
+              <label>Biografía</label>
+              <textarea v-model="form.bio" class="input textarea" placeholder="Cuéntanos algo sobre ti..." rows="3" />
+            </div>
 
-          <div class="modal-actions">
+            <div class="form-group">
+              <label>Fecha de nacimiento</label>
+              <input v-model="form.cumpleanos" type="date" class="input" />
+              <span class="input-hint">Usaremos esto para celebrar tu día especial</span>
+            </div>
+          </div>
+
+          <div class="modal-footer">
             <button class="btn-cancel" @click="closeModal">Cancelar</button>
             <button class="btn-save" @click="openConfirmModal" :disabled="guardando">
-              {{ guardando ? 'Guardando...' : 'Guardar' }}
+              {{ guardando ? 'Guardando...' : 'Guardar cambios' }}
             </button>
           </div>
 
@@ -72,7 +116,7 @@
       </div>
     </Teleport>
 
-    <!-- ===== MODAL DE CONFIRMACIÓN ===== -->
+    <!-- Modal de confirmación -->
     <Teleport to="body">
       <Transition name="modal-fade">
         <div v-if="showConfirmModal" class="confirm-overlay" @click.self="closeConfirmModal">
@@ -86,10 +130,10 @@
                 </svg>
               </div>
             </div>
-            <h3 class="confirm-title">¿Estás seguro de guardar los cambios?</h3>
+            <h3 class="confirm-title">¿Guardar los cambios?</h3>
             <p class="confirm-message">Los cambios se aplicarán a tu perfil inmediatamente.</p>
             <div class="confirm-actions">
-              <button class="confirm-btn cancel" @click="closeConfirmModal">No, cancelar</button>
+              <button class="confirm-btn cancel" @click="closeConfirmModal">Cancelar</button>
               <button class="confirm-btn save" @click="confirmGuardar">Sí, guardar</button>
             </div>
           </div>
@@ -97,7 +141,7 @@
       </Transition>
     </Teleport>
 
-    <!-- ===== TOAST DE ÉXITO ===== -->
+    <!-- Toast de éxito -->
     <Teleport to="body">
       <Transition name="toast-slide">
         <div v-if="showSuccessToast" class="success-toast">
@@ -108,7 +152,8 @@
               </svg>
             </div>
             <div class="toast-message">
-              <strong>¡Cambios guardados exitosamente!</strong>
+              <strong>¡Perfil actualizado!</strong>
+              <span>Tus cambios se guardaron correctamente</span>
             </div>
           </div>
         </div>
@@ -133,15 +178,19 @@ const perfil = ref({
   email: '',
   bio: '',
   foto_perfil: '',
+  cumpleanos: '',
   creado_en: ''
 })
 const editando = ref(false)
 const guardando = ref(false)
 const error = ref('')
+const esCumpleanos = ref(false)
+
 const form = ref({
   nombre: '',
   foto_perfil: '',
-  bio: ''
+  bio: '',
+  cumpleanos: ''
 })
 
 // ========== MODAL DE CONFIRMACIÓN ==========
@@ -173,6 +222,12 @@ const cargarPerfil = async () => {
     const data = await usuariosService.getMiPerfil()
     perfil.value = data
     authStore.actualizarPerfil(data)
+    
+    if (data.cumpleanos) {
+      const hoy = new Date()
+      const cumple = new Date(data.cumpleanos)
+      esCumpleanos.value = hoy.getMonth() === cumple.getMonth() && hoy.getDate() === cumple.getDate()
+    }
   } catch (e) {
     console.error('Error cargando perfil:', e)
   }
@@ -182,7 +237,8 @@ const abrirEditor = () => {
   form.value = {
     nombre: perfil.value.nombre,
     foto_perfil: perfil.value.foto_perfil || '',
-    bio: perfil.value.bio || ''
+    bio: perfil.value.bio || '',
+    cumpleanos: perfil.value.cumpleanos || ''
   }
   error.value = ''
   editando.value = true
@@ -193,7 +249,6 @@ const closeModal = () => {
   error.value = ''
 }
 
-// Función real de guardado (ahora llamada desde el modal de confirmación)
 const ejecutarGuardado = async () => {
   if (!form.value.nombre.trim()) {
     error.value = 'El nombre es obligatorio'
@@ -205,16 +260,10 @@ const ejecutarGuardado = async () => {
 
   try {
     const data = await usuariosService.editarPerfil(form.value)
-    
     perfil.value = { ...perfil.value, ...data }
     authStore.actualizarPerfil(data)
-    
-    // Cerrar ambos modales
     closeModal()
-    
-    // Mostrar toast de éxito
     showToast()
-    
     return true
   } catch (e) {
     error.value = e.message || 'Error al guardar, intenta de nuevo.'
@@ -224,7 +273,6 @@ const ejecutarGuardado = async () => {
   }
 }
 
-// Manejar clic en "Sí, guardar" del modal de confirmación
 const confirmGuardar = async () => {
   closeConfirmModal()
   await ejecutarGuardado()
@@ -239,13 +287,22 @@ const formatFecha = (fecha) => {
   })
 }
 
-// ========== LIFECYCLE ==========
+const formatearFechaCumple = (fecha) => {
+  if (!fecha) return 'No especificado'
+  return new Date(fecha).toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  })
+}
+
 onMounted(async () => {
   perfil.value = {
     nombre: authStore.nombre || '',
     email: authStore.email || '',
     foto_perfil: authStore.foto || '',
     bio: authStore.bio || '',
+    cumpleanos: authStore.cumpleanos || '',
     creado_en: ''
   }
   await cargarPerfil()
@@ -253,51 +310,116 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.profile-page {
+  position: relative;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Header decorativo */
+.profile-header-bg {
+  position: absolute;
+  top: -30px;
+  left: -24px;
+  right: -24px;
+  height: 220px;
+  background: linear-gradient(135deg, #481827 0%, #6B1B3C 100%);
+  border-radius: 0 0 48px 48px;
+  z-index: 0;
+}
+
 .page-header {
-  margin-bottom: 30px;
+  position: relative;
+  z-index: 2;
+  margin-bottom: 40px;
+  padding-top: 30px;
 }
 
 .page-header h1 {
-  color: var(--plum);
-  font-size: 2rem;
-  margin: 0 0 8px 0;
+  color: white;
+  font-size: 2.2rem;
+  margin: 0 0 10px 0;
+  font-weight: 700;
 }
 
 .subtitle {
-  color: var(--dusty-coral);
-  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1rem;
   margin: 0;
 }
 
+/* Banner de cumpleaños - SIN EMOJI */
+.birthday-banner {
+  position: relative;
+  z-index: 2;
+  background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+  border-radius: 24px;
+  padding: 18px 28px;
+  margin-bottom: 40px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.birthday-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.birthday-text strong {
+  font-size: 1.1rem;
+  color: #92400E;
+}
+
+.birthday-text span {
+  font-size: 0.9rem;
+  color: #B45309;
+}
+
+/* Profile wrapper */
 .profile-wrapper {
+  position: relative;
+  z-index: 2;
   display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 24px;
+  grid-template-columns: 340px 1fr;
+  gap: 32px;
   align-items: start;
 }
 
+/* Lado izquierdo */
 .profile-left {
   background: white;
-  border-radius: 15px;
-  padding: 32px 24px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  border-radius: 32px;
+  padding: 36px 28px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 18px;
   text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.profile-left:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.12);
+}
+
+.avatar-container {
+  position: relative;
 }
 
 .avatar {
-  width: 90px;
-  height: 90px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--blush), var(--dusty-coral));
+  background: linear-gradient(135deg, #D893A1, #E8D5B5);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
   overflow: hidden;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 }
 
 .avatar-img {
@@ -306,73 +428,117 @@ onMounted(async () => {
   object-fit: cover;
 }
 
+.avatar-icon {
+  color: white;
+}
+
+.avatar-decoration {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  right: -6px;
+  bottom: -6px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #481827, #6B1B3C);
+  z-index: 1;
+  opacity: 0.25;
+}
+
 .profile-name {
-  font-size: 1.2rem;
-  color: var(--plum);
+  font-size: 1.5rem;
+  color: #481827;
   margin: 0;
   font-weight: 700;
 }
 
 .profile-email {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: #888;
   margin: 0;
 }
 
+.profile-bio-wrapper {
+  background: #f8f6f4;
+  border-radius: 18px;
+  padding: 14px 18px;
+  width: 100%;
+  margin-top: 4px;
+}
+
 .profile-bio {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: #666;
   margin: 0;
   font-style: italic;
+  line-height: 1.5;
 }
 
 .btn-edit {
   margin-top: 8px;
   width: 100%;
-  padding: 10px;
-  border: 2px solid var(--plum);
-  background: transparent;
-  color: var(--plum);
-  border-radius: 10px;
-  font-size: 0.9rem;
+  padding: 14px;
+  background: linear-gradient(135deg, #481827, #6B1B3C);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-}
-
-.btn-icon {
-  display: inline-block;
+  gap: 10px;
 }
 
 .btn-edit:hover {
-  background: linear-gradient(135deg, var(--blush), var(--dusty-coral));
-  color: var(--plum);
-  border-color: transparent;
+  background: linear-gradient(135deg, #5a1a2e, #7d2142);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(72, 24, 39, 0.3);
 }
 
+/* Lado derecho */
 .profile-right {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 .info-card {
   background: white;
-  border-radius: 15px;
-  padding: 24px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  border-radius: 32px;
+  overflow: hidden;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
+}
+
+.info-card-header {
+  padding: 24px 32px;
+  background: #faf8f6;
+  border-bottom: 1px solid #f0ede7;
+}
+
+.info-card-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #481827;
+}
+
+.info-card-content {
+  padding: 8px 0;
 }
 
 .info-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 0;
-  border-bottom: 1px solid #f5f5f5;
+  padding: 18px 32px;
+  border-bottom: 1px solid #f5f2ef;
+  transition: background 0.2s;
+}
+
+.info-row:hover {
+  background: #fefaf8;
 }
 
 .info-row:last-child {
@@ -382,19 +548,23 @@ onMounted(async () => {
 .info-label {
   font-weight: 600;
   color: #666;
-  font-size: 0.9rem;
-}
-
-.info-value {
-  color: var(--plum);
   font-size: 0.95rem;
 }
 
-/* ===== MODAL DE EDICIÓN ===== */
+.info-value {
+  color: #481827;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-align: right;
+  max-width: 55%;
+  word-break: break-word;
+}
+
+/* Modal de edición */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -405,61 +575,106 @@ onMounted(async () => {
 
 .modal {
   background: white;
-  border-radius: 1.5rem;
-  padding: 1.75rem;
+  border-radius: 32px;
   width: 100%;
-  max-width: 460px;
+  max-width: 520px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.modal-header {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 28px;
+  background: linear-gradient(135deg, #481827, #6B1B3C);
 }
 
-.modal h2 {
-  margin: 0 0 8px;
-  color: var(--plum);
+.modal-header h2 {
+  margin: 0;
+  color: white;
   font-size: 1.4rem;
+  font-weight: 700;
 }
 
-label {
-  font-size: 0.88rem;
+.modal-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.modal-body {
+  padding: 28px;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: #666;
+  color: #481827;
+  margin-bottom: 8px;
 }
 
 .input {
   width: 100%;
-  padding: 10px 14px;
+  padding: 14px 18px;
   border: 1.5px solid #e8e8e8;
-  border-radius: 10px;
+  border-radius: 16px;
   font-size: 0.95rem;
   font-family: inherit;
   outline: none;
+  transition: all 0.2s;
   box-sizing: border-box;
-  transition: border-color 0.2s;
 }
 
 .input:focus {
-  border-color: var(--plum);
-  outline: none;
+  border-color: #481827;
+  box-shadow: 0 0 0 3px rgba(72, 24, 39, 0.1);
 }
 
 .textarea {
   resize: vertical;
-  min-height: 90px;
+  min-height: 100px;
 }
 
-.modal-actions {
+.input-hint {
+  display: block;
+  font-size: 0.75rem;
+  color: #aaa;
+  margin-top: 6px;
+}
+
+.modal-footer {
   display: flex;
-  gap: 12px;
-  margin-top: 8px;
+  gap: 14px;
+  padding: 20px 28px;
+  background: #faf8f6;
+  border-top: 1px solid #f0ede7;
 }
 
 .btn-cancel {
   flex: 1;
-  padding: 10px;
+  padding: 14px;
   border: 1.5px solid #e8e8e8;
-  background: transparent;
-  border-radius: 10px;
+  background: white;
+  border-radius: 50px;
   font-weight: 600;
   cursor: pointer;
   color: #666;
@@ -472,18 +687,19 @@ label {
 
 .btn-save {
   flex: 1;
-  padding: 10px;
+  padding: 14px;
   border: none;
-  background: var(--plum);
+  background: linear-gradient(135deg, #481827, #6B1B3C);
   color: white;
-  border-radius: 10px;
+  border-radius: 50px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
 .btn-save:hover:not(:disabled) {
-  background: #6b2540;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(72, 24, 39, 0.3);
 }
 
 .btn-save:disabled {
@@ -495,13 +711,14 @@ label {
   color: #c0392b;
   font-size: 0.85rem;
   margin: 0;
+  padding: 0 28px 24px;
 }
 
-/* ===== MODAL DE CONFIRMACIÓN ===== */
+/* Modal de confirmación */
 .confirm-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -512,8 +729,8 @@ label {
 
 .confirm-modal {
   background: white;
-  border-radius: 1.5rem;
-  padding: 1.75rem;
+  border-radius: 32px;
+  padding: 32px;
   width: 100%;
   max-width: 400px;
   text-align: center;
@@ -537,14 +754,14 @@ label {
 }
 
 .confirm-title {
-  font-size: 1.25rem;
+  font-size: 1.3rem;
   font-weight: 700;
   color: #1f2937;
   margin-bottom: 0.5rem;
 }
 
 .confirm-message {
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   color: #6b7280;
   margin-bottom: 1.5rem;
   line-height: 1.5;
@@ -552,15 +769,15 @@ label {
 
 .confirm-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: 1rem;
   justify-content: center;
 }
 
 .confirm-btn {
-  padding: 0.6rem 1.5rem;
-  border-radius: 9999px;
+  padding: 0.7rem 1.8rem;
+  border-radius: 50px;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s ease;
   border: none;
@@ -576,53 +793,62 @@ label {
 }
 
 .confirm-btn.save {
-  background-color: var(--plum);
+  background: linear-gradient(135deg, #481827, #6B1B3C);
   color: white;
 }
 
 .confirm-btn.save:hover {
-  background-color: #6b2540;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(72, 24, 39, 0.3);
 }
 
-/* ===== TOAST DE ÉXITO ===== */
+/* Toast de éxito */
 .success-toast {
   position: fixed;
-  top: 24px;
-  right: 24px;
+  bottom: 30px;
+  right: 30px;
   z-index: 1200;
-  background-color: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: 12px;
-  padding: 12px 20px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
-  min-width: 280px;
+  background: linear-gradient(135deg, #10B981, #059669);
+  border-radius: 20px;
+  padding: 16px 24px;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.15);
+  min-width: 300px;
 }
 
 .toast-content {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .toast-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  background-color: #dcfce7;
+  width: 32px;
+  height: 32px;
+  background-color: rgba(255, 255, 255, 0.2);
   border-radius: 50%;
-  color: #16a34a;
+  color: white;
+}
+
+.toast-message {
+  display: flex;
+  flex-direction: column;
 }
 
 .toast-message strong {
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  color: #166534;
-  display: block;
+  color: white;
 }
 
-/* ===== TRANSICIONES ===== */
+.toast-message span {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Transiciones */
 .modal-fade-enter-active,
 .modal-fade-leave-active {
   transition: opacity 0.25s ease;
@@ -655,20 +881,75 @@ label {
   transform: translateX(100%);
 }
 
-/* ===== RESPONSIVE ===== */
-@media (max-width: 768px) {
+/* Responsive */
+@media (max-width: 900px) {
+  .profile-page {
+    padding: 0 20px;
+  }
+
   .profile-wrapper {
     grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .profile-left {
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .profile-header-bg {
+    left: -20px;
+    right: -20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .profile-page {
+    padding: 0 16px;
+  }
+
+  .profile-header-bg {
+    height: 180px;
+    left: -16px;
+    right: -16px;
+  }
+
+  .page-header h1 {
+    font-size: 1.6rem;
+  }
+
+  .profile-left {
+    padding: 28px 20px;
+  }
+
+  .info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 16px 24px;
+  }
+
+  .info-value {
+    text-align: left;
+    max-width: 100%;
+  }
+
+  .info-card-header {
+    padding: 18px 24px;
+  }
+
+  .info-card-header h3 {
+    font-size: 1rem;
   }
 
   .success-toast {
-    top: 16px;
+    bottom: 16px;
     right: 16px;
     left: 16px;
     min-width: auto;
   }
 
-  .confirm-modal {
+  .modal {
     margin: 1rem;
   }
 }

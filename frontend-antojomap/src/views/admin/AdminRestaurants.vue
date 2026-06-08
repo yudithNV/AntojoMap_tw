@@ -114,64 +114,273 @@ onMounted(() => loadRestaurantes())
 </script>
 
 <style scoped>
-.page-header { margin-bottom: 20px; }
-.page-header h1 { color: var(--plum); font-size: 2rem; margin: 0 0 6px 0; }
-.subtitle { color: var(--dusty-coral); font-size: 0.95rem; margin: 0; }
+.page-header { 
+  margin-bottom: 28px; 
+}
 
-.stats-row { display: flex; gap: 16px; margin-bottom: 24px; }
+.page-header h1 { 
+  color: #481827; 
+  font-size: 1.75rem; 
+  font-weight: 700;
+  margin: 0 0 6px 0; 
+  letter-spacing: -0.3px;
+}
+
+.subtitle { 
+  color: #D893A1; 
+  font-size: 0.88rem; 
+  margin: 0; 
+}
+
+/* ===== STATS ROW - OCUPA TODO EL ANCHO HORIZONTAL ===== */
+.stats-row { 
+  display: flex; 
+  flex-wrap: wrap;
+  gap: 14px; 
+  margin-bottom: 28px; 
+}
+
 .stat-card {
-  background: white; border-radius: 12px; padding: 16px 24px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
-  display: flex; flex-direction: column; align-items: center; min-width: 90px;
+  background: white; 
+  border-radius: 18px; 
+  padding: 18px 24px; 
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  flex: 1;
+  min-width: 100px;
+  transition: all 0.25s ease;
+  cursor: default;
 }
-.stat-number { font-size: 1.8rem; font-weight: 700; color: var(--plum); }
-.stat-label { font-size: 0.8rem; color: var(--dusty-coral); margin-top: 2px; }
 
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.05);
+  border-color: rgba(216, 147, 161, 0.15);
+}
+
+.stat-number { 
+  font-size: 1.9rem; 
+  font-weight: 800; 
+  color: #481827; 
+  line-height: 1.2;
+}
+
+.stat-label { 
+  font-size: 0.75rem; 
+  color: #D893A1; 
+  font-weight: 500; 
+  letter-spacing: 0.3px;
+  margin-top: 4px;
+}
+
+/* ===== CONTENEDOR PRINCIPAL ===== */
 .content-container {
-  background: white; border-radius: 15px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.08); overflow: hidden;
+  background: white; 
+  border-radius: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f5f2ef;
+  overflow: hidden;
 }
-.loading, .content-placeholder {
-  padding: 60px 20px; text-align: center; color: var(--dusty-coral);
-  display: flex; flex-direction: column; align-items: center; gap: 16px;
-}
-.table-container { overflow-x: auto; }
-.restaurants-table { width: 100%; border-collapse: collapse; }
-.restaurants-table thead { background-color: #f5f5f5; border-bottom: 2px solid #e0e0e0; }
-.restaurants-table th {
-  padding: 15px; text-align: left; font-weight: 600; color: var(--plum); font-size: 0.9rem;
-}
-.restaurants-table td { padding: 12px 15px; border-bottom: 1px solid #e0e0e0; color: #333; }
-.restaurants-table tbody tr:hover { background-color: #fafafa; }
 
+.loading, .content-placeholder {
+  padding: 60px 20px; 
+  text-align: center; 
+  color: #D893A1;
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  gap: 14px;
+}
+
+/* ===== TABLA ===== */
+.table-container { 
+  overflow-x: auto; 
+}
+
+.restaurants-table { 
+  width: 100%; 
+  border-collapse: collapse; 
+  min-width: 800px;
+}
+
+/* CABECERA CON GRADIENTE ROSA COMO LA TABLA DE USUARIOS */
+/* CABECERA DE TABLA EN COLOR VINO */
+.restaurants-table thead {
+  background: #481827;
+  border-bottom: 1px solid #5c2a3a;
+}
+
+.restaurants-table th {
+  padding: 14px 20px;
+  text-align: left;
+  font-weight: 600;
+  color: white;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.restaurants-table td { 
+  padding: 14px 20px; 
+  border-bottom: 1px solid #f5f2ef; 
+  color: #555;
+  font-size: 0.85rem;
+}
+
+.restaurants-table tbody tr { 
+  transition: all 0.2s ease;
+}
+
+.restaurants-table tbody tr:hover { 
+  background-color: #FAF8F6;
+}
+
+/* ===== FILA CLICKEABLE ===== */
 .clickable-row {
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .clickable-row:hover {
-  background-color: #f0f0f0;
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+  background-color: #FAF8F6;
 }
 
-.rest-cell { display: flex; align-items: center; gap: 12px; }
+/* ===== CELDA DE RESTAURANTE ===== */
+.rest-cell { 
+  display: flex; 
+  align-items: center; 
+  gap: 12px; 
+}
+
 .avatar {
-  width: 38px; height: 38px; border-radius: 50%; overflow: hidden;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 700; color: white; font-size: 1rem; flex-shrink: 0;
+  width: 42px; 
+  height: 42px; 
+  border-radius: 50%; 
+  overflow: hidden;
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  font-weight: 600; 
+  color: white; 
+  font-size: 0.95rem; 
+  flex-shrink: 0;
+  transition: all 0.2s ease;
 }
-.avatar img { width: 100%; height: 100%; object-fit: cover; }
-.rest-info { display: flex; flex-direction: column; }
-.rest-nombre { font-weight: 600; font-size: 0.9rem; }
-.rest-id { font-size: 0.75rem; color: #999; }
 
+.avatar:hover {
+  transform: scale(1.02);
+  filter: brightness(1.02);
+}
+
+.avatar img { 
+  width: 100%; 
+  height: 100%; 
+  object-fit: cover; 
+}
+
+.rest-info { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 2px;
+}
+
+.rest-nombre { 
+  font-weight: 700; 
+  font-size: 0.88rem;
+  color: #481827;
+}
+
+.rest-id { 
+  font-size: 0.68rem; 
+  color: #aaa;
+  font-family: monospace;
+}
+
+/* ===== BADGE DE ESTADO ===== */
 .estado-badge {
-  display: inline-block; padding: 4px 12px;
-  border-radius: 20px; font-size: 0.8rem; font-weight: 600;
+  display: inline-block; 
+  padding: 4px 12px;
+  border-radius: 30px; 
+  font-size: 0.68rem; 
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  transition: all 0.2s ease;
 }
-.estado-badge.activo { background-color: #e8f5e9; color: #2e7d32; }
-.estado-badge:not(.activo) { background-color: #ffebee; color: #c62828; }
 
-.error-message { padding: 15px; background-color: #ffebee; color: #c62828; text-align: center; }
-.error-message p { margin: 0; }
+.estado-badge.activo { 
+  background-color: #D1FAE5; 
+  color: #059669; 
+}
+
+.estado-badge:not(.activo) { 
+  background-color: #FEE2E2; 
+  color: #DC2626; 
+}
+
+.estado-badge:hover {
+  transform: scale(1.02);
+}
+
+/* ===== ERROR ===== */
+.error-message { 
+  padding: 15px; 
+  background-color: #FEE2E2; 
+  color: #DC2626; 
+  text-align: center;
+  margin: 0;
+  border-radius: 14px;
+}
+
+.error-message p { 
+  margin: 0; 
+  font-size: 0.85rem;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .stats-row {
+    gap: 10px;
+  }
+  
+  .stat-card {
+    padding: 12px 14px;
+  }
+  
+  .stat-number {
+    font-size: 1.5rem;
+  }
+  
+  .stat-label {
+    font-size: 0.68rem;
+  }
+  
+  .restaurants-table th,
+  .restaurants-table td {
+    padding: 10px 12px;
+  }
+  
+  .avatar {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .rest-nombre {
+    font-size: 0.82rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
 </style>

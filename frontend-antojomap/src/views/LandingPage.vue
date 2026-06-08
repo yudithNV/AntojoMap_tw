@@ -4,13 +4,16 @@
     
     <header class="hero">
       <div class="hero-wrapper">
+        <!-- 🔥 BLOQUE IZQUIERDO - REESTRUCTURADO 🔥 -->
         <div class="hero-content">
-          <span class="hero-badge">
-            <Zap :size="16" stroke-width="2" />
-            ¡TU RULETA GASTRONÓMICA LOCAL!
-          </span>
-          <h1>¿Qué <span class="highlight">comerás</span> <br> hoy?</h1>
-          <p class="hero-description">Descubre restaurantes cerca de ti o deja que la Ruleta del Antojo decida por ti.</p>
+          <div class="hero-text-container">
+            <span class="hero-badge">
+              <Zap :size="16" stroke-width="2" />
+              ¡TU RULETA GASTRONÓMICA LOCAL!
+            </span>
+            <h1>¿Qué <span class="highlight">comerás</span> hoy?</h1>
+            <p class="hero-description">Descubre restaurantes cerca de ti o deja que la Ruleta del Antojo decida por ti.</p>
+          </div>
           
           <div class="hero-actions">
             <button class="btn-primary" @click="irARuleta">
@@ -24,31 +27,27 @@
           </div>
 
           <div class="social-proof">
-            <span class="avatar-group">
+            <div class="avatar-group">
               <Users :size="24" stroke-width="2" />
-            </span>
+            </div>
             <span class="social-text">22,000+ foodistas ya disfrutan AntojoMap</span>
           </div>
         </div>
 
         <div class="hero-visual">
-          <!-- 🔥 v-show en lugar de v-if - el componente ya está en DOM al montarse 🔥 -->
           <WheelSpinner v-show="!mostrarMapa" />
           <AsyncMapaRestaurantes v-if="mostrarMapa" />
         </div>
       </div>
     </header>
 
-    <!-- 🔥 Componentes cargados de forma diferida (lazy loading) 🔥 -->
     <AsyncCategoriesSection />
     <AsyncRecommendedSection />
 
     <footer class="footer">
       <div class="footer-content">
         <p>&copy; 2026 AntojoMap - Encuentra tu comida favorita</p>
-        <div class="footer-links">
-          
-        </div>
+        <div class="footer-links"></div>
       </div>
     </footer>
   </div>
@@ -60,8 +59,6 @@ import { useRouter } from 'vue-router'
 import { Zap, MapPin, Users } from 'lucide-vue-next'
 import Navbar from '../components/Navbar.vue'
 
-// 🔥 COMPONENTES PESADOS CARGADOS DE FORMA DIFERIDA (LAZY LOADING) 🔥
-// Esto evita que bloqueen el renderizado inicial de la página
 const WheelSpinner = defineAsyncComponent(() => import('../components/WheelSpinner.vue'))
 const AsyncMapaRestaurantes = defineAsyncComponent(() => import('@/components/MapaRestaurantes.vue'))
 const AsyncCategoriesSection = defineAsyncComponent(() => import('../components/CategoriesSection.vue'))
@@ -78,11 +75,8 @@ const toggleMapa = () => {
   mostrarMapa.value = !mostrarMapa.value
 }
 
-// 🔥 PREFETCH DE COMPONENTES PESADOS - los carga en segundo plano después del renderizado inicial
 onMounted(() => {
-  // Esto asegura que los componentes ya estén en caché cuando el usuario los necesite
   requestIdleCallback(() => {
-    // Precargar componentes que podrían necesitarse después
     import('../components/WheelSpinner.vue')
     import('@/components/MapaRestaurantes.vue')
   })
@@ -125,6 +119,19 @@ onMounted(() => {
   gap: 60px;
 }
 
+/* ===== BLOQUE IZQUIERDO - REESTRUCTURADO ===== */
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.hero-text-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .hero-badge {
   display: inline-flex;
   align-items: center;
@@ -132,85 +139,81 @@ onMounted(() => {
   background-color: rgba(255, 255, 255, 0.15);
   color: #E8D5B5;
   padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 0.8rem;
+  border-radius: 30px;
+  font-size: 0.75rem;
   font-weight: 700;
-  margin-bottom: 24px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
   font-family: var(--font-family);
   backdrop-filter: blur(4px);
+  width: fit-content;
 }
 
 h1 {
-  font-size: 3.5rem;
+  font-size: 3.8rem;
   color: #FFF8F0;
-  margin: 0 0 20px 0;
-  line-height: 1.1;
-  font-weight: 700;
+  margin: 0;
+  line-height: 1.15;
+  font-weight: 800;
   font-family: var(--font-family-display);
+  letter-spacing: -0.5px;
 }
 
 .highlight {
   color: #E8D5B5;
-  text-decoration: none;
   position: relative;
+  display: inline-block;
 }
 
-.highlight::after {
-  content: '';
-  position: absolute;
-  bottom: -8px;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background-color: #E8D5B5;
-  border-radius: 2px;
-}
+/* 🔥 LÍNEA DECORATIVA ELIMINADA - ya no hay highlight::after 🔥 */
 
 .hero-description {
-  font-size: 1.1rem;
-  color: #F0E0D0;
-  margin: 0 0 32px 0;
+  font-size: 1.05rem;
+  color: rgba(240, 224, 208, 0.9);
+  margin: 0;
   line-height: 1.6;
   font-weight: 400;
+  max-width: 90%;
 }
 
 .hero-actions {
   display: flex;
-  gap: 16px;
-  margin-bottom: 40px;
+  gap: 18px;
+  align-items: center;
+  margin-top: 4px;
 }
 
-.btn-primary, .btn-secondary {
-  padding: 12px 28px;
+.btn-primary,
+.btn-secondary {
+  padding: 14px 32px;
   border-radius: 50px;
   border: none;
   font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.25s ease;
   font-family: var(--font-family);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
+  min-width: 180px;
 }
 
 .btn-primary {
   background: linear-gradient(135deg, #E8D5B5 0%, #C4A77D 100%);
   color: #4a122a;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
 }
 
 .btn-primary:hover {
   background: linear-gradient(135deg, #F0E5D0 0%, #D4B88C 100%);
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
 }
 
 .btn-primary:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
 }
 
 .btn-secondary {
@@ -221,30 +224,42 @@ h1 {
 }
 
 .btn-secondary:hover {
-  background-color: rgba(232, 213, 181, 0.15);
+  background-color: rgba(232, 213, 181, 0.12);
   transform: translateY(-2px);
   border-color: #F0E5D0;
   color: #F0E5D0;
 }
 
+.btn-secondary:active {
+  transform: scale(0.97);
+}
+
 .social-proof {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+  margin-top: 8px;
+  padding-top: 8px;
 }
 
 .avatar-group {
-  font-size: 1.8rem;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   color: #E8D5B5;
+  background: rgba(232, 213, 181, 0.12);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
 }
 
 .social-text {
   font-size: 0.9rem;
-  color: #F0E0D0;
+  color: rgba(240, 224, 208, 0.85);
   font-weight: 500;
 }
+
+/* ===== FIN BLOQUE IZQUIERDO ===== */
 
 .hero-visual {
   display: flex;
@@ -297,7 +312,6 @@ h1 {
   color: #E8D5B5;
 }
 
-/* Ajustes para componentes internos */
 :deep(.category-card),
 :deep(.recommended-card) {
   background: rgba(255, 255, 255, 0.95);
@@ -330,7 +344,7 @@ h1 {
   }
 
   h1 {
-    font-size: 2.2rem;
+    font-size: 2.5rem;
   }
 
   .hero {
@@ -339,15 +353,46 @@ h1 {
 
   .hero-actions {
     flex-direction: column;
+    gap: 14px;
   }
 
-  .btn-primary, .btn-secondary {
+  .btn-primary,
+  .btn-secondary {
     width: 100%;
+    min-width: auto;
+  }
+
+  .hero-description {
+    max-width: 100%;
+  }
+
+  .hero-content {
+    gap: 24px;
+  }
+
+  .hero-text-container {
+    gap: 16px;
   }
 
   .footer-links {
     flex-direction: column;
     gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 2rem;
+  }
+
+  .hero-badge {
+    font-size: 0.65rem;
+    padding: 6px 12px;
+  }
+
+  .social-proof {
+    flex-wrap: wrap;
+    justify-content: flex-start;
   }
 }
 </style>

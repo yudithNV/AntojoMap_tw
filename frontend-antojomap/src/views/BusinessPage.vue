@@ -2,12 +2,13 @@
   <div class="business-page">
     <!-- 🔥 PARTE SUPERIOR - FONDO VINO 🔥 -->
     <div class="top-section">
-      <!-- Hero Section -->
+      <!-- Hero Section con carrusel GRANDE en el lado derecho -->
       <section class="hero-section">
         <div class="hero-grid">
+          <!-- LADO IZQUIERDO: Texto -->
           <div class="hero-content">
             <span class="hero-badge">
-              <Zap :size="16" stroke-width="2" />
+              <Zap :size="18" stroke-width="2" />
               AntojoMap para Restaurantes
             </span>
             <h1>Haz que tu restaurante sea el <span class="highlight">próximo antojo</span></h1>
@@ -36,23 +37,39 @@
             </div>
           </div>
 
-          <div class="hero-visual" aria-hidden="true">
+          <!-- LADO DERECHO: Carrusel -->
+          <div class="hero-visual">
             <div class="visual-circle"></div>
-            <div class="visual-card visual-card--small">
-              <div class="visual-icon">
-                <Zap :size="24" />
+            
+            <div 
+              class="right-carousel"
+              @mouseenter="pauseCarousel"
+              @mouseleave="startCarousel"
+            >
+              <div 
+                v-for="(image, index) in carouselImages" 
+                :key="index"
+                class="carousel-card"
+                :class="{ active: currentIndex === index }"
+              >
+                <div class="carousel-card-inner">
+                  <img :src="image.src" :alt="image.alt" class="carousel-image" />
+                  <div class="carousel-overlay">
+                    <h3>{{ image.title }}</h3>
+                    <p>{{ image.description }}</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <strong>Conexión directa</strong>
-                <p>Foodies curiosos llegan a tu menú.</p>
-              </div>
-            </div>
 
-            <div class="visual-mockup">
-              <div class="mockup-photo" aria-hidden="true"></div>
-              <div class="mockup-copy">
-                <span>✨ Imagen destacada</span>
-                <p>Una vista premium de tu ambiente y propuesta de valor.</p>
+              <!-- Indicadores - SIN MARGEN SUPERIOR -->
+              <div class="carousel-indicators">
+                <button
+                  v-for="(_, index) in carouselImages"
+                  :key="index"
+                  class="indicator-dot"
+                  :class="{ active: currentIndex === index }"
+                  @click="goToSlide(index)"
+                ></button>
               </div>
             </div>
           </div>
@@ -60,9 +77,8 @@
       </section>
     </div>
 
-    <!-- 🔥 PARTE INFERIOR - CON PATRÓN SVG 🔥 -->
+    <!-- 🔥 PARTE INFERIOR 🔥 -->
     <div class="bottom-section">
-      <!-- Beneficios Reales -->
       <section id="benefits" class="benefits-section">
         <div class="section-header">
           <span class="section-badge">Beneficios</span>
@@ -76,7 +92,6 @@
             </div>
             <h3>Visibilidad Gratis</h3>
             <p>Aparece en la Ruleta del Antojo y deja que el azar traiga nuevos clientes directamente a tu local.</p>
-            <div class="benefit-hover-effect"></div>
           </div>
 
           <div class="benefit-card">
@@ -85,7 +100,6 @@
             </div>
             <h3>Gestión de Menú</h3>
             <p>Sube tus platos estrella, edita precios y actualiza fotos en tiempo real desde tu propio panel intuitivo.</p>
-            <div class="benefit-hover-effect"></div>
           </div>
 
           <div class="benefit-card">
@@ -94,12 +108,10 @@
             </div>
             <h3>Feedback Real</h3>
             <p>Conoce lo que opinan tus clientes y monitorea el interés por tus platillos con datos precisos.</p>
-            <div class="benefit-hover-effect"></div>
           </div>
         </div>
       </section>
 
-      <!-- Sección Cero Costo -->
       <section class="no-cost-section">
         <div class="info-card">
           <div class="info-icon">💰</div>
@@ -113,7 +125,6 @@
         </div>
       </section>
 
-      <!-- CTA Final -->
       <section class="cta-section">
         <h2>¿Listo para encender los fogones?</h2>
         <p>El registro toma menos de 5 minutos. Crea tu cuenta y empieza a recibir visitas.</p>
@@ -127,35 +138,117 @@
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
 import { Users, BarChart3, Zap } from 'lucide-vue-next'
+
+const currentIndex = ref(0)
+const carouselInterval = ref(null)
+const isHovering = ref(false)
+
+const carouselImages = ref([
+  {
+    src: '/src/assets/imagen1.jpg',
+    alt: 'Plato destacado 1',
+    title: 'Sabores Auténticos',
+    description: 'Los mejores platos locales'
+  },
+  {
+    src: '/src/assets/imagen2.jpg',
+    alt: 'Plato destacado 2',
+    title: 'Cocina con Pasión',
+    description: 'Ingredientes frescos y de calidad'
+  },
+  {
+    src: '/src/assets/imagen3.jpg',
+    alt: 'Plato destacado 3',
+    title: 'Variedad para Todos',
+    description: 'Para todos los gustos'
+  },
+  {
+    src: '/src/assets/imagen4.jpg',
+    alt: 'Plato destacado 4',
+    title: 'Ambiente Único',
+    description: 'Experiencias inolvidables'
+  },
+  {
+    src: '/src/assets/imagen5.jpg',
+    alt: 'Plato destacado 5',
+    title: 'Tradición y Sabor',
+    description: 'Recetas auténticas'
+  },
+  {
+    src: '/src/assets/seis.jpg',
+    alt: 'Plato destacado 6',
+    title: 'Innovación Culinaria',
+    description: 'Nuevas tendencias'
+  }
+])
+
+const nextSlide = () => {
+  currentIndex.value = (currentIndex.value + 1) % carouselImages.value.length
+}
+
+const goToSlide = (index) => {
+  currentIndex.value = index
+  resetCarouselTimer()
+}
+
+const startCarousel = () => {
+  if (carouselInterval.value) clearInterval(carouselInterval.value)
+  carouselInterval.value = setInterval(() => {
+    if (!isHovering.value) {
+      nextSlide()
+    }
+  }, 4000)
+}
+
+const pauseCarousel = () => {
+  isHovering.value = true
+  if (carouselInterval.value) {
+    clearInterval(carouselInterval.value)
+    carouselInterval.value = null
+  }
+}
+
+const resetCarouselTimer = () => {
+  if (carouselInterval.value) {
+    clearInterval(carouselInterval.value)
+    carouselInterval.value = null
+  }
+  isHovering.value = false
+  startCarousel()
+}
+
+onMounted(() => {
+  startCarousel()
+})
+
+onUnmounted(() => {
+  if (carouselInterval.value) {
+    clearInterval(carouselInterval.value)
+  }
+})
 </script>
 
 <style scoped>
-/* ===== PALETA DE COLORES ===== */
-/* ============================ */
-
 .business-page {
   position: relative;
   min-height: 100vh;
   overflow-x: hidden;
   padding-top: 80px;
-  /* 🔥 FONDO VINO PARA TODA LA PÁGINA 🔥 */
   background: linear-gradient(135deg, #8B2A4E 0%, #6B1B3C 100%);
 }
 
-/* 🔥 PARTE SUPERIOR - FONDO VINO 🔥 */
 .top-section {
   background: transparent;
   position: relative;
 }
 
-/* 🔥 PARTE INFERIOR - CON PATRÓN SVG 🔥 */
 .bottom-section {
   position: relative;
   background: transparent;
 }
 
-/* Patrón SVG solo en la parte inferior */
 .bottom-section::before {
   content: '';
   position: absolute;
@@ -171,7 +264,6 @@ import { Users, BarChart3, Zap } from 'lucide-vue-next'
   z-index: 0;
 }
 
-/* Asegurar que el contenido esté sobre el patrón */
 .benefits-section,
 .no-cost-section,
 .cta-section {
@@ -181,19 +273,20 @@ import { Users, BarChart3, Zap } from 'lucide-vue-next'
 
 .hero-section {
   position: relative;
-  padding: 60px 24px 64px;
+  padding: 60px 24px 80px;
   z-index: 1;
 }
 
 .hero-grid {
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: 42px;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
   align-items: center;
-  max-width: 1200px;
+  max-width: 1300px;
   margin: 0 auto;
 }
 
+/* LADO IZQUIERDO - TEXTO */
 .hero-content {
   position: relative;
   z-index: 1;
@@ -207,22 +300,22 @@ import { Users, BarChart3, Zap } from 'lucide-vue-next'
   background: rgba(232, 213, 181, 0.15);
   backdrop-filter: blur(8px);
   color: #E8D5B5;
-  padding: 8px 18px;
-  border-radius: 40px;
-  font-size: 0.8rem;
+  padding: 10px 22px;
+  border-radius: 50px;
+  font-size: 0.9rem;
   font-weight: 700;
-  margin-bottom: 28px;
+  margin-bottom: 30px;
   letter-spacing: 0.5px;
   border: 1px solid rgba(232, 213, 181, 0.25);
 }
 
 .hero-section h1 {
-  font-size: clamp(3rem, 4.2vw, 4.2rem);
+  font-size: clamp(2.2rem, 3.5vw, 3.2rem);
   color: #FFF8F0;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: -1px;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
 }
 
 .highlight {
@@ -244,15 +337,15 @@ import { Users, BarChart3, Zap } from 'lucide-vue-next'
 }
 
 .subtitle {
-  font-size: clamp(1.2rem, 1.8vw, 1.4rem);
+  font-size: clamp(1.1rem, 1.5vw, 1.2rem);
   color: #E8D5B5;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
   font-weight: 600;
 }
 
 .description {
   max-width: 580px;
-  margin: 0 0 34px;
+  margin: 0 0 40px;
   color: #E0D0C0;
   line-height: 1.7;
   font-size: 1rem;
@@ -261,23 +354,24 @@ import { Users, BarChart3, Zap } from 'lucide-vue-next'
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 24px;
   align-items: center;
-  margin-bottom: 48px;
+  margin-bottom: 50px;
 }
 
 .btn-cta {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   padding: 14px 32px;
-  border-radius: 50px;
+  border-radius: 60px;
   background: linear-gradient(135deg, #E8D5B5, #C4A77D);
   color: #4a122a;
   font-weight: 700;
+  font-size: 0.95rem;
   text-decoration: none;
   transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
   position: relative;
   overflow: hidden;
 }
@@ -299,11 +393,12 @@ import { Users, BarChart3, Zap } from 'lucide-vue-next'
 
 .btn-cta:hover {
   transform: translateY(-3px);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
 }
 
 .btn-arrow {
   transition: transform 0.3s ease;
+  font-size: 1.1rem;
 }
 
 .btn-cta:hover .btn-arrow {
@@ -314,6 +409,7 @@ import { Users, BarChart3, Zap } from 'lucide-vue-next'
   color: #E8D5B5;
   text-decoration: none;
   font-weight: 600;
+  font-size: 0.95rem;
   border-bottom: 2px solid rgba(232, 213, 181, 0.3);
   transition: all 0.3s ease;
 }
@@ -326,13 +422,13 @@ import { Users, BarChart3, Zap } from 'lucide-vue-next'
 
 .hero-stats {
   display: flex;
-  gap: 24px;
+  gap: 30px;
   align-items: center;
   flex-wrap: wrap;
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(8px);
-  padding: 12px 24px;
-  border-radius: 60px;
+  padding: 12px 28px;
+  border-radius: 80px;
   width: fit-content;
 }
 
@@ -342,7 +438,7 @@ import { Users, BarChart3, Zap } from 'lucide-vue-next'
 
 .stat-value {
   display: block;
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   font-weight: 800;
   color: #FFF8F0;
 }
@@ -352,120 +448,134 @@ import { Users, BarChart3, Zap } from 'lucide-vue-next'
   margin-top: 4px;
   color: #E8D5B5;
   font-weight: 500;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 
 .stat-divider {
   width: 1px;
-  height: 40px;
+  height: 45px;
   background: linear-gradient(180deg, transparent, #E8D5B5, transparent);
 }
 
+/* ===== LADO DERECHO - CARRUSEL ALINEADO ===== */
 .hero-visual {
   position: relative;
-  min-height: 420px;
   display: flex;
-  flex-direction: column;
-  gap: 20px;
-  animation: fadeInRight 0.8s ease-out;
+  justify-content: center;
+  align-items: center;
 }
 
 .visual-circle {
   position: absolute;
-  top: -36px;
-  right: -36px;
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(232, 213, 181, 0.15), transparent);
-  filter: blur(20px);
-  animation: rotate 15s linear infinite;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(circle, rgba(232, 213, 181, 0.12), transparent);
+  filter: blur(40px);
+  animation: rotate 20s linear infinite;
+  pointer-events: none;
 }
 
 @keyframes rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
-.visual-card {
-  overflow: hidden;
-  padding: 24px;
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(232, 213, 181, 0.2);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-}
-
-.visual-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 25px 45px rgba(0, 0, 0, 0.15);
-}
-
-.visual-card--small {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 18px;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.95);
-}
-
-.visual-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, #8B2A4E, #6B1B3C);
-  color: #E8D5B5;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-}
-
-.visual-mockup {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 18px;
-  align-items: center;
-  padding: 20px 24px;
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(232, 213, 181, 0.2);
-  transition: all 0.3s ease;
-}
-
-.visual-mockup:hover {
-  transform: translateX(5px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
-
-.mockup-photo {
+.right-carousel {
+  position: relative;
   width: 100%;
-  min-height: 100px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, #E8D5B5, #C4A77D);
-  animation: shimmer 3s ease-in-out infinite;
+  max-width: 420px;
+  margin: 0 auto;
 }
 
-@keyframes shimmer {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 1; }
+.carousel-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  opacity: 0;
+  transform: scale(0.9) translateY(30px);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
 }
 
-.mockup-copy span {
-  display: inline-block;
-  color: #75162D;
-  font-weight: 700;
+.carousel-card.active {
+  position: relative;
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+  z-index: 2;
 }
 
-.mockup-copy p {
-  margin: 8px 0 0;
+.carousel-card-inner {
+  background: white;
+  border-radius: 32px;
+  overflow: hidden;
+  box-shadow: 0 30px 50px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease;
+}
+
+.carousel-card-inner:hover {
+  transform: translateY(-8px);
+}
+
+.carousel-image {
+  width: 100%;
+  height: 360px;
+  object-fit: cover;
+}
+
+.carousel-overlay {
+  padding: 24px 20px;
+  text-align: center;
+  background: white;
+}
+
+.carousel-overlay h3 {
+  color: #4a122a;
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.carousel-overlay p {
   color: #6b4a3a;
-  line-height: 1.5;
   font-size: 0.9rem;
+  margin: 0;
+  line-height: 1.5;
 }
 
-/* Sección Beneficios */
+/* 🔥 INDICADORES - SIN MARGEN SUPERIOR 🔥 */
+.carousel-indicators {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  padding-top: 20px;
+}
+
+.indicator-dot {
+  width: 40px;
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(232, 213, 181, 0.4);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+  border: none;
+}
+
+.indicator-dot.active {
+  background: #F97316;
+  width: 65px;
+}
+
+.indicator-dot:hover {
+  background: rgba(232, 213, 181, 0.8);
+}
+
+/* ===== BENEFICIOS SECTION ===== */
 .benefits-section {
   padding: 80px 20px;
   max-width: 1200px;
@@ -572,7 +682,6 @@ import { Users, BarChart3, Zap } from 'lucide-vue-next'
   line-height: 1.7;
 }
 
-/* Sección Cero Costo */
 .no-cost-section {
   padding: 80px 20px;
 }
@@ -624,7 +733,6 @@ import { Users, BarChart3, Zap } from 'lucide-vue-next'
   font-size: 0.85rem;
 }
 
-/* Sección CTA */
 .cta-section {
   padding: 100px 20px;
   text-align: center;
@@ -649,7 +757,7 @@ import { Users, BarChart3, Zap } from 'lucide-vue-next'
 .cta-section h2 {
   color: #E8D5B5;
   margin-bottom: 20px;
-  font-size: clamp(2rem, 3vw, 2.8rem);
+  font-size: clamp(2rem, 3vw, 2.5rem);
   font-weight: 800;
   position: relative;
   z-index: 1;
@@ -672,7 +780,7 @@ import { Users, BarChart3, Zap } from 'lucide-vue-next'
   gap: 10px;
   background: #E8D5B5;
   color: #4a122a;
-  padding: 16px 36px;
+  padding: 14px 32px;
   border-radius: 50px;
   text-decoration: none;
   font-weight: 700;
@@ -712,14 +820,8 @@ import { Users, BarChart3, Zap } from 'lucide-vue-next'
   transform: translateX(5px);
 }
 
-/* ===== ANIMACIONES GENERALES ===== */
 @keyframes fadeInLeft {
   from { opacity: 0; transform: translateX(-40px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes fadeInRight {
-  from { opacity: 0; transform: translateX(40px); }
   to { opacity: 1; transform: translateX(0); }
 }
 
@@ -733,16 +835,20 @@ import { Users, BarChart3, Zap } from 'lucide-vue-next'
   50% { transform: translateY(-8px); }
 }
 
-/* ===== RESPONSIVE ===== */
+/* RESPONSIVE */
 @media (max-width: 1024px) {
   .hero-grid {
     grid-template-columns: 1fr;
-    gap: 40px;
+    gap: 50px;
   }
 
   .hero-visual {
     min-height: auto;
     order: -1;
+  }
+
+  .right-carousel {
+    max-width: 380px;
   }
 }
 
@@ -769,6 +875,18 @@ import { Users, BarChart3, Zap } from 'lucide-vue-next'
     justify-content: center;
   }
 
+  .right-carousel {
+    max-width: 340px;
+  }
+
+  .carousel-image {
+    height: 280px;
+  }
+
+  .carousel-overlay h3 {
+    font-size: 1.2rem;
+  }
+
   .benefits-section,
   .no-cost-section,
   .cta-section {
@@ -792,7 +910,7 @@ import { Users, BarChart3, Zap } from 'lucide-vue-next'
 
 @media (max-width: 480px) {
   .hero-section h1 {
-    font-size: 2rem;
+    font-size: 1.6rem;
   }
   
   .hero-stats {
@@ -806,17 +924,28 @@ import { Users, BarChart3, Zap } from 'lucide-vue-next'
     height: 1px;
   }
 
-  .visual-card--small {
-    grid-template-columns: 1fr;
-    text-align: center;
+  .right-carousel {
+    max-width: 280px;
   }
 
-  .visual-icon {
-    margin: 0 auto;
+  .carousel-image {
+    height: 240px;
   }
 
-  .visual-mockup {
-    grid-template-columns: 1fr;
+  .carousel-overlay h3 {
+    font-size: 1rem;
+  }
+
+  .carousel-overlay p {
+    font-size: 0.75rem;
+  }
+
+  .indicator-dot {
+    width: 25px;
+  }
+  
+  .indicator-dot.active {
+    width: 45px;
   }
 }
 </style>

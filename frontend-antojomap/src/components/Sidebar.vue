@@ -4,7 +4,7 @@
       <button class="collapse-btn" @click="emit('toggle')">
         <Menu :size="20" />
       </button>
-      <router-link to="/" class="logo-link" v-if="!props.collapsed">
+      <router-link :to="homeRoute" class="logo-link" v-if="!props.collapsed">
         <img src="@/assets/logo2.svg" alt="AntojoMap" class="logo-img" />
         <span class="logo-text">AntojoMap</span>
       </router-link>
@@ -102,6 +102,15 @@ const isLoggingOut = ref(false)
 const userRole = computed(() => (authStore.rol || 'USER').toLowerCase())
 const userEmail = computed(() => authStore.email)
 const userName = computed(() => authStore.nombre)
+
+// ========== RUTA DEL HOME SEGÚN ROL ==========
+const homeRoute = computed(() => {
+  const role = userRole.value
+  if (role === 'admin') return '/admin/dashboard'
+  if (role === 'restaurant') return '/restaurant/dashboard'
+  if (role === 'user') return '/user/feed'
+  return '/'
+})
 
 // ========== MENÚ ==========
 const menuItems = computed(() => {
