@@ -107,7 +107,9 @@ onMounted(async () => {
   try {
     // Opción 1: Usar un sonido local (recomendado)
     // Coloca tu archivo en public/sounds/wheel-spin.mp3
-    spinSound.value = new Audio('/sounds/wheel-spin.mp3')
+    //aaaaa
+    spinSound.value = new Audio('/sounds/victorabdo-spin-232536.mp3')
+    
     
     // Opción 2: Usar URL externa (la que diste no funciona)
     // spinSound.value = new Audio('https://www.soundjay.com/misc/sounds/wheel-of-fortune-1.mp3')
@@ -156,8 +158,8 @@ const itemsToUse = computed(() => {
 
 // PALETA DE COLORES
 const wheelColors = [
-  '#B1666B', '#8B2431', '#B1666B', '#8B2431', '#B1666B',
-  '#8B2431', '#B1666B', '#8B2431', '#B1666B', '#8B2431'
+  '#6B1B3C', '#2D6A4F', '#E07B39', '#8B2431', '#1B5E45',
+  '#C75E2A', '#481827', '#4A9E6B', '#D4622F', '#A3334B'
 ]
 
 const wheelGradient = computed(() => {
@@ -194,6 +196,14 @@ const spinWheel = () => {
   const deltaRotation = extraTurns + ((desiredRotation - currentRotation + 360) % 360)
 
   rotation.value += deltaRotation
+
+  setTimeout(() => {
+    // Pausar el sonido justo cuando la animación visual termina (aprox. 1.8s)
+    if (spinSound.value && soundEnabled.value) {
+      spinSound.value.pause()
+      spinSound.value.currentTime = 0 // Reiniciar para la próxima vez que se gire
+    }
+  }, 1800) // Detener el sonido a los 1.8 segundos
 
   setTimeout(() => {
     isSpinning.value = false

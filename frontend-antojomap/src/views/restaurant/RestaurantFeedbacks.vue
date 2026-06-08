@@ -46,26 +46,14 @@
         </div>
 
         <div class="rating-filter">
-          <span class="filter-label">Calificación:</span>
-          <div class="rating-buttons">
-            <button 
-              class="rating-btn"
-              :class="{ active: selectedRating === null }"
-              @click="selectedRating = null"
-            >
-              Todas
-            </button>
-            <button 
-              v-for="stars in [5,4,3,2,1]" 
-              :key="stars"
-              class="rating-btn"
-              :class="{ active: selectedRating === stars }"
-              @click="selectedRating = stars"
-            >
-              {{ stars }} ⭐
-            </button>
-          </div>
-        </div>
+  <span class="filter-label">Ordenar:</span>
+  <div class="rating-buttons">
+    <button class="rating-btn" :class="{ active: sortOrder === 'reciente' }" @click="sortOrder = 'reciente'">Más reciente</button>
+    <button class="rating-btn" :class="{ active: sortOrder === 'antiguo' }" @click="sortOrder = 'antiguo'">Más antiguo</button>
+    <button class="rating-btn" :class="{ active: sortOrder === 'mayor' }" @click="sortOrder = 'mayor'">Mayor puntuación</button>
+    <button class="rating-btn" :class="{ active: sortOrder === 'menor' }" @click="sortOrder = 'menor'">Menor puntuación</button>
+  </div>
+</div>
 
         <!-- Indicador de resultados encontrados -->
         <div v-if="filteredFeedbacks.length !== feedbacks.length" class="results-info">
@@ -107,6 +95,8 @@ const feedbacks = ref([])
 const cargando = ref(true)
 const restaurante_id = localStorage.getItem('restaurante_id')
 
+const sortOrder = ref('reciente') // 'reciente' | 'antiguo' | 'mayor' | 'menor'
+
 // ===== NUEVOS ESTADOS PARA FILTROS =====
 const searchQuery = ref('')
 const selectedRating = ref(null) // null = todas, 5,4,3,2,1
@@ -131,10 +121,18 @@ const filteredFeedbacks = computed(() => {
       // Buscar en el comentario
       const comment = feedback.comentario?.toLowerCase() || ''
       if (comment.includes(query)) return true
-      
       return false
     })
   }
+
+  // 3. Ordenar resultados (Fuera del filtro para mayor eficiencia)
+  result.sort((a, b) => {
+    if (sortOrder.value === 'reciente') return new Date(b.fecha) - new Date(a.fecha)
+    if (sortOrder.value === 'antiguo') return new Date(a.fecha) - new Date(b.fecha)
+    if (sortOrder.value === 'mayor') return b.puntuacion - a.puntuacion
+    if (sortOrder.value === 'menor') return a.puntuacion - b.puntuacion
+    return 0
+  })
   
   return result
 })
@@ -143,6 +141,7 @@ const filteredFeedbacks = computed(() => {
 const clearFilters = () => {
   searchQuery.value = ''
   selectedRating.value = null
+  sortOrder.value = 'reciente'
 }
 
 const promedio = computed(() => {
@@ -284,7 +283,7 @@ onMounted(async () => {
 }
 
 .search-input:focus {
-  border-color: #FF6B00;
+  border-color: #481827;
   box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.1);
 }
 
@@ -346,13 +345,13 @@ onMounted(async () => {
 }
 
 .rating-btn:hover {
-  border-color: #FF6B00;
+  border-color: #481827;
   background: #FFF5F0;
 }
 
 .rating-btn.active {
-  background: linear-gradient(135deg, #FF6B00 0%, #E05A00 100%);
-  border-color: #FF6B00;
+  background: linear-gradient(135deg, #481827 0%, #6B1B3C 100%);
+  border-color: #481827;
   color: white;
 }
 
@@ -371,7 +370,7 @@ onMounted(async () => {
 .clear-filters-btn {
   background: none;
   border: none;
-  color: #FF6B00;
+  color: #481827;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
@@ -396,7 +395,7 @@ onMounted(async () => {
   padding: 20px;
   border-radius: 12px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-  border-left: 4px solid #FF6B00;
+  border-left: 4px solid #481827;
 }
 
 .feedback-header {
@@ -418,7 +417,7 @@ onMounted(async () => {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #FF6B00, #FFB366);
+  background: linear-gradient(135deg, #481827, #FFB366);
   color: white;
   display: flex;
   align-items: center;
@@ -456,7 +455,7 @@ onMounted(async () => {
 
 .rating-badge .score {
   font-weight: 700;
-  color: #FF6B00;
+  color: #481827;
   font-size: 0.9rem;
 }
 

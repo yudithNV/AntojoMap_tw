@@ -75,7 +75,7 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { 
-  LayoutDashboard, ClipboardList, Users, Store, BarChart3,
+  LayoutDashboard, ClipboardList, Users, Store, Map, BarChart3,
   Menu, Heart, Search, User, UtensilsCrossed, LogOut, Star
 } from 'lucide-vue-next'
 import { useAuthStore } from '../stores/auth.store.js'
@@ -130,7 +130,7 @@ const menuItems = computed(() => {
     ],
     user: [
       { id: 1, label: 'Explorar', icon: Search, path: '/user/feed' },
-      { id: 2, label: 'Mapa', icon: Store, path: '/user/mapa' },
+      { id: 2, label: 'Mapa', icon: Map, path: '/user/mapa' },
       { id: 3, label: 'Favoritos', icon: Heart, path: '/user/favorites' },
       { id: 4, label: 'Perfil', icon: User, path: '/user/profile' }
     ]
@@ -206,8 +206,8 @@ const confirmLogout = async () => {
 }
 
 .logo-img {
-  width: 40px;
-  height: 40px;
+  width: 52px;
+  height: 52px;
   flex-shrink: 0;
   border-radius: 10px;
   object-fit: contain;

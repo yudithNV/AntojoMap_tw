@@ -221,11 +221,12 @@
            Almuerzos Completos
         </button>
         <button 
-          class="tipo-chip btn-sorprendeme" 
-          @click="mostrarRuleta = true"
-        >
-           Sorpréndeme
-        </button>
+  class="tipo-chip btn-sorprendeme" 
+  @click="sortearPlatoSorpresa"
+  :disabled="isSorteando"
+>
+  {{ isSorteando ? '🎲 Sorteando...' : '✨ Sorpréndeme' }}
+</button>
       </div>
 
       <div v-if="buscandoPlatos" class="loading-state">
@@ -240,7 +241,11 @@
         <p>No encontramos platos con esos filtros.</p>
         <button class="btn-clear" @click="clearPlatosFilters">Limpiar filtros</button>
       </div>
-      <div v-else class="platos-grid">
+      <div v-else class="platos-carousel-wrapper">
+  <div class="platos-carousel-container">
+    <button class="carousel-arrow carousel-arrow-left" @click="scrollPlatosLeft" v-if="platosResultados.length > 3">‹</button>
+    <div class="platos-carousel" ref="platosCarouselRef">
+      <div class="platos-carousel-track">
         <div v-for="plato in platosResultados" :key="plato.id" class="plato-card" @click="router.push(`/user/menu/${plato.restaurante_id}`)">
           <div class="plato-img">
             <img v-if="plato.foto_url" :src="plato.foto_url" :alt="plato.nombre" />
@@ -265,6 +270,10 @@
         </div>
       </div>
     </div>
+    <button class="carousel-arrow carousel-arrow-right" @click="scrollPlatosRight" v-if="platosResultados.length > 3">›</button>
+  </div>
+</div>
+    </div>
 
     <RuletaPlatos 
       :isOpen="mostrarRuleta" 
@@ -279,6 +288,45 @@
         </div>
       </div>
     </Teleport>
+    <!-- MODAL SORTEO CARTA -->
+<Teleport to="body">
+  <Transition name="sorteo-fade">
+    <div v-if="showSorteoModal" class="sorteo-overlay" @click.self="showSorteoModal = false">
+      <div class="sorteo-card-wrapper">
+        <div class="sorteo-card" :class="{ flipped: cartaFlipped }">
+          <div class="sorteo-card-front">
+            <div class="sorteo-front-content">
+              <div class="sorteo-spinner">🎲</div>
+              <p class="sorteo-loading-text">Sorteando...</p>
+              <div class="sorteo-dots">
+                <span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+          <div class="sorteo-card-back">
+            <div v-if="platoSorteado" class="sorteo-result">
+              <button class="sorteo-close" @click="showSorteoModal = false">×</button>
+              <div class="sorteo-result-img">
+                <img v-if="platoSorteado.foto_url" :src="platoSorteado.foto_url" :alt="platoSorteado.nombre" />
+                <div v-else class="sorteo-img-placeholder">🍽️</div>
+              </div>
+              <p class="sorteo-label">¡Tu antojo de hoy es!</p>
+              <h3 class="sorteo-nombre">{{ platoSorteado.nombre }}</h3>
+              <p class="sorteo-restaurante">{{ platoSorteado.restaurantes?.nombre }}</p>
+              <span class="sorteo-precio">Bs {{ platoSorteado.precio }}</span>
+              <button class="sorteo-btn-ver" @click="router.push(`/user/menu/${platoSorteado.restaurante_id}`); showSorteoModal = false">
+                Ver restaurante →
+              </button>
+              <button class="sorteo-btn-repetir" @click="repetirSorteo">
+                🎲 Otro plato
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </Transition>
+</Teleport>
   </DashboardLayout>
 </template>
 
@@ -300,6 +348,53 @@ const route = useRoute()
 const restaurantesStore = useRestaurantesStore()
 const favoritosStore = useFavoritosStore()
 const irARuleta = () => router.push('/user/ruleta')
+
+const showSorteoModal = ref(false)
+const cartaFlipped = ref(false)
+const platoSorteado = ref(null)
+const isSorteando = ref(false)
+
+const repetirSorteo = () => {
+  cartaFlipped.value = false
+  platoSorteado.value = null
+  setTimeout(() => {
+    const random = Math.floor(Math.random() * platosResultados.value.length)
+    platoSorteado.value = platosResultados.value[random]
+    cartaFlipped.value = true
+  }, 1800)
+}
+
+const sortearPlatoSorpresa = async () => {
+  if (platosResultados.value.length === 0) {
+    // Si no hay platos cargados, carga todos
+    selectedTipoPlato.value = 'plato_suelto'
+    await buscarPlatos()
+  }
+  if (platosResultados.value.length === 0) return
+
+  isSorteando.value = true
+  cartaFlipped.value = false
+  platoSorteado.value = null
+  showSorteoModal.value = true
+
+  // Espera animación del frente
+  setTimeout(() => {
+    const random = Math.floor(Math.random() * platosResultados.value.length)
+    platoSorteado.value = platosResultados.value[random]
+    cartaFlipped.value = true
+    isSorteando.value = false
+  }, 1800)
+}
+
+const platosCarouselRef = ref(null)
+
+const scrollPlatosLeft = () => {
+  platosCarouselRef.value?.scrollBy({ left: -320, behavior: 'smooth' })
+}
+
+const scrollPlatosRight = () => {
+  platosCarouselRef.value?.scrollBy({ left: 320, behavior: 'smooth' })
+}
 
 // ========== BANNER CARRUSEL ==========
 const bannerIndex = ref(0)
@@ -1110,11 +1205,56 @@ onUnmounted(() => {
   transform: translateY(-2px);
 }
 
-/* Grid de platos */
+/* Grid de platos 
 .platos-grid {
   display: grid;
   gap: 20px;
   grid-template-columns: repeat(3, 1fr);
+}*/
+.platos-carousel-wrapper {
+  position: relative;
+  margin: 20px 0;
+}
+
+.platos-carousel-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.platos-carousel {
+  flex: 1;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 10px 0;
+  scroll-snap-type: x mandatory;
+}
+
+.platos-carousel::-webkit-scrollbar { display: none; }
+
+.platos-carousel-track {
+  display: flex;
+  gap: 24px;
+  padding: 5px;
+}
+
+.plato-card {
+  flex: 0 0 280px;
+  scroll-snap-align: start;
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.plato-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
 }
 
 .empty-platos {
@@ -1210,6 +1350,209 @@ onUnmounted(() => {
 .btn-clear:hover { background: linear-gradient(135deg, #7D8F81 0%, #657869 100%); transform: translateY(-2px); }
 
 .loading-state { padding: 40px; text-align: center; color: var(--dusty-coral, #D893A1); font-size: 1rem; }
+
+/* ===== SORTEO CARTA ===== */
+.sorteo-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.sorteo-card-wrapper {
+  perspective: 1000px;
+}
+
+.sorteo-card {
+  width: 320px;
+  height: 420px;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sorteo-card.flipped {
+  transform: rotateY(180deg);
+}
+
+.sorteo-card-front,
+.sorteo-card-back {
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.sorteo-card-front {
+  background: linear-gradient(135deg, #481827, #6B1B3C);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sorteo-front-content {
+  text-align: center;
+  color: white;
+}
+
+.sorteo-spinner {
+  font-size: 4rem;
+  animation: spinEmoji 0.6s linear infinite;
+  display: block;
+  margin-bottom: 16px;
+}
+
+.sorteo-loading-text {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0 0 16px;
+}
+
+.sorteo-dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.sorteo-dots span {
+  width: 10px;
+  height: 10px;
+  background: rgba(255,255,255,0.6);
+  border-radius: 50%;
+  animation: dotBounce 0.8s ease-in-out infinite;
+}
+
+.sorteo-dots span:nth-child(2) { animation-delay: 0.15s; }
+.sorteo-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+.sorteo-card-back {
+  background: white;
+  transform: rotateY(180deg);
+  overflow: hidden;
+}
+
+.sorteo-result {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+}
+
+.sorteo-close {
+  position: absolute;
+  top: 12px; right: 12px;
+  background: none; border: none;
+  font-size: 1.8rem; color: #999;
+  cursor: pointer; line-height: 1;
+}
+
+.sorteo-result-img {
+  width: 100%;
+  height: 160px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.sorteo-result-img img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+
+.sorteo-img-placeholder {
+  width: 100%; height: 100%;
+  background: #f5f0eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+}
+
+.sorteo-label {
+  margin: 16px 0 4px;
+  font-size: 0.8rem;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sorteo-nombre {
+  margin: 0 0 6px;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #481827;
+  padding: 0 20px;
+}
+
+.sorteo-restaurante {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.sorteo-precio {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #C0392B;
+  margin-bottom: 16px;
+}
+
+.sorteo-btn-ver {
+  margin: 0 20px;
+  width: calc(100% - 40px);
+  padding: 12px;
+  background: linear-gradient(135deg, #481827, #6B1B3C);
+  color: white;
+  border: none;
+  border-radius: 40px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sorteo-btn-ver:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(72,24,39,0.3);
+}
+
+@keyframes spinEmoji {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes dotBounce {
+  0%, 100% { transform: translateY(0); opacity: 0.6; }
+  50% { transform: translateY(-8px); opacity: 1; }
+}
+
+.sorteo-fade-enter-active, .sorteo-fade-leave-active { transition: opacity 0.3s ease; }
+.sorteo-fade-enter-from, .sorteo-fade-leave-to { opacity: 0; }
+
+.sorteo-btn-repetir {
+  margin: 8px 20px 0;
+  width: calc(100% - 40px);
+  padding: 12px;
+  background: transparent;
+  color: #481827;
+  border: 2px solid #481827;
+  border-radius: 40px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sorteo-btn-repetir:hover {
+  background: rgba(72,24,39,0.06);
+  transform: translateY(-2px);
+}
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 

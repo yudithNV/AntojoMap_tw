@@ -892,7 +892,7 @@ onMounted(async () => {
   background: rgba(220, 38, 38, 0.9);
 }
 .item-card.plato_suelto .item-badge {
-  background: rgba(242, 163, 89, 0.9);
+  background: rgba(72, 24, 39, 0.85);
 }
 
 .item-image img {
