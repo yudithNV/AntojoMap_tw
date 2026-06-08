@@ -67,7 +67,7 @@
                 :class="{ active: selectedStatus === 'disponible' }"
                 @click="selectedStatus = 'disponible'"
               >
-                ✅ Disponible
+                Disponible
               </button>
               <button 
                 class="status-btn"
@@ -156,116 +156,207 @@
           </div>
 
           <form @submit.prevent="saveMenuDirect">
-            <div v-if="Object.keys(formErrors).length > 0" class="validation-summary">
-              <strong>Revisa el formulario</strong>
-              <span>Hay campos obligatorios o datos con formato incorrecto.</span>
-            </div>
+  <!-- Indicador de pasos (solo para almuerzo_completo) -->
+  <div v-if="formMenu.tipo === 'almuerzo_completo'" class="wizard-steps">
+    <div 
+      v-for="step in totalSteps" 
+      :key="step"
+      class="wizard-step"
+      :class="{ 
+        active: currentStep === step, 
+        completed: currentStep > step 
+      }"
+      @click="currentStep = step"
+    >
+      <div class="step-number">
+        <span v-if="currentStep > step">✓</span>
+        <span v-else>{{ step }}</span>
+      </div>
+      <div class="step-label">
+        {{ step === 1 ? 'Datos básicos' : step === 2 ? 'Componentes' : 'Configuración' }}
+      </div>
+    </div>
+  </div>
 
-            <div class="upload-area">
-              <ImageUploader v-model="formMenu.foto_url" @update:modelValue="validateMenuForm" />
-            </div>
-            <p v-if="formErrors.foto_url" class="field-error">{{ formErrors.foto_url }}</p>
+  <!-- Mostrar error general -->
+  <div v-if="formErrors.general" class="validation-summary">
+    <strong>Error</strong>
+    <span>{{ formErrors.general }}</span>
+  </div>
 
-            <label class="field">
-              Nombre
-              <input
-                v-model="formMenu.nombre"
-                :class="{ invalid: formErrors.nombre }"
-                type="text"
-                @blur="validateMenuForm"
-                @input="refreshVisibleErrors"
-              />
-              <span v-if="formErrors.nombre" class="field-error">{{ formErrors.nombre }}</span>
-            </label>
+  <!-- ===== PASO 1: DATOS BÁSICOS ===== -->
+  <div v-show="currentStep === 1 || formMenu.tipo !== 'almuerzo_completo'" class="step-content">
+    <div class="two-columns">
+      <div class="col">
+        <label class="field">
+          <span class="field-label">Nombre <span class="required">*</span></span>
+          <input
+            v-model="formMenu.nombre"
+            :class="{ invalid: formErrors.nombre }"
+            type="text"
+            placeholder="Ej: Lomo Saltado"
+            @blur="validateMenuForm"
+            @input="refreshVisibleErrors"
+          />
+          <span v-if="formErrors.nombre" class="field-error">{{ formErrors.nombre }}</span>
+        </label>
+      </div>
+      
+      <div class="col">
+        <label class="field">
+          <span class="field-label">Precio <span class="required">*</span></span>
+          <div class="price-input" :class="{ invalid: formErrors.precio }">
+            <span>Bs</span>
+            <input
+              v-model="formMenu.precio"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              @blur="validateMenuForm"
+              @input="refreshVisibleErrors"
+            />
+          </div>
+          <span v-if="formErrors.precio" class="field-error">{{ formErrors.precio }}</span>
+        </label>
+      </div>
+    </div>
 
-            <label class="field">
-              Precio
-              <div class="price-input" :class="{ invalid: formErrors.precio }">
-                <span>Bs</span>
-                <input
-                  v-model="formMenu.precio"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  @blur="validateMenuForm"
-                  @input="refreshVisibleErrors"
-                />
-              </div>
-              <span v-if="formErrors.precio" class="field-error">{{ formErrors.precio }}</span>
-            </label>
+    <label class="field">
+      <span class="field-label">Imagen <span class="required">*</span></span>
+      <div class="upload-area">
+        <ImageUploader v-model="formMenu.foto_url" @update:modelValue="validateMenuForm" />
+      </div>
+      <p v-if="formErrors.foto_url" class="field-error">{{ formErrors.foto_url }}</p>
+    </label>
 
-            <label class="field">
-              Descripción
-              <textarea
-                v-model="formMenu.descripcion"
-                :class="{ invalid: formErrors.descripcion }"
-                rows="3"
-                @blur="validateMenuForm"
-                @input="refreshVisibleErrors"
-              />
-              <small class="field-hint">{{ formMenu.descripcion.length }}/250 caracteres</small>
-              <span v-if="formErrors.descripcion" class="field-error">{{ formErrors.descripcion }}</span>
-            </label>
+    <label class="field">
+      <span class="field-label">Descripción</span>
+      <textarea
+        v-model="formMenu.descripcion"
+        :class="{ invalid: formErrors.descripcion }"
+        rows="3"
+        placeholder="Describe el plato (opcional)..."
+        @blur="validateMenuForm"
+        @input="refreshVisibleErrors"
+      />
+      <small class="field-hint">{{ formMenu.descripcion.length }}/250 caracteres</small>
+      <span v-if="formErrors.descripcion" class="field-error">{{ formErrors.descripcion }}</span>
+    </label>
+  </div>
 
-            <div v-if="formMenu.tipo === 'almuerzo_completo'" class="meal-section">
-              <span class="meal-section-title">Componentes del almuerzo</span>
+  <!-- ===== PASO 2: COMPONENTES DEL ALMUERZO (solo para almuerzo_completo) ===== -->
+  <div v-if="formMenu.tipo === 'almuerzo_completo'" v-show="currentStep === 2" class="step-content">
+    <div class="meal-section">
+      <span class="meal-section-title">🍽️ Componentes del almuerzo</span>
+      
+      <div class="two-columns">
+        <div class="col">
+          <label class="field">
+            <span class="field-label">Entrada <span class="required">*</span></span>
+            <input
+              v-model="formMenu.entrada.nombre"
+              :class="{ invalid: formErrors.entrada }"
+              type="text"
+              placeholder="Ej: Sopa de verduras"
+              @blur="validateMenuForm"
+              @input="refreshVisibleErrors"
+            />
+            <span v-if="formErrors.entrada" class="field-error">{{ formErrors.entrada }}</span>
+          </label>
+        </div>
+        
+        <div class="col">
+          <label class="field">
+            <span class="field-label">Principal <span class="required">*</span></span>
+            <input
+              v-model="formMenu.principal.nombre"
+              :class="{ invalid: formErrors.principal }"
+              type="text"
+              placeholder="Ej: Lomo saltado con arroz"
+              @blur="validateMenuForm"
+              @input="refreshVisibleErrors"
+            />
+            <span v-if="formErrors.principal" class="field-error">{{ formErrors.principal }}</span>
+          </label>
+        </div>
+      </div>
+      
+      <label class="field">
+        <span class="field-label">Postre <span class="required">*</span></span>
+        <input
+          v-model="formMenu.postre.nombre"
+          :class="{ invalid: formErrors.postre }"
+          type="text"
+          placeholder="Ej: Flan de vainilla"
+          @blur="validateMenuForm"
+          @input="refreshVisibleErrors"
+        />
+        <span v-if="formErrors.postre" class="field-error">{{ formErrors.postre }}</span>
+      </label>
+    </div>
+  </div>
 
-              <label class="field">
-                Entrada
-                <input
-                  v-model="formMenu.entrada.nombre"
-                  :class="{ invalid: formErrors.entrada }"
-                  type="text"
-                  @blur="validateMenuForm"
-                  @input="refreshVisibleErrors"
-                />
-                <span v-if="formErrors.entrada" class="field-error">{{ formErrors.entrada }}</span>
-              </label>
+  <!-- ===== PASO 3: CONFIGURACIÓN ===== -->
+  <div v-show="currentStep === 3 || formMenu.tipo !== 'almuerzo_completo'" class="step-content">
+    <div class="config-section">
+      <label class="checkbox-card">
+        <div class="checkbox-content">
+          <input v-model="formMenu.disponible" type="checkbox" />
+          <div>
+            <strong> Disponible</strong>
+            <p>El plato estará visible para los clientes</p>
+          </div>
+        </div>
+      </label>
 
-              <label class="field">
-                Principal
-                <input
-                  v-model="formMenu.principal.nombre"
-                  :class="{ invalid: formErrors.principal }"
-                  type="text"
-                  @blur="validateMenuForm"
-                  @input="refreshVisibleErrors"
-                />
-                <span v-if="formErrors.principal" class="field-error">{{ formErrors.principal }}</span>
-              </label>
+      <label v-if="formMenu.tipo === 'almuerzo_completo'" class="checkbox-card">
+        <div class="checkbox-content">
+          <input v-model="formMenu.es_menu_del_dia" type="checkbox" />
+          <div>
+            <strong>🌟 Menú del día</strong>
+            <p>Destacar este almuerzo como especial del día</p>
+          </div>
+        </div>
+      </label>
+    </div>
+  </div>
 
-              <label class="field">
-                Postre
-                <input
-                  v-model="formMenu.postre.nombre"
-                  :class="{ invalid: formErrors.postre }"
-                  type="text"
-                  @blur="validateMenuForm"
-                  @input="refreshVisibleErrors"
-                />
-                <span v-if="formErrors.postre" class="field-error">{{ formErrors.postre }}</span>
-              </label>
-
-              <label class="checkbox-label">
-                <input v-model="formMenu.es_menu_del_dia" type="checkbox" />
-                Menú del día
-              </label>
-            </div>
-
-            <label class="checkbox-label">
-              <input v-model="formMenu.disponible" type="checkbox" />
-              Disponible
-            </label>
-
-            <p v-if="formErrors.general" class="form-error">{{ formErrors.general }}</p>
-
-            <div class="form-actions">
-              <button class="btn-save" type="submit" :disabled="guardando">
-                {{ guardando ? 'Guardando...' : 'Guardar Menú' }}
-              </button>
-              <button class="btn-cancel" type="button" @click="closeForm">Cancelar</button>
-            </div>
-          </form>
+  <!-- Botones de navegación -->
+  <div class="form-actions">
+    <div class="nav-buttons" v-if="formMenu.tipo === 'almuerzo_completo'">
+      <button 
+        v-if="currentStep > 1" 
+        type="button" 
+        class="btn-nav btn-prev" 
+        @click="prevStep"
+      >
+        ← Anterior
+      </button>
+      <button 
+        v-if="currentStep < totalSteps" 
+        type="button" 
+        class="btn-nav btn-next" 
+        @click="nextStep"
+      >
+        Siguiente →
+      </button>
+    </div>
+    
+    <button 
+      v-if="currentStep === totalSteps || formMenu.tipo !== 'almuerzo_completo'" 
+      class="btn-save" 
+      type="submit" 
+      :disabled="guardando"
+    >
+      {{ guardando ? 'Guardando...' : 'Guardar Menú' }}
+    </button>
+    
+    <button class="btn-cancel" type="button" @click="closeForm">
+      Cancelar
+    </button>
+  </div>
+</form>
         </div>
       </div>
     </Transition>
@@ -384,6 +475,82 @@ const clearFilters = () => {
 const showSuccessToast = ref(false)
 let toastTimeout = null
 
+//noseeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+// ===== NUEVOS ESTADOS PARA EL WIZARD =====
+const currentStep = ref(1) // 1, 2 o 3
+const totalSteps = 3
+
+// Funciones de navegación del wizard
+const nextStep = () => {
+  if (validateCurrentStep()) {
+    currentStep.value++
+  }
+}
+
+const prevStep = () => {
+  currentStep.value--
+}
+
+const validateCurrentStep = () => {
+  // Limpiar errores visuales previos
+  if (currentStep.value === 1) {
+    // Validar paso 1: nombre, precio, foto
+    const nombre = formMenu.value.nombre.trim()
+    const precio = Number(formMenu.value.precio)
+    const fotoUrl = formMenu.value.foto_url.trim()
+    
+    if (!nombre) {
+      formErrors.value.nombre = 'El nombre es obligatorio.'
+      return false
+    }
+    if (nombre.length < 3) {
+      formErrors.value.nombre = 'El nombre debe tener al menos 3 caracteres.'
+      return false
+    }
+    if (!formMenu.value.precio) {
+      formErrors.value.precio = 'El precio es obligatorio.'
+      return false
+    }
+    if (precio <= 0) {
+      formErrors.value.precio = 'El precio debe ser mayor a 0.'
+      return false
+    }
+    if (!fotoUrl) {
+      formErrors.value.foto_url = 'La imagen es obligatoria.'
+      return false
+    }
+    return true
+  }
+  
+  if (currentStep.value === 2 && formMenu.value.tipo === 'almuerzo_completo') {
+    // Validar paso 2: componentes del almuerzo
+    const entrada = formMenu.value.entrada.nombre.trim()
+    const principal = formMenu.value.principal.nombre.trim()
+    const postre = formMenu.value.postre.nombre.trim()
+    
+    if (!entrada) {
+      formErrors.value.entrada = 'La entrada es obligatoria.'
+      return false
+    }
+    if (!principal) {
+      formErrors.value.principal = 'El plato principal es obligatorio.'
+      return false
+    }
+    if (!postre) {
+      formErrors.value.postre = 'El postre es obligatorio.'
+      return false
+    }
+    return true
+  }
+  
+  return true
+}
+
+// Reiniciar el wizard al cerrar/abrir
+const resetWizard = () => {
+  currentStep.value = 1
+}
+
 const showToast = () => {
   showSuccessToast.value = true
   if (toastTimeout) clearTimeout(toastTimeout)
@@ -417,6 +584,7 @@ const refreshVisibleErrors = () => {
 
 const selectMenuType = (type) => {
   formMenu.value.tipo = type
+  resetWizard() // <-- Reinicia el wizard al cambiar de tipo
   refreshVisibleErrors()
 }
 
@@ -525,6 +693,7 @@ const resetForm = () => {
   }
   showForm.value = false
   formErrors.value = {}
+  resetWizard() // <-- Agrega esta línea
 }
 
 const openForm = () => {
@@ -1005,7 +1174,7 @@ onMounted(async () => {
   background: white;
   border-radius: 20px;
   width: 100%;
-  max-width: 480px;
+  max-width: 560px; /* Aumentado de 480px a 560px para más espacio */
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -1156,7 +1325,18 @@ form {
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.meal-section .field {
+  width: 100%;
+}
+
+.meal-section input {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .meal-section-title {
@@ -1353,6 +1533,300 @@ form {
   transform: scale(0.95);
   opacity: 0;
 }
+
+/* ===== ESTILOS DEL WIZARD ===== */
+.wizard-steps {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 24px 24px 24px;
+  padding-top: 16px;
+  border-bottom: 2px solid #F0EDE7;
+}
+
+.wizard-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding-bottom: 16px;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.wizard-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 14px;
+  right: -50%;
+  width: 100%;
+  height: 2px;
+  background: #E8E5DF;
+  z-index: 0;
+}
+
+.wizard-step.completed:not(:last-child)::after {
+  background: #22c55e;
+}
+
+.step-number {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  background: #F0EDE7;
+  color: #888;
+  position: relative;
+  z-index: 1;
+  transition: all 0.2s;
+}
+
+.wizard-step.active .step-number {
+  background: linear-gradient(135deg, #D4AF37 0%, #E0A96D 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+}
+
+.wizard-step.completed .step-number {
+  background: #22c55e;
+  color: white;
+}
+
+.step-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.wizard-step.active .step-label {
+  color: #D4AF37;
+}
+
+/* Grid de dos columnas - CORREGIDO */
+.two-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+}
+
+/* Asegurar que los campos dentro del grid no se desborden */
+.two-columns .field {
+  width: 100%;
+  min-width: 0; /* Previene el desbordamiento */
+}
+
+.two-columns input,
+.two-columns .price-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Corregir el contenedor price-input */
+.price-input {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid #eee;
+  border-radius: 10px;
+  overflow: hidden;
+  width: 100%;
+  background: white;
+}
+
+.price-input span {
+  padding: 12px 14px;
+  background: #f9f9f9;
+  color: #888;
+  font-weight: 600;
+  border-right: 1px solid #eee;
+  flex-shrink: 0;
+}
+
+.price-input input {
+  flex: 1;
+  border: none;
+  padding: 12px 14px;
+  outline: none;
+  width: 100%;
+  min-width: 0;
+  background: white;
+}
+
+/* Estilos para campos requeridos */
+.required {
+  color: #dc2626;
+  font-size: 0.7rem;
+  margin-left: 4px;
+}
+
+.field-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4a2c2c;
+  margin-bottom: 4px;
+  display: block;
+}
+
+/* Asegurar que todos los inputs tengan box-sizing correcto */
+.field input,
+.field textarea,
+.price-input {
+  box-sizing: border-box;
+}
+
+.field input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid #eee;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  outline: none;
+  background: white;
+}
+
+/* Configuración cards */
+.config-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.checkbox-card {
+  background: #FAFAFA;
+  border: 1.5px solid #F0EDE7;
+  border-radius: 16px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.checkbox-card:hover {
+  border-color: #D4AF37;
+  background: #FFFBF5;
+}
+
+.checkbox-content {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.checkbox-content input {
+  margin-top: 2px;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.checkbox-content strong {
+  color: #4a2c2c;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.checkbox-content p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+/* Botones de navegación */
+.nav-buttons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.btn-nav {
+  flex: 1;
+  padding: 12px;
+  border: 1.5px solid #E8E5DF;
+  background: white;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-nav:hover {
+  border-color: #D4AF37;
+  background: #FFFBF5;
+}
+
+.btn-prev {
+  color: #666;
+}
+
+.btn-next {
+  background: linear-gradient(135deg, #D4AF37 0%, #E0A96D 100%);
+  border: none;
+  color: white;
+}
+
+.btn-next:hover {
+  transform: translateX(2px);
+  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+}
+
+/* Animación de pasos */
+.step-content {
+  animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Campo de texto */
+.field-hint {
+  font-size: 0.7rem;
+  color: #999;
+  margin-top: 4px;
+}
+
+/* ===== MEDIA QUERY RESPONSIVE ===== */
+@media (max-width: 640px) {
+  .two-columns {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .wizard-steps {
+    margin: 0 16px 20px 16px;
+  }
+  
+  .step-label {
+    font-size: 0.6rem;
+  }
+  
+  .step-number {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+  }
+  
+  .form-card {
+    max-width: 95%;
+    margin: 0 auto;
+  }
+}
+
 
 @media (max-width: 768px) {
   .menu-header {
