@@ -8,7 +8,7 @@
         <div class="hero-content">
           <span v-if="categoria" class="categoria-chip">{{ categoria }}</span>
           <h1>{{ restaurante.nombre }}</h1>
-          <p v-if="restaurante.direccion" class="hero-direccion">📍 {{ restaurante.direccion }}</p>
+          <p v-if="restaurante.direccion" class="hero-direccion"><MapPin :size="18" class="icon-map" /> {{ restaurante.direccion }}</p>
         </div>
       </div>
     </div>
@@ -43,27 +43,31 @@
               </div>
 
               <div v-if="item.tipo === 'almuerzo_completo'" class="meal-components">
+                
                 <div v-if="item.entrada_nombre" class="component-item">
-                  <span class="component-icon">🍴</span>
+                  <Utensils :size="20" class="component-icon" />
                   <div>
                     <strong>Entrada</strong>
                     <p>{{ item.entrada_nombre }}</p>
                   </div>
                 </div>
+
                 <div v-if="item.principal_nombre" class="component-item">
-                  <span class="component-icon">🍗</span>
+                  <Beef :size="20" class="component-icon" />
                   <div>
                     <strong>Segundo</strong>
                     <p>{{ item.principal_nombre }}</p>
                   </div>
                 </div>
+
                 <div v-if="item.postre_nombre" class="component-item">
-                  <span class="component-icon">🍰</span>
+                  <CakeSlice :size="20" class="component-icon" />
                   <div>
                     <strong>Bebida o Postre</strong>
                     <p>{{ item.postre_nombre }}</p>
                   </div>
                 </div>
+
               </div>
             </div>
           </div>
@@ -93,15 +97,22 @@
                 <span class="menu-price">Bs {{ item.precio }}</span>
                 
                 <div v-if="item.tipo === 'almuerzo_completo'" class="almuerzo-detalles">
+  
                   <div v-if="item.entrada_nombre" class="detalle-item">
-                    <span class="detalle-icon">🍴</span> {{ item.entrada_nombre }}
+                    <Utensils :size="18" class="detalle-icon" /> 
+                    {{ item.entrada_nombre }}
                   </div>
+
                   <div v-if="item.principal_nombre" class="detalle-item">
-                    <span class="detalle-icon">🍗</span> {{ item.principal_nombre }}
+                    <Beef :size="18" class="detalle-icon" /> 
+                    {{ item.principal_nombre }}
                   </div>
+
                   <div v-if="item.postre_nombre" class="detalle-item">
-                    <span class="detalle-icon">🍰</span> {{ item.postre_nombre }}
+                    <CakeSlice :size="18" class="detalle-icon" /> 
+                    {{ item.postre_nombre }}
                   </div>
+
                 </div>
                 
                 <p v-else-if="item.descripcion" class="menu-desc">{{ item.descripcion }}</p>
@@ -214,7 +225,7 @@
           <!-- Horario -->
           <div v-if="horarios.length > 0" class="info-item">
             <div class="info-label-row">
-              <span class="info-label-icon">⏰</span>
+              <Clock :size="18" class="info-label-icon" />
               <span class="info-label">Horario de atención</span>
             </div>
             <div class="horario-compact">
@@ -228,7 +239,7 @@
           <!-- Teléfono -->
           <div v-if="restaurante.telefono" class="info-item">
             <div class="info-label-row">
-              <span class="info-label-icon">📱</span>
+              <Phone :size="18" class="info-label-icon" />
               <span class="info-label">Teléfono</span>
             </div>
             <p class="info-value">{{ restaurante.telefono }}</p>
@@ -237,7 +248,7 @@
           <!-- Categoría -->
           <div v-if="categoria" class="info-item">
             <div class="info-label-row">
-              <span class="info-label-icon">🍽️</span>
+              <ChefHat :size="18" class="info-label-icon" />
               <span class="info-label">Tipo de Cocina</span>
             </div>
             <p class="info-value">{{ categoria }}</p>
@@ -255,7 +266,7 @@
           <h3>¿Ya lo probaste?</h3>
           <p>Comparte tu experiencia con otros usuarios.</p>
           <button class="btn-calificar" @click="showReviewForm = true">
-            📷 Calificar
+            <MessageCircleHeart :size="18" /> Calificar
           </button>
         </div>
       </aside>
@@ -268,6 +279,8 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { restaurantesService, almuerzosService, feedbackService } from '@/services/menu.service.js'
 import { api } from '@/services/api.js'
+import { Star, MessageCircleHeart, MapPin, CircleStar, Utensils,
+  Beef, CakeSlice, Clock, Phone, ChefHat} from 'lucide-vue-next'
 
 const router = useRouter()
 const route = useRoute()
@@ -1164,6 +1177,11 @@ onMounted(async () => {
 }
 
 .btn-calificar {
+  display: flex;  /* Mantiene el icono y el texto juntos */
+  justify-content: center; 
+  align-items: center;     /* Alinea verticalmente */
+  gap: 8px;                /* Espacio entre el icono y la palabra 'Calificar' */
+  cursor: pointer;
   width: 100%;
   background: white;
   color: var(--plum, #481827);

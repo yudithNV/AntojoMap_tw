@@ -76,7 +76,7 @@ import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { 
   LayoutDashboard, ClipboardList, Users, Store, Map, BarChart3,
-  Menu, Heart, Search, User, UtensilsCrossed, LogOut, Star
+  Menu, CookingPot, Heart, Search, User, UtensilsCrossed, LogOut, Star
 } from 'lucide-vue-next'
 import { useAuthStore } from '../stores/auth.store.js'
 import { useFavoritosStore } from '../stores/favoritos.store.js'
@@ -124,7 +124,7 @@ const menuItems = computed(() => {
     ],
     restaurant: [
       { id: 1, label: 'Resumen', icon: LayoutDashboard, path: '/restaurant/dashboard' },
-      { id: 2, label: 'Menú', icon: Menu, path: '/restaurant/menu' },
+      { id: 2, label: 'Menú', icon: CookingPot, path: '/restaurant/menu' },
       { id: 3, label: 'Perfil', icon: User, path: '/restaurant/profile' },
       { id: 4, label: 'Feedbacks', icon: Heart, path: '/restaurant/feedbacks' }
     ],

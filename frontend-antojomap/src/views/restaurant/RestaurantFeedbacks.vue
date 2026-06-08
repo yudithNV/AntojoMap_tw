@@ -19,7 +19,10 @@
       <div class="stats-header">
         <div class="stat">
           <span class="label">Promedio</span>
-          <span class="value">{{ promedio }} ⭐</span>
+          <span class="value">
+            {{ promedio }} 
+            <Star :size="24" color="#FFD700" />
+          </span>
         </div>
         <div class="stat">
           <span class="label">Total Feedbacks</span>
@@ -73,7 +76,7 @@
               </div>
             </div>
             <div class="rating-badge">
-              <span class="stars">⭐</span>
+              <Star class="star-icon" :size="16" color="#FFD700" stroke-width="2.5" />
               <span class="score">{{ feedback.puntuacion }}/5</span>
             </div>
           </div>
@@ -243,7 +246,12 @@ onMounted(async () => {
   color: var(--plum);
   font-size: 2rem;
   font-weight: 700;
+  display: inline-flex;    /* Activa flexbox */
+  align-items: center;     /* Centra verticalmente el número y el icono */
+  gap: 8px;                /* Espacio entre el 5.0 y la estrella */
+  font-weight: bold;
 }
+
 
 /* ===== NUEVOS ESTILOS PARA FILTROS ===== */
 .filters-section {
