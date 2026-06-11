@@ -106,174 +106,254 @@
     </div>
 
     <!-- TAB RESTAURANTES -->
-    <div v-if="activeTab === 'restaurantes'" class="tab-content">
-      <div class="search-bar">
-        <Search :size="20" class="search-icon" />
-        <input 
-          v-model="searchRestaurantes" 
-          type="text" 
-          placeholder="Buscar por nombre..." 
-          class="search-input" 
-        />
-      </div>
+   <!-- TAB RESTAURANTES -->
+<div v-if="activeTab === 'restaurantes'" class="tab-content">
+  <div class="search-bar">
+    <Search :size="20" class="search-icon" />
+    <input 
+      v-model="searchRestaurantes" 
+      type="text" 
+      placeholder="Buscar por nombre..." 
+      class="search-input" 
+    />
+  </div>
 
-      <div v-if="restaurantesStore.categorias.length > 0" class="category-filter">
-        <button 
-          class="category-chip" 
-          :class="{ active: selectedCategories.length === 0 }" 
-          @click="selectedCategories = []"
-        >
-          Todos
-        </button>
-        <button 
-          v-for="cat in restaurantesStore.categorias" 
-          :key="cat" 
-          class="category-chip" 
-          :class="{ active: selectedCategories.includes(cat) }" 
-          @click="toggleCategory(cat)"
-        >
-          {{ cat }}
-        </button>
-        <button class="btn-ruleta" @click="irARuleta">🎲 Sorpréndeme</button>
-      </div>
+  <div v-if="restaurantesStore.categorias.length > 0" class="category-filter">
+    <button 
+      class="category-chip" 
+      :class="{ active: selectedCategories.length === 0 }" 
+      @click="selectedCategories = []"
+    >
+      Todos
+    </button>
+    <button 
+      v-for="cat in restaurantesStore.categorias" 
+      :key="cat" 
+      class="category-chip" 
+      :class="{ active: selectedCategories.includes(cat) }" 
+      @click="toggleCategory(cat)"
+    >
+      {{ cat }}
+    </button>
+    <button class="btn-ruleta" @click="irARuleta">🎲 Sorpréndeme</button>
+  </div>
 
-      <!-- 🔥 CARRUSEL DE RESTAURANTES (en lugar de grid) 🔥 -->
-      <div class="restaurants-carousel-wrapper">
-        <div class="restaurants-carousel-container">
-          <button 
-            class="carousel-arrow carousel-arrow-left"
-            @click="scrollRestaurantsLeft"
-            v-if="showRestaurantArrows"
-          >
-            ‹
-          </button>
-          
-          <div class="restaurants-carousel" ref="restaurantsCarouselRef">
-            <div class="restaurants-carousel-track">
-              <RestaurantCard 
-                v-for="restaurant in filteredRestaurants" 
-                :key="restaurant.id" 
-                :restaurant="restaurant" 
-                :linkTo="`/user/menu/${restaurant.id}`" 
-                class="restaurant-carousel-card"
-              />
-            </div>
-          </div>
-          
-          <button 
-            class="carousel-arrow carousel-arrow-right"
-            @click="scrollRestaurantsRight"
-            v-if="showRestaurantArrows"
-          >
-            ›
-          </button>
-        </div>
-        
-        <div class="carousel-dots" v-if="filteredRestaurants.length > 0">
-          <button
-            v-for="(_, idx) in Math.ceil(filteredRestaurants.length / restaurantsPerView)"
-            :key="idx"
-            class="carousel-dot"
-            :class="{ active: restaurantDotIndex === idx }"
-            @click="goToRestaurantDot(idx)"
-          ></button>
-        </div>
-      </div>
-
-      <div v-if="filteredRestaurants.length === 0" class="no-results">
-        <p>No encontramos restaurantes con esos filtros.</p>
-        <button class="btn-clear" @click="clearRestaurantesFilters">Limpiar filtros</button>
-      </div>
+  <!-- 🔥 SELECTOR DE VISTA PARA RESTAURANTES -->
+  <div class="view-toggle-container">
+    <div class="view-toggle">
+      <button 
+        :class="['view-btn', { active: viewModeRestaurantes === 'carousel' }]"
+        @click="viewModeRestaurantes = 'carousel'"
+      >
+        <LayoutGrid :size="18" />
+        <span>Carrusel</span>
+      </button>
+      <button 
+        :class="['view-btn', { active: viewModeRestaurantes === 'cards' }]"
+        @click="viewModeRestaurantes = 'cards'"
+      >
+        <List :size="18" />
+        <span>Tarjetas</span>
+      </button>
     </div>
+  </div>
 
-    <!-- TAB PLATOS -->
-    <div v-if="activeTab === 'platos'" class="tab-content">
-      <div class="search-bar">
-        <Search :size="20" class="search-icon" />
-        <input 
-          v-model="searchPlatos" 
-          type="text" 
-          placeholder="Buscar platos..." 
-          class="search-input" 
-        />
-      </div>
-
-      <div class="tipo-filter">
-        <button 
-          class="tipo-chip" 
-          :class="{ active: selectedTipoPlato === '' }" 
-          @click="selectedTipoPlato = ''"
-        >
-           Todos
-        </button>
-        <button 
-          class="tipo-chip" 
-          :class="{ active: selectedTipoPlato === 'plato_suelto' }" 
-          @click="selectedTipoPlato = 'plato_suelto'"
-        >
-           Platos
-        </button>
-        <button 
-          class="tipo-chip" 
-          :class="{ active: selectedTipoPlato === 'almuerzo_completo' }" 
-          @click="selectedTipoPlato = 'almuerzo_completo'"
-        >
-           Almuerzos Completos
-        </button>
-        <button 
-  class="tipo-chip btn-sorprendeme" 
-  @click="sortearPlatoSorpresa"
-  :disabled="isSorteando"
->
-  {{ isSorteando ? '🎲 Sorteando...' : '✨ Sorpréndeme' }}
-</button>
-      </div>
-
-      <div v-if="buscandoPlatos" class="loading-state">
-        <p>Buscando platos...</p>
-      </div>
-      <div v-else-if="!searchPlatos && selectedTipoPlato === ''" class="empty-platos">
-        <UtensilsCrossed :size="48" stroke-width="1.5" />
-        <p>¿Qué se te antoja?</p>
-        <span>Busca un plato o filtra por tipo</span>
-      </div>
-      <div v-else-if="platosResultados.length === 0" class="no-results">
-        <p>No encontramos platos con esos filtros.</p>
-        <button class="btn-clear" @click="clearPlatosFilters">Limpiar filtros</button>
-      </div>
-      <div v-else class="platos-carousel-wrapper">
-  <div class="platos-carousel-container">
-    <button class="carousel-arrow carousel-arrow-left" @click="scrollPlatosLeft" v-if="platosResultados.length > 3">‹</button>
-    <div class="platos-carousel" ref="platosCarouselRef">
-      <div class="platos-carousel-track">
-        <div v-for="plato in platosResultados" :key="plato.id" class="plato-card" @click="router.push(`/user/menu/${plato.restaurante_id}`)">
-          <div class="plato-img">
-            <img v-if="plato.foto_url" :src="plato.foto_url" :alt="plato.nombre" />
-            <div v-else class="plato-img-placeholder">🍽️</div>
-            <span class="plato-tipo-badge">{{ plato.tipo === 'plato_suelto' ? '🥘 Plato' : '🥗 Almuerzo' }}</span>
-          </div>
-          <div class="restaurante-strip">
-            <img v-if="plato.restaurantes?.foto_portada" :src="plato.restaurantes.foto_portada" class="rest-mini-img" />
-            <div v-else class="rest-mini-placeholder">🍴</div>
-            <span class="rest-mini-nombre">{{ plato.restaurantes?.nombre }}</span>
-          </div>
-          <div class="plato-info">
-            <h3>{{ plato.nombre }}</h3>
-            <p v-if="plato.descripcion" class="plato-desc">{{ plato.descripcion }}</p>
-            <div v-if="plato.tipo === 'almuerzo_completo'" class="plato-detalles">
-              <span v-if="plato.entrada_nombre">🍴 {{ plato.entrada_nombre }}</span>
-              <span v-if="plato.principal_nombre">🍗 {{ plato.principal_nombre }}</span>
-              <span v-if="plato.postre_nombre">🍰 {{ plato.postre_nombre }}</span>
-            </div>
-            <span class="plato-precio">Bs {{ plato.precio }}</span>
-          </div>
+  <!-- VISTA CARRUSEL RESTAURANTES -->
+  <div v-if="viewModeRestaurantes === 'carousel'" class="restaurants-carousel-wrapper">
+    <div class="restaurants-carousel-container">
+      <button 
+        class="carousel-arrow carousel-arrow-left"
+        @click="scrollRestaurantsLeft"
+        v-if="showRestaurantArrows"
+      >‹</button>
+      
+      <div class="restaurants-carousel" ref="restaurantsCarouselRef">
+        <div class="restaurants-carousel-track">
+          <RestaurantCard 
+            v-for="restaurant in filteredRestaurants" 
+            :key="restaurant.id" 
+            :restaurant="restaurant" 
+            :linkTo="`/user/menu/${restaurant.id}`" 
+            class="restaurant-carousel-card"
+          />
         </div>
       </div>
+      
+      <button 
+        class="carousel-arrow carousel-arrow-right"
+        @click="scrollRestaurantsRight"
+        v-if="showRestaurantArrows"
+      >›</button>
     </div>
-    <button class="carousel-arrow carousel-arrow-right" @click="scrollPlatosRight" v-if="platosResultados.length > 3">›</button>
+    
+    <div class="carousel-dots" v-if="filteredRestaurants.length > 0">
+      <button
+        v-for="(_, idx) in Math.ceil(filteredRestaurants.length / restaurantsPerView)"
+        :key="idx"
+        class="carousel-dot"
+        :class="{ active: restaurantDotIndex === idx }"
+        @click="goToRestaurantDot(idx)"
+      ></button>
+    </div>
+  </div>
+
+  <!-- VISTA CARDS RESTAURANTES -->
+  <div v-else class="restaurants-cards-view">
+    <div class="restaurants-grid">
+      <RestaurantCard 
+        v-for="restaurant in filteredRestaurants" 
+        :key="restaurant.id" 
+        :restaurant="restaurant" 
+        :linkTo="`/user/menu/${restaurant.id}`" 
+        class="restaurant-card-item"
+      />
+    </div>
+  </div>
+
+  <div v-if="filteredRestaurants.length === 0" class="no-results">
+    <p>No encontramos restaurantes con esos filtros.</p>
+    <button class="btn-clear" @click="clearRestaurantesFilters">Limpiar filtros</button>
   </div>
 </div>
+
+    <!-- TAB PLATOS -->
+<div v-if="activeTab === 'platos'" class="tab-content">
+  <div class="search-bar">
+    <Search :size="20" class="search-icon" />
+    <input 
+      v-model="searchPlatos" 
+      type="text" 
+      placeholder="Buscar platos..." 
+      class="search-input" 
+    />
+  </div>
+
+  <div class="tipo-filter">
+    <button 
+      class="tipo-chip" 
+      :class="{ active: selectedTipoPlato === '' }" 
+      @click="selectedTipoPlato = ''"
+    >
+       Todos
+    </button>
+    <button 
+      class="tipo-chip" 
+      :class="{ active: selectedTipoPlato === 'plato_suelto' }" 
+      @click="selectedTipoPlato = 'plato_suelto'"
+    >
+       Platos
+    </button>
+    <button 
+      class="tipo-chip" 
+      :class="{ active: selectedTipoPlato === 'almuerzo_completo' }" 
+      @click="selectedTipoPlato = 'almuerzo_completo'"
+    >
+       Almuerzos Completos
+    </button>
+    <button 
+      class="tipo-chip btn-sorprendeme" 
+      @click="sortearPlatoSorpresa"
+      :disabled="isSorteando"
+    >
+      {{ isSorteando ? '🎲 Sorteando...' : '✨ Sorpréndeme' }}
+    </button>
+  </div>
+
+  <!-- 🔥 SELECTOR DE VISTA PARA PLATOS -->
+  <div class="view-toggle-container">
+    <div class="view-toggle">
+      <button 
+        :class="['view-btn', { active: viewModePlatos === 'carousel' }]"
+        @click="viewModePlatos = 'carousel'"
+      >
+        <LayoutGrid :size="18" />
+        <span>Carrusel</span>
+      </button>
+      <button 
+        :class="['view-btn', { active: viewModePlatos === 'cards' }]"
+        @click="viewModePlatos = 'cards'"
+      >
+        <List :size="18" />
+        <span>Tarjetas</span>
+      </button>
     </div>
+  </div>
+
+  <div v-if="buscandoPlatos" class="loading-state">
+    <p>Buscando platos...</p>
+  </div>
+  <div v-else-if="!searchPlatos && selectedTipoPlato === ''" class="empty-platos">
+    <UtensilsCrossed :size="48" stroke-width="1.5" />
+    <p>¿Qué se te antoja?</p>
+    <span>Busca un plato o filtra por tipo</span>
+  </div>
+  <div v-else-if="platosResultados.length === 0" class="no-results">
+    <p>No encontramos platos con esos filtros.</p>
+    <button class="btn-clear" @click="clearPlatosFilters">Limpiar filtros</button>
+  </div>
+  
+  <!-- VISTA CARRUSEL PLATOS -->
+  <div v-else-if="viewModePlatos === 'carousel'" class="platos-carousel-wrapper">
+    <div class="platos-carousel-container">
+      <button class="carousel-arrow carousel-arrow-left" @click="scrollPlatosLeft" v-if="platosResultados.length > 3">‹</button>
+      <div class="platos-carousel" ref="platosCarouselRef">
+        <div class="platos-carousel-track">
+          <div v-for="plato in platosResultados" :key="plato.id" class="plato-card" @click="router.push(`/user/menu/${plato.restaurante_id}`)">
+            <div class="plato-img">
+              <img v-if="plato.foto_url" :src="plato.foto_url" :alt="plato.nombre" />
+              <div v-else class="plato-img-placeholder">🍽️</div>
+              <span class="plato-tipo-badge">{{ plato.tipo === 'plato_suelto' ? '🥘 Plato' : '🥗 Almuerzo' }}</span>
+            </div>
+            <div class="restaurante-strip">
+              <img v-if="plato.restaurantes?.foto_portada" :src="plato.restaurantes.foto_portada" class="rest-mini-img" />
+              <div v-else class="rest-mini-placeholder">🍴</div>
+              <span class="rest-mini-nombre">{{ plato.restaurantes?.nombre }}</span>
+            </div>
+            <div class="plato-info">
+              <h3>{{ plato.nombre }}</h3>
+              <p v-if="plato.descripcion" class="plato-desc">{{ plato.descripcion }}</p>
+              <div v-if="plato.tipo === 'almuerzo_completo'" class="plato-detalles">
+                <span v-if="plato.entrada_nombre">🍴 {{ plato.entrada_nombre }}</span>
+                <span v-if="plato.principal_nombre">🍗 {{ plato.principal_nombre }}</span>
+                <span v-if="plato.postre_nombre">🍰 {{ plato.postre_nombre }}</span>
+              </div>
+              <span class="plato-precio">Bs {{ plato.precio }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="carousel-arrow carousel-arrow-right" @click="scrollPlatosRight" v-if="platosResultados.length > 3">›</button>
+    </div>
+  </div>
+
+  <!-- VISTA CARDS PLATOS (GRID) -->
+  <div v-else class="platos-cards-view">
+    <div class="platos-grid">
+      <div v-for="plato in platosResultados" :key="plato.id" class="plato-card" @click="router.push(`/user/menu/${plato.restaurante_id}`)">
+        <div class="plato-img">
+          <img v-if="plato.foto_url" :src="plato.foto_url" :alt="plato.nombre" />
+          <div v-else class="plato-img-placeholder">🍽️</div>
+          <span class="plato-tipo-badge">{{ plato.tipo === 'plato_suelto' ? '🥘 Plato' : '🥗 Almuerzo' }}</span>
+        </div>
+        <div class="restaurante-strip">
+          <img v-if="plato.restaurantes?.foto_portada" :src="plato.restaurantes.foto_portada" class="rest-mini-img" />
+          <div v-else class="rest-mini-placeholder">🍴</div>
+          <span class="rest-mini-nombre">{{ plato.restaurantes?.nombre }}</span>
+        </div>
+        <div class="plato-info">
+          <h3>{{ plato.nombre }}</h3>
+          <p v-if="plato.descripcion" class="plato-desc">{{ plato.descripcion }}</p>
+          <div v-if="plato.tipo === 'almuerzo_completo'" class="plato-detalles">
+            <span v-if="plato.entrada_nombre">🍴 {{ plato.entrada_nombre }}</span>
+            <span v-if="plato.principal_nombre">🍗 {{ plato.principal_nombre }}</span>
+            <span v-if="plato.postre_nombre">🍰 {{ plato.postre_nombre }}</span>
+          </div>
+          <span class="plato-precio">Bs {{ plato.precio }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
     <RuletaPlatos 
       :isOpen="mostrarRuleta" 
@@ -333,7 +413,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router' 
-import { Search, UtensilsCrossed, Store } from 'lucide-vue-next'
+import { Search, UtensilsCrossed, Store, LayoutGrid, List } from 'lucide-vue-next'
 import gsap from 'gsap'
 import DashboardLayout from '../../components/DashboardLayout.vue'
 import RestaurantCard from '../../components/RestaurantCard.vue'
@@ -353,6 +433,10 @@ const showSorteoModal = ref(false)
 const cartaFlipped = ref(false)
 const platoSorteado = ref(null)
 const isSorteando = ref(false)
+
+// Modos de vista
+const viewModeRestaurantes = ref('carousel') // 'carousel' o 'cards'
+const viewModePlatos = ref('carousel') // 'carousel' o 'cards'
 
 const repetirSorteo = () => {
   cartaFlipped.value = false
@@ -657,6 +741,97 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* ========== SELECTOR DE VISTA ========== */
+.view-toggle-container {
+  display: flex;
+  justify-content: flex-end;
+  margin: 16px 0 24px 0;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 8px;
+  background: white;
+  border-radius: 48px;
+  padding: 4px;
+  border: 1px solid #e5e0db;
+}
+
+.view-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  background: transparent;
+  border: none;
+  border-radius: 40px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #6b2121;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-btn:hover {
+  background: rgba(163, 51, 51, 0.08);
+}
+
+.view-btn.active {
+  background: #A33333;
+  color: white;
+  box-shadow: 0 2px 8px rgba(163, 51, 51, 0.3);
+}
+
+/* ========== VISTA DE CARDS RESTAURANTES ========== */
+.restaurants-cards-view {
+  margin: 20px 0;
+}
+
+.restaurants-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.restaurant-card-item {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.restaurant-card-item:hover {
+  transform: translateY(-4px);
+}
+
+/* ========== VISTA DE CARDS PLATOS ========== */
+.platos-cards-view {
+  margin: 20px 0;
+}
+
+.platos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .view-toggle-container {
+    justify-content: center;
+  }
+  
+  .view-btn span {
+    display: none;
+  }
+  
+  .view-btn {
+    padding: 8px 16px;
+  }
+  
+  .restaurants-grid,
+  .platos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+  }
+}
 /* ========== ESTILOS EXISTENTES ========== */
 .page-header {
   margin-bottom: 32px;

@@ -16,7 +16,9 @@ Plataforma de comida basada en ubicación. Usuarios pueden explorar restaurantes
 ```bash
 cd backend
 npm install
- 
+npm install nodemailer
+npm install uuid
+
 npm start
 ```
 

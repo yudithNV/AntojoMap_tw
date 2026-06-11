@@ -3,6 +3,8 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { supabase } from '../config/supabase.js'
+import nodemailer from 'nodemailer'
+import { v4 as uuidv4 } from 'uuid'
 
 // Validación de email
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)
@@ -272,6 +274,114 @@ export const verificarEstadoSolicitud = async (req, res) => {
       puede_acceder: solicitud.estado === 'APROBADO'
     })
 
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+}
+
+// RECUPERACIÓN DE CONTRASEÑA - FORGOT PASSWORD
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body
+    if (!email) return res.status(400).json({ error: 'Email requerido' })
+
+    // Verificar si el usuario existe
+    const { data: usuario } = await supabase
+      .from('usuarios')
+      .select('id, email, nombre')
+      .eq('email', email)
+      .single()
+
+    // Siempre responder lo mismo por seguridad
+    if (!usuario) {
+      return res.json({ mensaje: 'Si el email existe, recibirás un correo' })
+    }
+
+    // Generar token y expiración (1 hora)
+    const token = uuidv4()
+    const expires_at = new Date(Date.now() + 60 * 60 * 1000).toISOString()
+
+    // Guardar token en BD
+    await supabase.from('password_resets').insert({ email, token, expires_at })
+
+    // Enviar email
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    })
+
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`
+
+    await transporter.sendMail({
+      from: `"AntojoMap" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: 'Recuperación de contraseña - AntojoMap',
+      html: `
+        <div style="font-family: sans-serif; max-width: 500px; margin: auto;">
+          <h2>Hola ${usuario.nombre}!</h2>
+          <p>Recibimos una solicitud para restablecer tu contraseña.</p>
+          <a href="${resetUrl}" style="
+            display: inline-block; padding: 12px 24px;
+            background: #481827; color: white;
+            border-radius: 8px; text-decoration: none; font-weight: bold;
+          ">Restablecer contraseña</a>
+          <p style="color: #999; font-size: 0.85rem;">Este enlace expira en 1 hora.</p>
+        </div>
+      `
+    })
+
+    res.json({ mensaje: 'Si el email existe, recibirás un correo' })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+}
+
+// RECUPERACIÓN DE CONTRASEÑA - RESET PASSWORD
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body
+
+    if (!token || !newPassword) {
+      return res.status(400).json({ error: 'Token y nueva contraseña requeridos' })
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres' })
+    }
+
+    // Verificar token
+    const { data: reset } = await supabase
+      .from('password_resets')
+      .select('*')
+      .eq('token', token)
+      .eq('usado', false)
+      .single()
+
+    if (!reset) return res.status(400).json({ error: 'Token inválido o expirado' })
+
+    if (new Date(reset.expires_at) < new Date()) {
+      return res.status(400).json({ error: 'Token expirado' })
+    }
+
+    // Hashear nueva contraseña
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+
+    // Actualizar contraseña
+    await supabase
+      .from('usuarios')
+      .update({ password: hashedPassword })
+      .eq('email', reset.email)
+
+    // Marcar token como usado
+    await supabase
+      .from('password_resets')
+      .update({ usado: true })
+      .eq('token', token)
+
+    res.json({ mensaje: 'Contraseña actualizada exitosamente' })
   } catch (error) {
     res.status(500).json({ error: error.message })
   }

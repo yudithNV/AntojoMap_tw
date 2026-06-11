@@ -4,6 +4,8 @@ import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import BusinessPage from '../views/BusinessPage.vue'
 import NoSeQueComerView from '../views/NoSeQueComerView.vue'
+import ForgotPassword from '../views/ForgotPassword.vue'
+import ResetPassword from '../views/ResetPassword.vue'
 
 // Admin Views
 import AdminDashboard from '../views/admin/AdminDashboard.vue'
@@ -42,6 +44,16 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: LoginView
+    },
+    {
+      path: '/forgot-password',
+      name: 'forgot-password',
+      component: ForgotPassword
+    },
+    {
+      path: '/reset-password',
+      name: 'reset-password',
+      component: ResetPassword
     },
     {
       path: '/register',

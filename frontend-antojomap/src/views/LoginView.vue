@@ -96,7 +96,13 @@
                 </div>
               </div>
 
-              
+              <!-- Agrega esto después del div del password-input-wrapper -->
+              <div class="form-options">
+                
+                <button type="button" class="forgot-password" @click="handleForgotPassword">
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
 
               <button type="submit" class="btn-submit" :disabled="isLoading || !!passwordError">
                 {{ isLoading ? 'Cargando...' : 'Iniciar Sesión' }}
@@ -607,15 +613,24 @@ input[type="text"]:focus {
 }
 
 .forgot-password {
+  background: transparent !important;
+  border: none !important;
   color: #A33333;
   text-decoration: none;
   font-weight: 700;
   transition: color 0.2s ease;
   font-size: 0.95rem;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  box-shadow: none !important;
+  outline: none;
 }
 
 .forgot-password:hover {
   color: #6b2121;
+  background: transparent !important;
+  transform: none;
 }
 
 .btn-submit {
