@@ -72,7 +72,7 @@
       </div>
     </div>
 
-    <!-- Modal de edición -->
+    <!-- Modal de edición con pasos -->
     <Teleport to="body">
       <div v-if="editando" class="modal-overlay" @click.self="closeModal">
         <div class="modal">
@@ -82,33 +82,85 @@
           </div>
 
           <div class="modal-body">
-            <div class="form-group">
-              <label>Nombre completo</label>
-              <input v-model="form.nombre" type="text" class="input" placeholder="Tu nombre" />
+            <!-- Paso 1: Información básica -->
+            <div v-if="pasoActual === 1" class="step-content">
+              <div class="step-title">
+                <span class="step-number">1</span>
+                <span>Información básica</span>
+              </div>
+              
+              <div class="form-group">
+                <label>Nombre completo</label>
+                <input v-model="form.nombre" type="text" class="input" placeholder="Tu nombre" />
+              </div>
+
+              <div class="form-group">
+                <label>Foto de perfil</label>
+                <ImageUploader v-model="form.foto_perfil" />
+              </div>
             </div>
 
-            <div class="form-group">
-              <label>Foto de perfil</label>
-              <ImageUploader v-model="form.foto_perfil" />
+            <!-- Paso 2: Información adicional -->
+            <div v-if="pasoActual === 2" class="step-content">
+              <div class="step-title">
+                <span class="step-number">2</span>
+                <span>Información adicional</span>
+              </div>
+              
+              <div class="form-group">
+                <label>Biografía</label>
+                <textarea v-model="form.bio" class="input textarea" placeholder="Cuéntanos algo sobre ti..." rows="4" />
+              </div>
+
+              <div class="form-group">
+                <label>Fecha de nacimiento</label>
+                <input v-model="form.cumpleanos" type="date" class="input" />
+                <span class="input-hint">Usaremos esto para celebrar tu día especial</span>
+              </div>
             </div>
 
-            <div class="form-group">
-              <label>Biografía</label>
-              <textarea v-model="form.bio" class="input textarea" placeholder="Cuéntanos algo sobre ti..." rows="3" />
-            </div>
-
-            <div class="form-group">
-              <label>Fecha de nacimiento</label>
-              <input v-model="form.cumpleanos" type="date" class="input" />
-              <span class="input-hint">Usaremos esto para celebrar tu día especial</span>
+            <!-- Indicador de pasos -->
+            <div class="step-indicator">
+              <div 
+                v-for="n in totalPasos" 
+                :key="n"
+                class="step-dot"
+                :class="{ 
+                  active: n === pasoActual,
+                  completed: n < pasoActual
+                }"
+                @click="irAlPaso(n)"
+              ></div>
             </div>
           </div>
 
           <div class="modal-footer">
             <button class="btn-cancel" @click="closeModal">Cancelar</button>
-            <button class="btn-save" @click="openConfirmModal" :disabled="guardando">
-              {{ guardando ? 'Guardando...' : 'Guardar cambios' }}
-            </button>
+            
+            <div class="footer-actions">
+              <button 
+                v-if="pasoActual > 1" 
+                class="btn-back" 
+                @click="pasoAnterior"
+              >
+                Anterior
+              </button>
+              <button 
+                v-if="pasoActual < totalPasos" 
+                class="btn-next" 
+                @click="siguientePaso"
+              >
+                Siguiente
+              </button>
+              <button 
+                v-else 
+                class="btn-save" 
+                @click="openConfirmModal" 
+                :disabled="guardando"
+              >
+                {{ guardando ? 'Guardando...' : 'Guardar cambios' }}
+              </button>
+            </div>
           </div>
 
           <p v-if="error" class="error-msg">{{ error }}</p>
@@ -186,6 +238,10 @@ const guardando = ref(false)
 const error = ref('')
 const esCumpleanos = ref(false)
 
+// ========== ESTADO PARA PASOS ==========
+const pasoActual = ref(1)
+const totalPasos = 2
+
 const form = ref({
   nombre: '',
   foto_perfil: '',
@@ -216,7 +272,37 @@ const showToast = () => {
   }, 3000)
 }
 
-// ========== FUNCIONES ==========
+// ========== FUNCIONES DE PASOS ==========
+const siguientePaso = () => {
+  if (pasoActual.value < totalPasos) {
+    // Validar paso 1 antes de continuar
+    if (pasoActual.value === 1) {
+      if (!form.value.nombre.trim()) {
+        error.value = 'El nombre es obligatorio'
+        return
+      }
+      error.value = ''
+    }
+    pasoActual.value++
+  }
+}
+
+const pasoAnterior = () => {
+  if (pasoActual.value > 1) {
+    pasoActual.value--
+    error.value = ''
+  }
+}
+
+const irAlPaso = (n) => {
+  // Solo permitir ir a pasos anteriores o al actual
+  if (n <= pasoActual.value) {
+    pasoActual.value = n
+    error.value = ''
+  }
+}
+
+// ========== FUNCIONES PRINCIPALES ==========
 const cargarPerfil = async () => {
   try {
     const data = await usuariosService.getMiPerfil()
@@ -241,12 +327,14 @@ const abrirEditor = () => {
     cumpleanos: perfil.value.cumpleanos || ''
   }
   error.value = ''
+  pasoActual.value = 1 // Reiniciar al primer paso
   editando.value = true
 }
 
 const closeModal = () => {
   editando.value = false
   error.value = ''
+  pasoActual.value = 1
 }
 
 const ejecutarGuardado = async () => {
@@ -349,7 +437,7 @@ onMounted(async () => {
   margin: 0;
 }
 
-/* Banner de cumpleaños - SIN EMOJI */
+/* Banner de cumpleaños */
 .birthday-banner {
   position: relative;
   z-index: 2;
@@ -560,7 +648,7 @@ onMounted(async () => {
   word-break: break-word;
 }
 
-/* Modal de edición */
+/* ========== MODAL DE EDICIÓN CON PASOS ========== */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -578,8 +666,11 @@ onMounted(async () => {
   border-radius: 32px;
   width: 100%;
   max-width: 520px;
-  overflow: hidden;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
 }
 
 .modal-header {
@@ -588,6 +679,7 @@ onMounted(async () => {
   align-items: center;
   padding: 24px 28px;
   background: linear-gradient(135deg, #481827, #6B1B3C);
+  flex-shrink: 0;
 }
 
 .modal-header h2 {
@@ -618,10 +710,75 @@ onMounted(async () => {
 
 .modal-body {
   padding: 28px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Scroll personalizado */
+.modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: #D893A1;
+  border-radius: 3px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: #B87384;
+}
+
+/* Paso content */
+.step-content {
+  animation: fadeSlideIn 0.3s ease;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.step-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #481827;
+  margin-bottom: 24px;
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #481827, #6B1B3C);
+  color: white;
+  border-radius: 50%;
+  font-size: 0.9rem;
+  font-weight: 700;
+  flex-shrink: 0;
 }
 
 .form-group {
   margin-bottom: 24px;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
 }
 
 .form-group label {
@@ -661,17 +818,58 @@ onMounted(async () => {
   margin-top: 6px;
 }
 
-.modal-footer {
+/* Indicador de pasos */
+.step-indicator {
   display: flex;
-  gap: 14px;
-  padding: 20px 28px;
-  background: #faf8f6;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 24px;
+  padding-top: 20px;
   border-top: 1px solid #f0ede7;
 }
 
+.step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.step-dot:hover {
+  transform: scale(1.2);
+}
+
+.step-dot.active {
+  background: #481827;
+  width: 24px;
+  border-radius: 4px;
+}
+
+.step-dot.completed {
+  background: #6B1B3C;
+}
+
+/* Modal footer */
+.modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 28px;
+  background: #faf8f6;
+  border-top: 1px solid #f0ede7;
+  flex-shrink: 0;
+  gap: 14px;
+}
+
+.footer-actions {
+  display: flex;
+  gap: 10px;
+}
+
 .btn-cancel {
-  flex: 1;
-  padding: 14px;
+  padding: 12px 24px;
   border: 1.5px solid #e8e8e8;
   background: white;
   border-radius: 50px;
@@ -679,15 +877,31 @@ onMounted(async () => {
   cursor: pointer;
   color: #666;
   transition: all 0.2s;
+  font-size: 0.9rem;
 }
 
 .btn-cancel:hover {
   background: #f5f5f5;
 }
 
-.btn-save {
-  flex: 1;
-  padding: 14px;
+.btn-back {
+  padding: 12px 24px;
+  border: 1.5px solid #e8e8e8;
+  background: white;
+  border-radius: 50px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #666;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.btn-back:hover {
+  background: #f5f5f5;
+}
+
+.btn-next {
+  padding: 12px 28px;
   border: none;
   background: linear-gradient(135deg, #481827, #6B1B3C);
   color: white;
@@ -695,11 +909,29 @@ onMounted(async () => {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.btn-next:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(72, 24, 39, 0.3);
+}
+
+.btn-save {
+  padding: 12px 28px;
+  border: none;
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: white;
+  border-radius: 50px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
 }
 
 .btn-save:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(72, 24, 39, 0.3);
+  box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3);
 }
 
 .btn-save:disabled {
@@ -711,10 +943,11 @@ onMounted(async () => {
   color: #c0392b;
   font-size: 0.85rem;
   margin: 0;
-  padding: 0 28px 24px;
+  padding: 0 28px 20px;
+  text-align: center;
 }
 
-/* Modal de confirmación */
+/* ========== MODAL DE CONFIRMACIÓN ========== */
 .confirm-overlay {
   position: fixed;
   inset: 0;
@@ -802,7 +1035,7 @@ onMounted(async () => {
   box-shadow: 0 6px 15px rgba(72, 24, 39, 0.3);
 }
 
-/* Toast de éxito */
+/* ========== TOAST ========== */
 .success-toast {
   position: fixed;
   bottom: 30px;
@@ -848,7 +1081,7 @@ onMounted(async () => {
   color: rgba(255, 255, 255, 0.85);
 }
 
-/* Transiciones */
+/* ========== TRANSICIONES ========== */
 .modal-fade-enter-active,
 .modal-fade-leave-active {
   transition: opacity 0.25s ease;
@@ -881,7 +1114,7 @@ onMounted(async () => {
   transform: translateX(100%);
 }
 
-/* Responsive */
+/* ========== RESPONSIVE ========== */
 @media (max-width: 900px) {
   .profile-page {
     padding: 0 20px;
@@ -942,6 +1175,43 @@ onMounted(async () => {
     font-size: 1rem;
   }
 
+  .modal {
+    margin: 0.5rem;
+    max-height: 95vh;
+  }
+
+  .modal-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px 20px;
+  }
+
+  .footer-actions {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .btn-cancel {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .btn-back,
+  .btn-next,
+  .btn-save {
+    flex: 1;
+    text-align: center;
+    padding: 12px 16px;
+  }
+
   .success-toast {
     bottom: 16px;
     right: 16px;
@@ -949,7 +1219,7 @@ onMounted(async () => {
     min-width: auto;
   }
 
-  .modal {
+  .confirm-modal {
     margin: 1rem;
   }
 }
